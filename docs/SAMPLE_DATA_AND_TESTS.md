@@ -221,7 +221,7 @@ Measured on 28 Oct 2026 with every suite run once, offline, in parallel (about 4
 | osint-geo | 359 | 0 | 31 fixtures still being moved to the Kolkata gazetteer |
 | osint-analysis | 356 | 4 | |
 | deck proxy guard (pytest) | 5 | 0 | |
-| **Python total** | **5,243** | **161** | |
+| **Python total** | **5,921** | **159** | |
 | signal-ingress (cargo) | 121 | 0 | four test binaries: 50 + 45 + 7 + 19 |
 | deck unit suites | 41 of 42 files | — | `perf2` (a language-pack size golden) was being re-baselined |
 | deck lints | design tokens, copy (4,263 English strings), Bengali script | — | all pass |

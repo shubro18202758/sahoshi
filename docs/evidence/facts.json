@@ -4,7 +4,7 @@
  "network": "49 junctions and 65 road segments (125 km), the Nabanna → airport route 29 km",
  "gazetteer": "a 163-place gazetteer in English, Bengali and Hindi (wards, police stations, hospitals, pandals, ghats, low-lying spots)",
  "feeds": "IMD / NDMA SACHET alerts for West Bengal, Bengali and English Kolkata news, Open-Meteo rainfall, the Hooghly tide (modelled), Copernicus 30 m terrain, KMC FFEWS adapter (emulated)",
- "tests": "66 automated gates green: 5,855 Python tests, 121 Rust tests, 44 console unit suites, contract replays and type checks",
+ "tests": "68 automated gates green: 5,921 Python tests, 121 Rust tests, 44 console unit suites, contract replays and type checks",
  "ai_rows": [
   [
    "Corridor forecasting",
@@ -89,7 +89,7 @@
   ],
   [
    "Total",
-   "66 of 66 gates green"
+   "68 of 68 gates green · 5,921 Python + 121 Rust tests"
   ]
  ]
 }

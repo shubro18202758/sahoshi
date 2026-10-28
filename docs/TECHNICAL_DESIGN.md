@@ -1155,7 +1155,7 @@ The on-demand models load lazily and unload when idle, so the box keeps headroom
 
 | Level | What | Count (28 Oct 2026) |
 |---|---|---|
-| Unit and API (Python) | Every service, offline, outbound calls mocked | 5,243 passed |
+| Unit and API (Python) | Every service, offline, outbound calls mocked | 5,921 passed |
 | Real-model (opt-in) | forecast `-m model`, speech and vision `-m slow` | run on the box with weights |
 | Rust | signal-ingress | 121 passed |
 | Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 42 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |

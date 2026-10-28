@@ -17,7 +17,7 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square">
   <img alt="City: Kolkata, West Bengal" src="https://img.shields.io/badge/city-Kolkata%2C%20West%20Bengal-111111?style=flat-square">
   <img alt="Languages: Bengali, English, Hindi" src="https://img.shields.io/badge/languages-%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%20%C2%B7%20EN%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%82%E0%A4%A6%E0%A5%80-111111?style=flat-square">
-  <img alt="Tests: 5,243 pytest and 121 cargo" src="https://img.shields.io/badge/tests-5%2C243%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
+  <img alt="Tests: 5,921 pytest and 121 cargo" src="https://img.shields.io/badge/tests-5%2C921%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
   <img alt="Status: prototype on one edge server" src="https://img.shields.io/badge/status-prototype%20on%20one%20edge%20server-555555?style=flat-square">
 </p>
 
@@ -263,7 +263,7 @@ Measured on 28 Oct 2026, every suite offline:
 
 | Suite | Result |
 |---|---|
-| Python, 15 suites (oracle, brain, store, emulator, embeddings, the five AI services, four OSINT packages, the deck proxy guard) | **5,243 passed**, 161 skipped (they need a database sandbox or real models) |
+| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **5,921 passed**, 161 skipped (they need a database sandbox or real models) |
 | Rust (`signal-ingress`) | **121 passed** |
 | Deck | `svelte-check` 0 errors; design-token, English copy (4,263 strings) and Bengali-script lints pass; 42 unit suites |
 | City Pack | `city_build.py kolkata --check`: every derived file is current |
