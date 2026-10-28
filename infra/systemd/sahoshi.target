@@ -1,0 +1,14 @@
+# Sahoshi city operations stack (Corridor-OS + God's-eye): compose services via
+# sahoshi-up.service, host model services via sahoshi-models.target.
+#   enable once:  scripts/sahoshi_up.sh --install-units   (links units, enables this)
+#   reboot test:  systemctl --user stop sahoshi.target sahoshi-models.target;
+#                 docker compose ... stop; systemctl --user start sahoshi.target
+#                 (after a manual cutover only sahoshi-models.target is active)
+# Lingering is required for it to start at boot without a login session
+# (loginctl enable-linger $USER).
+[Unit]
+Description=Sahoshi city operations stack (compose services, model hosts, AI services, bring-up)
+Wants=sahoshi-models.target sahoshi-up.service sahoshi-ai.target
+
+[Install]
+WantedBy=default.target

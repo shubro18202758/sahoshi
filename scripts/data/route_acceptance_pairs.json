@@ -1,0 +1,233 @@
+{
+  "generated_by": "scripts/poi_route_matrix.py",
+  "attribution": "routes over Sahoshi's road network on OpenStreetMap — (c) OpenStreetMap contributors, ODbL 1.0",
+  "vvip_class": "Z+",
+  "max_snap_m": 600.0,
+  "matrix": {
+    "pairs": 182,
+    "ok": 182,
+    "same": 0,
+    "rejected": 0,
+    "empty": 0,
+    "far_snap": 0,
+    "compliant": 2,
+    "conditional": 180
+  },
+  "poi_snaps": [
+    {
+      "name": "Esplanade",
+      "lon": 88.3512,
+      "lat": 22.5646,
+      "segment_id": 1016,
+      "road_name": "Jawaharlal Nehru Road",
+      "snap_m": 26.0
+    },
+    {
+      "name": "Nabanna",
+      "lon": 88.319,
+      "lat": 22.565,
+      "segment_id": 1003,
+      "road_name": "Vidyasagar Setu (NH12, Vidyasagar Flyover)",
+      "snap_m": 54.6
+    },
+    {
+      "name": "Howrah Bridge",
+      "lon": 88.3468,
+      "lat": 22.5851,
+      "segment_id": 1001,
+      "road_name": "Howrah Bridge (Rabindra Setu)",
+      "snap_m": 0.4
+    },
+    {
+      "name": "Howrah Station",
+      "lon": 88.3425,
+      "lat": 22.5839,
+      "segment_id": 1002,
+      "road_name": "Grand Trunk Road",
+      "snap_m": 276.4
+    },
+    {
+      "name": "BBD Bag",
+      "lon": 88.3496,
+      "lat": 22.5726,
+      "segment_id": 1009,
+      "road_name": "Old Court House Street",
+      "snap_m": 108.1
+    },
+    {
+      "name": "Eden Gardens",
+      "lon": 88.3433,
+      "lat": 22.5646,
+      "segment_id": 1012,
+      "road_name": "Sahid Khudiram Bose Road",
+      "snap_m": 155.4
+    },
+    {
+      "name": "Victoria Memorial",
+      "lon": 88.3426,
+      "lat": 22.5448,
+      "segment_id": 1015,
+      "road_name": "Queensway - Cathedral Road",
+      "snap_m": 299.4
+    },
+    {
+      "name": "Park Street crossing",
+      "lon": 88.352,
+      "lat": 22.553,
+      "segment_id": 1026,
+      "road_name": "Park Street",
+      "snap_m": 38.1
+    },
+    {
+      "name": "Sealdah",
+      "lon": 88.3709,
+      "lat": 22.5678,
+      "segment_id": 1025,
+      "road_name": "Acharya Jagadish Chandra Bose Road",
+      "snap_m": 113.6
+    },
+    {
+      "name": "Gariahat crossing",
+      "lon": 88.366,
+      "lat": 22.519,
+      "segment_id": 1034,
+      "road_name": "Rash Behari Avenue Connector (Bijon Setu)",
+      "snap_m": 101.7
+    },
+    {
+      "name": "Ruby crossing",
+      "lon": 88.401,
+      "lat": 22.513,
+      "segment_id": 1034,
+      "road_name": "Rash Behari Avenue Connector (Bijon Setu)",
+      "snap_m": 38.5
+    },
+    {
+      "name": "Sector V, Salt Lake",
+      "lon": 88.431,
+      "lat": 22.573,
+      "segment_id": 1044,
+      "road_name": "Salt Lake Bypass",
+      "snap_m": 294.2
+    },
+    {
+      "name": "Kolkata Airport",
+      "lon": 88.446,
+      "lat": 22.652,
+      "segment_id": 1065,
+      "road_name": "Airport approach road",
+      "snap_m": 506.8
+    },
+    {
+      "name": "Science City",
+      "lon": 88.396,
+      "lat": 22.54,
+      "segment_id": 1035,
+      "road_name": "Eastern Metropolitan Bypass",
+      "snap_m": 183.9
+    }
+  ],
+  "compliant": {
+    "origin": {
+      "name": "Gariahat crossing",
+      "lon": 88.366,
+      "lat": 22.519,
+      "snap_m": 106.8
+    },
+    "destination": {
+      "name": "Ruby crossing",
+      "lon": 88.401,
+      "lat": 22.513,
+      "snap_m": 38.5
+    },
+    "origin_segment": 1033,
+    "destination_segment": 1034,
+    "segment_ids": [
+      1033,
+      1034
+    ],
+    "road_names": [
+      "Rash Behari Avenue",
+      "Rash Behari Avenue Connector (Bijon Setu)"
+    ],
+    "distance_m": 5489.2,
+    "route_tier": "compliant",
+    "why": "shortest pair whose primary meets the lane floor"
+  },
+  "conditional": {
+    "origin": {
+      "name": "Esplanade",
+      "lon": 88.3512,
+      "lat": 22.5646,
+      "snap_m": 26.0
+    },
+    "destination": {
+      "name": "Eden Gardens",
+      "lon": 88.3433,
+      "lat": 22.5646,
+      "snap_m": 155.4
+    },
+    "origin_segment": 1016,
+    "destination_segment": 1012,
+    "segment_ids": [
+      1016,
+      1011,
+      1012
+    ],
+    "road_names": [
+      "Jawaharlal Nehru Road",
+      "Esplanade - Old Court House Street link",
+      "Sahid Khudiram Bose Road"
+    ],
+    "distance_m": 1563.6,
+    "route_tier": "conditional",
+    "why": "shortest pair whose best Z+ route cannot meet the lane floor — the planner keeps it as conditional and says 'No fully compliant route:'"
+  },
+  "escort_demo": {
+    "origin": {
+      "name": "Nabanna",
+      "lon": 88.319,
+      "lat": 22.565,
+      "snap_m": 54.6
+    },
+    "destination": {
+      "name": "Kolkata Airport",
+      "lon": 88.446,
+      "lat": 22.652,
+      "snap_m": 506.8
+    },
+    "origin_segment": 1003,
+    "destination_segment": 1065,
+    "segment_ids": [
+      1003,
+      1002,
+      1001,
+      1061,
+      1060,
+      1062,
+      1039,
+      1040,
+      1041,
+      1042,
+      1043,
+      1065
+    ],
+    "road_names": [
+      "Vidyasagar Setu (NH12, Vidyasagar Flyover)",
+      "Grand Trunk Road",
+      "Howrah Bridge (Rabindra Setu)",
+      "Strand Road - Strand Bank Road",
+      "Bagbazar Street",
+      "Radha Gobinda Kar Road - Bidhannagar Road",
+      "VIP Road (Kazi Nazrul Islam Avenue)",
+      "VIP Road (Kazi Nazrul Islam Avenue)",
+      "VIP Road (Kazi Nazrul Islam Avenue)",
+      "VIP Road (Kazi Nazrul Islam Avenue)",
+      "VIP Road (Kazi Nazrul Islam Avenue)",
+      "Airport approach road"
+    ],
+    "distance_m": 25624.2,
+    "route_tier": "conditional",
+    "why": "the VIP movement: Nabanna over Vidyasagar Setu to the airport"
+  }
+}

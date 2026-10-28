@@ -1,0 +1,91 @@
+{
+  "generated_at_utc": "2026-10-28T12:24:38+00:00",
+  "network": {
+    "segments": 65,
+    "junctions": 49,
+    "total_km": 125.0,
+    "mean_lanes": 3.9,
+    "arrival_rate_veh_per_min_per_junction": 58.6,
+    "source": {
+      "mode": "offline",
+      "file": "scripts/data/osm_network.json"
+    },
+    "attribution": "(c) OpenStreetMap contributors, ODbL 1.0 — https://www.openstreetmap.org/copyright"
+  },
+  "scenarios": {
+    "central": {
+      "baseline_hold_min": 25.0,
+      "platform_hold_min": 2.5,
+      "commuter_minutes_baseline": 1346322.1,
+      "commuter_minutes_platform": 13463.2,
+      "reduction_factor": 100.0,
+      "vehicles_delayed_baseline": 71804,
+      "vehicles_delayed_platform": 7180,
+      "idle_liters_baseline": 12116.9,
+      "idle_liters_platform": 121.2,
+      "co2_kg_baseline": 30292.2,
+      "co2_kg_platform": 302.9
+    },
+    "conservative": {
+      "baseline_hold_min": 15.0,
+      "platform_hold_min": 3.0,
+      "commuter_minutes_baseline": 290805.6,
+      "commuter_minutes_platform": 11632.2,
+      "reduction_factor": 25.0,
+      "vehicles_delayed_baseline": 25849,
+      "vehicles_delayed_platform": 5170,
+      "idle_liters_baseline": 2617.3,
+      "idle_liters_platform": 104.7,
+      "co2_kg_baseline": 6543.1,
+      "co2_kg_platform": 261.7
+    },
+    "optimistic": {
+      "baseline_hold_min": 45.0,
+      "platform_hold_min": 2.0,
+      "commuter_minutes_baseline": 4362083.7,
+      "commuter_minutes_platform": 8616.5,
+      "reduction_factor": 506.2,
+      "vehicles_delayed_baseline": 129247,
+      "vehicles_delayed_platform": 5744,
+      "idle_liters_baseline": 39258.8,
+      "idle_liters_platform": 77.5,
+      "co2_kg_baseline": 98146.9,
+      "co2_kg_platform": 193.9
+    }
+  },
+  "per_junction_central": {
+    "commuter_minutes_baseline": 27476.0,
+    "commuter_minutes_platform": 274.8
+  },
+  "vip_corridor_central": {
+    "segment_ids": [
+      1003,
+      1028,
+      1029,
+      1036,
+      1037,
+      1038,
+      1039,
+      1040,
+      1041,
+      1042,
+      1043,
+      1065
+    ],
+    "junctions": 13,
+    "km": 29.0,
+    "commuter_minutes_baseline": 357187.5,
+    "commuter_minutes_platform": 3571.9
+  },
+  "label": "MODELLED — a deterministic analytical model, not a field measurement",
+  "ambulance": {
+    "trips_crossing_per_movement_day": 12.0,
+    "minutes_returned_per_movement_day": 132,
+    "minutes_returned_per_year": 33000
+  },
+  "annualization": {
+    "movement_days_per_year": 250,
+    "commuter_hours_returned_per_year_central": 5553579,
+    "commuter_hours_returned_per_year_vip_corridor": 1473398
+  }
+}

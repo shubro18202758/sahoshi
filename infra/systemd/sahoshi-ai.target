@@ -1,0 +1,7 @@
+# Sahoshi AI tier: forecast (8195), hydro (8197), twin (8198), speech (8194), vision (8196), city feeds (8199).
+[Unit]
+Description=Sahoshi AI services (forecast, hydro, twin, speech, vision, city feeds)
+Wants=sahoshi-ai-forecast.service sahoshi-ai-hydro.service sahoshi-ai-twin.service sahoshi-ai-speech.service sahoshi-ai-vision.service sahoshi-feeds.service
+
+[Install]
+WantedBy=default.target

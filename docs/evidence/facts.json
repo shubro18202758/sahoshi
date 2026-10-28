@@ -1,0 +1,95 @@
+{
+ "as_of": "29 October 2026",
+ "readiness": "the live stack reports READY 12/12",
+ "network": "49 junctions and 65 road segments (125 km), the Nabanna → airport route 29 km",
+ "gazetteer": "a 163-place gazetteer in English, Bengali and Hindi (wards, police stations, hospitals, pandals, ghats, low-lying spots)",
+ "feeds": "IMD / NDMA SACHET alerts for West Bengal, Bengali and English Kolkata news, Open-Meteo rainfall, the Hooghly tide (modelled), Copernicus 30 m terrain, KMC FFEWS adapter (emulated)",
+ "tests": "66 automated gates green: 5,855 Python tests, 121 Rust tests, 44 console unit suites, contract replays and type checks",
+ "ai_rows": [
+  [
+   "Corridor forecasting",
+   "Chronos-2 (Apache-2.0)",
+   "MAE 0.043 V/C vs 0.095 for the seasonal baseline (−55%); p10–p90 coverage 0.80",
+   "SIMULATED history until Kolkata traffic is recorded"
+  ],
+  [
+   "Waterlogging nowcast",
+   "rain × tide × DEM × pumps",
+   "Replay of 22–23 Sep 2025 on IMD-observed rain: 13 of 13 reported on-network places flagged; first flag 02:45 IST",
+   "OBSERVED rain, MODELLED ponding"
+  ],
+  [
+   "Signal-timing twin",
+   "cell-transmission model + Webster / max-pressure",
+   "Bottleneck discharge exact; shockwave speed within 0.2% of theory; 30 min of the city in 0.12 s",
+   "MODELLED"
+  ],
+  [
+   "Bengali voice",
+   "Bengali Whisper-medium (Apache-2.0), Svara-TTS",
+   "WER 11.5%, CER 2.6%; place matched 53/60, kind 60/60",
+   "synthetic round trip"
+  ],
+  [
+   "Road state from a still",
+   "Qwen3-VL-8B (Apache-2.0)",
+   "11 of 12 correct; 9 of 9 person/plate probes refused",
+   "Commons photos, credited"
+  ],
+  [
+   "Memory and retrieval",
+   "pplx-embed-context-v1-4b + pplx-embed-v2-late-0.6b (MIT)",
+   "Bengali SOP recall@1 0.93 vs 0.71 for bge-m3; cross-script news dedup AUC 0.997 vs 0.56 (word overlap)",
+   "synthetic Kolkata eval set"
+  ],
+  [
+   "Privacy (OSINT)",
+   "PII-Tracer (MIT) + rules",
+   "person recall 0.84 → 0.94; 0 of 122 place names redacted",
+   "synthetic eval set"
+  ]
+ ],
+ "ai_note": "Every model runs on the one on-premises computer; numbers come from the services' own evaluation files in the repository (docs/ai/*.md).",
+ "test_rows": [
+  [
+   "traffic-oracle",
+   "2,101 passed"
+  ],
+  [
+   "convoy-brain",
+   "752 passed"
+  ],
+  [
+   "OSINT (common, ingress, geo, analysis)",
+   "1,992 passed"
+  ],
+  [
+   "event-emulator",
+   "361 passed"
+  ],
+  [
+   "embedding-service",
+   "190 passed"
+  ],
+  [
+   "corridor-store",
+   "147 passed"
+  ],
+  [
+   "speech · vision · twin · forecast · hydro",
+   "124 · 73 · 48 · 37 · 23 passed"
+  ],
+  [
+   "signal-ingress (Rust)",
+   "121 passed"
+  ],
+  [
+   "command-deck",
+   "44 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,711 strings)"
+  ],
+  [
+   "Total",
+   "66 of 66 gates green"
+  ]
+ ]
+}

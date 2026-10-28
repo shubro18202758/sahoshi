@@ -1,0 +1,35 @@
+{
+  "schema": "sahoshi.hydro.hotspots/1",
+  "about": "Places widely reported as waterlogging-prone in Kolkata. Each entry names its source(s). Coordinates are approximate (about ±300 m) and were placed by hand from public maps for seeding only. An entry whose source field is empty was listed in the build brief but no source was located for it in this build: it is kept, marked unverified, and carries half weight.",
+  "sources": {
+    "mpost_2024_dana": {"publisher": "Millennium Post", "date": "2024-10-25", "url": "https://www.millenniumpost.in/bengal/impact-of-cyclone-dana-closure-of-lock-gates-canal-surcharge-delayed-stormwater-drainage-says-hakim-584523", "quote": "Jodhpur Park, Lake Gardens, Kalighat, Exide, and Behala were submerged ... Thanthania, Amherst Street, Bowbazar and Baranagar were also heavily waterlogged"},
+    "pti_week_2024": {"publisher": "PTI via The Week", "date": "2024-10-25", "url": "https://www.theweek.in/wire-updates/national/2024/10/25/cal16-wb-cyclone-rains.html", "quote": "Bhawanipur, New Market, Hazra, Dharmatala, Behala ... Thanthania Kalibari, Mahatma Gandhi Road, VIP Road ... Park Circus"},
+    "mpost_2021": {"publisher": "Millennium Post", "date": "2021-09-22", "url": "https://www.millenniumpost.in/kolkata/revamped-infra-helps-kmc-rid-city-from-waterlogging-speedily-453795", "quote": "Muktaram Babu Street, Mukundapur Main Road, Behala, New Alipore, Lake Gardens, Kidderpore, Paharpur Road, Taratala"},
+    "mongabay_2018": {"publisher": "Mongabay India", "date": "2018-12-31", "url": "https://india.mongabay.com/2018/12/photos-flood-of-memories/", "quote": "Amherst Street ... is one of 347 identified major waterlogging pockets in the city"},
+    "pti_2025_tribune": {"publisher": "PTI via The Tribune", "date": "2025-09-23", "url": "https://www.tribuneindia.com/news/india/heavy-rain-paralyses-kolkata-5-dead-in-rain-related-incidents/amp", "quote": "In south Kolkata's Garia and Jodhpur Park, residents found knee-to-waist-deep water"},
+    "ians_2025": {"publisher": "IANS via Reporter Post", "date": "2025-09-24", "url": "https://reporterpost.in/article/nation/40938/kolkata-battles-waterlogging-as-torrential-rain-claims-10-lives", "quote": "College Street, Thanthania ... Ballygunge Outpost ... Rashbehari Avenue ... Park Circus ... Kankurgachi underpass"},
+    "mpost_2026_apr": {"publisher": "Millennium Post", "date": "2026-04-10", "url": "https://www.millenniumpost.in/bengal/post-sudden-showers-kmc-ramps-up-drainage-response-655391", "quote": "Dum Dum, Belgachia, Bidhan Sarani, Amherst Street, Golf Green, Dhakuria, Tollygunge, Kudghat, Behala"}
+  },
+  "hotspots": [
+    {"id": "thanthania", "en": "Thanthania", "bn": "ঠনঠনিয়া", "lat": 22.5770, "lon": 88.3620, "sources": ["mpost_2024_dana", "pti_week_2024", "ians_2025"]},
+    {"id": "amherst_street", "en": "Amherst Street", "bn": "আমহার্স্ট স্ট্রিট", "lat": 22.5790, "lon": 88.3680, "sources": ["mongabay_2018", "mpost_2024_dana", "mpost_2026_apr"]},
+    {"id": "college_street", "en": "College Street", "bn": "কলেজ স্ট্রিট", "lat": 22.5745, "lon": 88.3633, "sources": ["ians_2025"]},
+    {"id": "park_circus", "en": "Park Circus", "bn": "পার্ক সার্কাস", "lat": 22.5395, "lon": 88.3690, "sources": ["pti_week_2024", "ians_2025"]},
+    {"id": "kalighat", "en": "Kalighat", "bn": "কালীঘাট", "lat": 22.5200, "lon": 88.3440, "sources": ["mpost_2024_dana"]},
+    {"id": "exide", "en": "Exide crossing", "bn": "এক্সাইড মোড়", "lat": 22.5440, "lon": 88.3510, "sources": ["mpost_2024_dana"]},
+    {"id": "hazra", "en": "Hazra", "bn": "হাজরা", "lat": 22.5260, "lon": 88.3470, "sources": ["pti_week_2024"]},
+    {"id": "behala", "en": "Behala", "bn": "বেহালা", "lat": 22.4950, "lon": 88.3150, "sources": ["mpost_2024_dana", "mpost_2021", "mpost_2026_apr"]},
+    {"id": "taratala", "en": "Taratala", "bn": "তারাতলা", "lat": 22.5040, "lon": 88.3240, "sources": ["mpost_2021"]},
+    {"id": "kidderpore", "en": "Kidderpore", "bn": "খিদিরপুর", "lat": 22.5390, "lon": 88.3270, "sources": ["mpost_2021"]},
+    {"id": "jodhpur_park", "en": "Jodhpur Park", "bn": "যোধপুর পার্ক", "lat": 22.5090, "lon": 88.3640, "sources": ["mpost_2024_dana", "pti_2025_tribune"]},
+    {"id": "lake_gardens", "en": "Lake Gardens", "bn": "লেক গার্ডেন্স", "lat": 22.5060, "lon": 88.3530, "sources": ["mpost_2024_dana", "mpost_2021"]},
+    {"id": "garia", "en": "Garia", "bn": "গড়িয়া", "lat": 22.4660, "lon": 88.3880, "sources": ["pti_2025_tribune"]},
+    {"id": "mukundapur", "en": "Mukundapur", "bn": "মুকুন্দপুর", "lat": 22.4960, "lon": 88.4010, "sources": ["mpost_2021"]},
+    {"id": "ballygunge", "en": "Ballygunge Phari", "bn": "বালিগঞ্জ ফাঁড়ি", "lat": 22.5280, "lon": 88.3650, "sources": ["ians_2025"]},
+    {"id": "rashbehari", "en": "Rashbehari Avenue", "bn": "রাসবিহারী অ্যাভিনিউ", "lat": 22.5180, "lon": 88.3550, "sources": ["ians_2025"]},
+    {"id": "mg_road", "en": "Mahatma Gandhi Road", "bn": "মহাত্মা গান্ধী রোড", "lat": 22.5785, "lon": 88.3600, "sources": ["pti_week_2024"]},
+    {"id": "tollygunge", "en": "Tollygunge", "bn": "টালিগঞ্জ", "lat": 22.4990, "lon": 88.3460, "sources": ["mpost_2026_apr"]},
+    {"id": "kasba", "en": "Kasba", "bn": "কসবা", "lat": 22.5170, "lon": 88.3880, "sources": [], "unverified": true},
+    {"id": "ultadanga_underpass", "en": "Ultadanga underpass", "bn": "উল্টোডাঙা আন্ডারপাস", "lat": 22.5920, "lon": 88.3880, "sources": [], "unverified": true}
+  ]
+}

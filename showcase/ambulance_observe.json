@@ -1,0 +1,43 @@
+[
+ {
+  "label": "window_opening",
+  "effective_class": "AMBER",
+  "transitioned": false,
+  "previous_class": "AMBER",
+  "escalation": {
+   "escalate": false,
+   "level": "NONE",
+   "reasons": [],
+   "handoff": "none"
+  },
+  "param_source": "baseline"
+ },
+ {
+  "label": "escalation_peak",
+  "effective_class": "RED",
+  "transitioned": true,
+  "previous_class": "AMBER",
+  "escalation": {
+   "escalate": true,
+   "level": "TAKEOVER",
+   "reasons": [
+    "AMBULANCE_DELAY_SEVERE"
+   ],
+   "handoff": "operator"
+  },
+  "param_source": "baseline",
+  "confirm_attempts": 2,
+  "confirm_trail": [
+   {
+    "attempt": 1,
+    "effective_class": "AMBER",
+    "transitioned": false
+   },
+   {
+    "attempt": 2,
+    "effective_class": "RED",
+    "transitioned": true
+   }
+  ]
+ }
+]

@@ -1,0 +1,15 @@
+{
+ "vehicle_id": "44f24e0b-27cd-4bc0-845b-912edb50b506",
+ "plate": "WB06EM9001",
+ "earmark_id": "6d36d72d-bf7f-4c8d-95bb-0b6f9cf49c08",
+ "earmark_state": "flagged",
+ "state": "flagged",
+ "reason": "STOLEN VEHICLE reported \u2014 FIR 4401/2026, Hare Street PS (scenario reference); God's-eye evening flagship",
+ "lawful_basis": "stolen_vehicle_fir",
+ "earmarked_by": "God's-eye evening showcase",
+ "earmarked_at": "2026-10-28T16:11:21.206325+00:00",
+ "retention_until": "2026-11-27T16:11:21.206325+00:00",
+ "retention_days": 30,
+ "actor_source": "body",
+ "claimed_officer": null
+}

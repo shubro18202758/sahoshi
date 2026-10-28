@@ -1,0 +1,32 @@
+# Sahoshi strategic tier — model-host serving the decider on 127.0.0.1:8083
+# (pplx-decider-v1-27b by default: cold load ≈285 s; ready when
+# /decider/health reports loaded:true and names the model). Pulled in by
+# sahoshi-models.target; installed (linked) by scripts/sahoshi_up.sh
+# --install-units. Paths come from ~/.config/sahoshi/sahoshi.env.
+#
+# Decider model switch: the optional ~/.config/sahoshi/decider.env is read
+# AFTER sahoshi.env, so its DECIDER_SNAPSHOT_PATH / DECIDER_RUNTIME /
+# DECIDER_QUESTION_MODE win. Absent file = the sahoshi.env decider. Written
+# and removed by services/model-host/switch_decider.sh (switch / rollback).
+[Unit]
+Description=Sahoshi strategic tier: decider model-host on 127.0.0.1:8083
+PartOf=sahoshi-models.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# a linger boot has no login session: pin the PATH the hand-launched hosts
+# ran with (CUDA tools for torch/llama.cpp; libraries resolve via ld.so.conf)
+Environment=PATH=%h/.local/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=%h/.config/sahoshi/sahoshi.env
+EnvironmentFile=-%h/.config/sahoshi/decider.env
+ExecStart=/bin/bash ${SAHOSHI_ROOT}/infra/scripts/serve_models.sh --foreground decider
+Restart=always
+RestartSec=5
+# 78 = EX_CONFIG: venv, snapshot or sahoshi_models.yaml missing — report once, don't spin
+RestartPreventExitStatus=78
+# releasing up to ~49 GiB of unified memory takes a moment
+TimeoutStopSec=60
+# Shared GB10 unified pool: a model host must be the kernel's preferred OOM
+# victim (host convention, nemotron memguard notes), never the desktop session.
+OOMScoreAdjust=500

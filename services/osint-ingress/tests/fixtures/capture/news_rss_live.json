@@ -1,0 +1,35 @@
+{
+ "schema": "sahoshi.news_rss/1",
+ "about": "SYNTHETIC REPLICA of a news_rss cache bundle for Sahoshi tests: three fictional outlets (*.example), fictional bylines and names. Not any outlet's content.",
+ "feeds": [
+  {
+   "feed": "synthetic_bn_a",
+   "publisher": "news-bn-a.example",
+   "language": "bn",
+   "sections": [
+    "/kolkata/",
+    "/bengal/"
+   ],
+   "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\"><channel><title>News BN A (SYNTHETIC REPLICA)</title><link>https://news-bn-a.example/</link><language>en-US</language><description>SYNTHETIC REPLICA of an outlet RSS feed for Sahoshi tests: every item, byline and name is fictional.</description><item><title>ঠনঠনিয়ায় বিধান সরণিতে জল জমা, যান চলাচল ব্যাহত</title><link>https://news-bn-a.example/kolkata/thanthania-waterlogging-bidhan-sarani</link><guid isPermaLink=\"false\">https://news-bn-a.example/kolkata/thanthania-waterlogging-bidhan-sarani</guid><pubDate>Tue, 20 Oct 2026 12:20:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[মহানগর]]></category><description><![CDATA[<p>ভারী বৃষ্টির পরে ঠনঠনিয়া কালীবাড়ির সামনে বিধান সরণি জলমগ্ন। স্থানীয় বাসিন্দা কাল্পনিক নমুনাদাস (৬০) জানান, রাস্তায় হাঁটুসমান জল।</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item><item><title>কলকাতা বইমেলার প্রস্তুতি শুরু</title><link>https://news-bn-a.example/kolkata/book-fair-preparations-begin</link><guid isPermaLink=\"false\">https://news-bn-a.example/kolkata/book-fair-preparations-begin</guid><pubDate>Tue, 20 Oct 2026 09:10:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[মহানগর]]></category><description><![CDATA[<p>বইমেলার মাঠে প্রস্তুতির কাজ শুরু হয়েছে।</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item><item><title>ক্রিকেটে নতুন রেকর্ড</title><link>https://news-bn-a.example/sports/cricket-new-record</link><guid isPermaLink=\"false\">https://news-bn-a.example/sports/cricket-new-record</guid><pubDate>Tue, 20 Oct 2026 08:00:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[খেলা]]></category><description><![CDATA[<p>খেলার খবর।</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item></channel></rss>"
+  },
+  {
+   "feed": "synthetic_bn_b",
+   "publisher": "news-bn-b.example",
+   "language": "bn",
+   "sections": [
+    "/kolkata/"
+   ],
+   "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\"><channel><title>News BN B (SYNTHETIC REPLICA)</title><link>https://news-bn-b.example/</link><language>en-US</language><description>SYNTHETIC REPLICA of an outlet RSS feed for Sahoshi tests: every item, byline and name is fictional.</description><item><title>Kolkata Rain: বিধান সরণিতে ঠনঠনিয়ার কাছে জলমগ্ন রাস্তা, যান চলাচল ব্যাহত</title><link>https://news-bn-b.example/kolkata/bidhan-sarani-waterlogged-near-thanthania</link><guid isPermaLink=\"false\">https://news-bn-b.example/kolkata/bidhan-sarani-waterlogged-near-thanthania</guid><pubDate>Tue, 20 Oct 2026 12:35:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[কলকাতা]]></category><description><![CDATA[<p>টানা বৃষ্টিতে বিধান সরণির ঠনঠনিয়া অংশে জল জমেছে, গাড়ি চলছে ধীরে।</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item><item><title>নিউ টাউনে নতুন সাইকেল লেন চালু</title><link>https://news-bn-b.example/kolkata/new-town-cycle-lane</link><guid isPermaLink=\"false\">https://news-bn-b.example/kolkata/new-town-cycle-lane</guid><pubDate>Tue, 20 Oct 2026 10:05:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[কলকাতা]]></category><description><![CDATA[<p>নতুন সাইকেল লেন খুলে দেওয়া হয়েছে।</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item></channel></rss>"
+  },
+  {
+   "feed": "synthetic_en_c",
+   "publisher": "news-c.example",
+   "language": "en",
+   "sections": [
+    "/kolkata/"
+   ],
+   "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\"><channel><title>News C (SYNTHETIC REPLICA)</title><link>https://news-c.example/</link><language>en-US</language><description>SYNTHETIC REPLICA of an outlet RSS feed for Sahoshi tests: every item, byline and name is fictional.</description><item><title>KMC to repaint zebra crossings near Esplanade before the festive season</title><link>https://news-c.example/kolkata/kmc-zebra-crossings-esplanade</link><guid isPermaLink=\"false\">https://news-c.example/kolkata/kmc-zebra-crossings-esplanade</guid><pubDate>Tue, 20 Oct 2026 07:30:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[Kolkata]]></category><description><![CDATA[<p>The civic body said the work will be done at night. The post KMC to repaint zebra crossings appeared first on News C.</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item><item><title>Retired schoolteacher Testa Exampleson, 71, honoured by the borough committee</title><link>https://news-c.example/kolkata/retired-schoolteacher-honoured</link><guid isPermaLink=\"false\">https://news-c.example/kolkata/retired-schoolteacher-honoured</guid><pubDate>Tue, 20 Oct 2026 07:00:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[Kolkata]]></category><description><![CDATA[<p>Exampleson taught at a school in Shyambazar for three decades.</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item><item><title>Partner content: a city guide</title><link>https://other-site.example/kolkata/city-guide</link><guid isPermaLink=\"false\">https://other-site.example/kolkata/city-guide</guid><pubDate>Tue, 20 Oct 2026 06:00:00 GMT</pubDate><dc:creator><![CDATA[Synthetic Byline Reporterwala]]></dc:creator><category><![CDATA[Kolkata]]></category><description><![CDATA[<p>Sponsored.</p>]]></description><content:encoded><![CDATA[<p>Full story by Synthetic Byline Reporterwala; never read.</p>]]></content:encoded></item></channel></rss>"
+  }
+ ],
+ "failed": []
+}

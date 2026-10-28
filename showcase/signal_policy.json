@@ -1,0 +1,55 @@
+{
+ "replay": {
+  "status": "no_data",
+  "reason": "no traffic.hourly_aggregates rows in window (no field observations)",
+  "window_start": "2026-10-25T21:41:28+05:30",
+  "window_end": "2026-10-28T21:41:28+05:30",
+  "n_observations": 0,
+  "speed_mae_kmh": null,
+  "mae_tolerance_kmh": null,
+  "calibrated": false
+ },
+ "city_band_live": "RED",
+ "city_band_simulated_feed": null,
+ "apply": {
+  "http": 409,
+  "band": "RED",
+  "applied": false,
+  "reason": "shadow_eval_failed_closed",
+  "planned_junctions": [
+   12,
+   14,
+   18,
+   19,
+   20,
+   33
+  ],
+  "shadow_eval": {
+   "status": "unavailable",
+   "detail": "twin_not_calibrated",
+   "baseline_disruption_vh": 58.9061,
+   "candidate_disruption_vh": 58.9061
+  }
+ },
+ "last_plan_auditable": {
+  "band": "RED",
+  "planned_junctions": [
+   12,
+   14,
+   18,
+   19,
+   20,
+   33
+  ],
+  "shadow_eval": {
+   "status": "unavailable",
+   "detail": "twin_not_calibrated",
+   "baseline_disruption_vh": 58.9061,
+   "candidate_disruption_vh": 58.9061
+  },
+  "event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332"
+ },
+ "committed_writes": 0,
+ "policy_refusals": 1,
+ "history_rows": 0
+}

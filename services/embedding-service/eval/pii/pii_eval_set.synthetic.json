@@ -1,0 +1,2116 @@
+{
+ "schema": "sahoshi.pii_eval/1",
+ "synthetic": true,
+ "label": "SYNTHETIC",
+ "note": "SYNTHETIC evaluation set: every sentence is invented; person names are fictional combinations of common given names and surnames and refer to no real individual; places are real public Kolkata places; phone numbers are invented; e-mail addresses use reserved example domains. Gold PII types: person, phone, email. Must-not-redact types: place, office, public_number. Informational: age, plate.",
+ "gold_pii_types": [
+  "person",
+  "phone",
+  "email"
+ ],
+ "protected_types": [
+  "place",
+  "office",
+  "public_number"
+ ],
+ "informational_types": [
+  "age",
+  "plate"
+ ],
+ "items": [
+  {
+   "id": "en-001",
+   "lang": "en",
+   "text": "Waterlogging on Rash Behari Avenue after two hours of rain; the Mayor said pumps were running.",
+   "spans": [
+    {
+     "start": 16,
+     "end": 34,
+     "type": "place",
+     "text": "Rash Behari Avenue"
+    },
+    {
+     "start": 60,
+     "end": 69,
+     "type": "office",
+     "text": "the Mayor"
+    }
+   ]
+  },
+  {
+   "id": "en-002",
+   "lang": "en",
+   "text": "A bus broke down on Sarat Bose Road near Deshapriya Park; driver Subrata Mondal was unhurt.",
+   "spans": [
+    {
+     "start": 20,
+     "end": 35,
+     "type": "place",
+     "text": "Sarat Bose Road"
+    },
+    {
+     "start": 41,
+     "end": 56,
+     "type": "place",
+     "text": "Deshapriya Park"
+    },
+    {
+     "start": 65,
+     "end": 79,
+     "type": "person",
+     "text": "Subrata Mondal"
+    }
+   ]
+  },
+  {
+   "id": "en-003",
+   "lang": "en",
+   "text": "Local resident Mrs Mitali Ghosh, 54, said the drains on Bidhan Sarani were choked again.",
+   "spans": [
+    {
+     "start": 19,
+     "end": 31,
+     "type": "person",
+     "text": "Mitali Ghosh"
+    },
+    {
+     "start": 33,
+     "end": 35,
+     "type": "age",
+     "text": "54"
+    },
+    {
+     "start": 56,
+     "end": 69,
+     "type": "place",
+     "text": "Bidhan Sarani"
+    }
+   ]
+  },
+  {
+   "id": "en-004",
+   "lang": "en",
+   "text": "Traffic was diverted from Chittaranjan Avenue to Jatindra Mohan Avenue for the procession.",
+   "spans": [
+    {
+     "start": 26,
+     "end": 45,
+     "type": "place",
+     "text": "Chittaranjan Avenue"
+    },
+    {
+     "start": 49,
+     "end": 70,
+     "type": "place",
+     "text": "Jatindra Mohan Avenue"
+    }
+   ]
+  },
+  {
+   "id": "en-005",
+   "lang": "en",
+   "text": "Amit Pal, a vegetable vendor, was injured when a tree fell on Shyama Prasad Mukherjee Road.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 8,
+     "type": "person",
+     "text": "Amit Pal"
+    },
+    {
+     "start": 62,
+     "end": 90,
+     "type": "place",
+     "text": "Shyama Prasad Mukherjee Road"
+    }
+   ]
+  },
+  {
+   "id": "en-006",
+   "lang": "en",
+   "text": "Morning walkers at Rabindra Sarobar reported a fallen branch blocking the eastern gate.",
+   "spans": [
+    {
+     "start": 19,
+     "end": 35,
+     "type": "place",
+     "text": "Rabindra Sarobar"
+    }
+   ]
+  },
+  {
+   "id": "en-007",
+   "lang": "en",
+   "text": "A cultural programme at Rabindra Sadan will end at 9 pm; expect slow traffic on AJC Bose Road.",
+   "spans": [
+    {
+     "start": 24,
+     "end": 38,
+     "type": "place",
+     "text": "Rabindra Sadan"
+    },
+    {
+     "start": 80,
+     "end": 93,
+     "type": "place",
+     "text": "AJC Bose Road"
+    }
+   ]
+  },
+  {
+   "id": "en-008",
+   "lang": "en",
+   "text": "Heavy vehicles are barred from Vidyasagar Setu between 8 am and 11 am on Sunday.",
+   "spans": [
+    {
+     "start": 31,
+     "end": 46,
+     "type": "place",
+     "text": "Vidyasagar Setu"
+    }
+   ]
+  },
+  {
+   "id": "en-009",
+   "lang": "en",
+   "text": "Flights at Netaji Subhas Chandra Bose International Airport were delayed by up to 40 minutes after the storm.",
+   "spans": [
+    {
+     "start": 11,
+     "end": 59,
+     "type": "place",
+     "text": "Netaji Subhas Chandra Bose International Airport"
+    }
+   ]
+  },
+  {
+   "id": "en-010",
+   "lang": "en",
+   "text": "Dr Anirban Mitra of SSKM Hospital said the injured pedestrian was stable.",
+   "spans": [
+    {
+     "start": 3,
+     "end": 16,
+     "type": "person",
+     "text": "Anirban Mitra"
+    },
+    {
+     "start": 20,
+     "end": 33,
+     "type": "place",
+     "text": "SSKM Hospital"
+    }
+   ]
+  },
+  {
+   "id": "en-011",
+   "lang": "en",
+   "text": "A water main burst on Aurobindo Sarani; KMC crews were on site by noon.",
+   "spans": [
+    {
+     "start": 22,
+     "end": 38,
+     "type": "place",
+     "text": "Aurobindo Sarani"
+    }
+   ]
+  },
+  {
+   "id": "en-012",
+   "lang": "en",
+   "text": "Signals on Acharya Jagadish Chandra Bose Road failed for an hour during the downpour.",
+   "spans": [
+    {
+     "start": 11,
+     "end": 45,
+     "type": "place",
+     "text": "Acharya Jagadish Chandra Bose Road"
+    }
+   ]
+  },
+  {
+   "id": "en-013",
+   "lang": "en",
+   "text": "Rani Rashmoni Avenue will stay closed for the Red Road rehearsal, the Deputy Commissioner of Police (Traffic) said.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 20,
+     "type": "place",
+     "text": "Rani Rashmoni Avenue"
+    },
+    {
+     "start": 66,
+     "end": 109,
+     "type": "office",
+     "text": "the Deputy Commissioner of Police (Traffic)"
+    }
+   ]
+  },
+  {
+   "id": "en-014",
+   "lang": "en",
+   "text": "Commuters on Kazi Nazrul Islam Avenue faced a long queue near the toll plaza.",
+   "spans": [
+    {
+     "start": 13,
+     "end": 37,
+     "type": "place",
+     "text": "Kazi Nazrul Islam Avenue"
+    }
+   ]
+  },
+  {
+   "id": "en-015",
+   "lang": "en",
+   "text": "A transformer fire was reported at Bagha Jatin late on Tuesday; no one was hurt.",
+   "spans": [
+    {
+     "start": 35,
+     "end": 46,
+     "type": "place",
+     "text": "Bagha Jatin"
+    }
+   ]
+  },
+  {
+   "id": "en-016",
+   "lang": "en",
+   "text": "Shopkeeper Partha Chakraborty said water entered his shop near Deshbandhu Park.",
+   "spans": [
+    {
+     "start": 11,
+     "end": 29,
+     "type": "person",
+     "text": "Partha Chakraborty"
+    },
+    {
+     "start": 63,
+     "end": 78,
+     "type": "place",
+     "text": "Deshbandhu Park"
+    }
+   ]
+  },
+  {
+   "id": "en-017",
+   "lang": "en",
+   "text": "Mother Teresa Sarani is one-way towards Park Street until Friday.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 20,
+     "type": "place",
+     "text": "Mother Teresa Sarani"
+    },
+    {
+     "start": 40,
+     "end": 51,
+     "type": "place",
+     "text": "Park Street"
+    }
+   ]
+  },
+  {
+   "id": "en-018",
+   "lang": "en",
+   "text": "A truck carrying bricks overturned on Prafulla Chandra Road; the cleaner Rakesh Yadav, 31, was taken to hospital.",
+   "spans": [
+    {
+     "start": 38,
+     "end": 59,
+     "type": "place",
+     "text": "Prafulla Chandra Road"
+    },
+    {
+     "start": 73,
+     "end": 85,
+     "type": "person",
+     "text": "Rakesh Yadav"
+    },
+    {
+     "start": 87,
+     "end": 89,
+     "type": "age",
+     "text": "31"
+    }
+   ]
+  },
+  {
+   "id": "en-019",
+   "lang": "en",
+   "text": "Office traffic around BBD Bag eased by 7 pm.",
+   "spans": [
+    {
+     "start": 22,
+     "end": 29,
+     "type": "place",
+     "text": "BBD Bag"
+    }
+   ]
+  },
+  {
+   "id": "en-020",
+   "lang": "en",
+   "text": "Biker Sayan Das dies after his scooter skidded on Netaji Subhas Road.",
+   "spans": [
+    {
+     "start": 6,
+     "end": 15,
+     "type": "person",
+     "text": "Sayan Das"
+    },
+    {
+     "start": 50,
+     "end": 68,
+     "type": "place",
+     "text": "Netaji Subhas Road"
+    }
+   ]
+  },
+  {
+   "id": "en-021",
+   "lang": "en",
+   "text": "Contact the ward office at 98300 41526 or write to ward87.help@example.in to report a blocked drain.",
+   "spans": [
+    {
+     "start": 27,
+     "end": 38,
+     "type": "phone",
+     "text": "98300 41526"
+    },
+    {
+     "start": 51,
+     "end": 73,
+     "type": "email",
+     "text": "ward87.help@example.in"
+    }
+   ]
+  },
+  {
+   "id": "en-022",
+   "lang": "en",
+   "text": "A car, WB 02 AB 1234, hit the divider on AJC Bose Road; call 112 for emergencies.",
+   "spans": [
+    {
+     "start": 7,
+     "end": 20,
+     "type": "plate",
+     "text": "WB 02 AB 1234"
+    },
+    {
+     "start": 41,
+     "end": 54,
+     "type": "place",
+     "text": "AJC Bose Road"
+    },
+    {
+     "start": 61,
+     "end": 64,
+     "type": "public_number",
+     "text": "112"
+    }
+   ]
+  },
+  {
+   "id": "en-023",
+   "lang": "en",
+   "text": "Ambulance (108) crews were stuck for 20 minutes on Chittaranjan Avenue.",
+   "spans": [
+    {
+     "start": 11,
+     "end": 14,
+     "type": "public_number",
+     "text": "108"
+    },
+    {
+     "start": 51,
+     "end": 70,
+     "type": "place",
+     "text": "Chittaranjan Avenue"
+    }
+   ]
+  },
+  {
+   "id": "en-024",
+   "lang": "en",
+   "text": "The Officer-in-Charge of Lake police station said the crossing near Rabindra Sarobar metro would reopen soon.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 44,
+     "type": "office",
+     "text": "The Officer-in-Charge of Lake police station"
+    },
+    {
+     "start": 68,
+     "end": 84,
+     "type": "place",
+     "text": "Rabindra Sarobar"
+    }
+   ]
+  },
+  {
+   "id": "en-025",
+   "lang": "en",
+   "text": "Moumita Saha's family said she had left for Esplanade at 6 pm.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "person",
+     "text": "Moumita Saha"
+    },
+    {
+     "start": 44,
+     "end": 53,
+     "type": "place",
+     "text": "Esplanade"
+    }
+   ]
+  },
+  {
+   "id": "en-026",
+   "lang": "en",
+   "text": "Debashis Sarkar and Sanchita Bhattacharya were rescued from a waterlogged lane off Bidhan Sarani.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 15,
+     "type": "person",
+     "text": "Debashis Sarkar"
+    },
+    {
+     "start": 20,
+     "end": 41,
+     "type": "person",
+     "text": "Sanchita Bhattacharya"
+    },
+    {
+     "start": 83,
+     "end": 96,
+     "type": "place",
+     "text": "Bidhan Sarani"
+    }
+   ]
+  },
+  {
+   "id": "en-027",
+   "lang": "en",
+   "text": "A KMC drainage engineer said the Thanthania pumping station was running at full capacity.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 23,
+     "type": "office",
+     "text": "A KMC drainage engineer"
+    },
+    {
+     "start": 33,
+     "end": 43,
+     "type": "place",
+     "text": "Thanthania"
+    }
+   ]
+  },
+  {
+   "id": "en-028",
+   "lang": "en",
+   "text": "Police seized a motorcycle, WB 06 K 5678, abandoned near Girish Park metro station.",
+   "spans": [
+    {
+     "start": 28,
+     "end": 40,
+     "type": "plate",
+     "text": "WB 06 K 5678"
+    },
+    {
+     "start": 57,
+     "end": 68,
+     "type": "place",
+     "text": "Girish Park"
+    }
+   ]
+  },
+  {
+   "id": "en-029",
+   "lang": "en",
+   "text": "Passengers alighting at Masterda Surya Sen metro station were held back during the signal failure.",
+   "spans": [
+    {
+     "start": 24,
+     "end": 42,
+     "type": "place",
+     "text": "Masterda Surya Sen"
+    }
+   ]
+  },
+  {
+   "id": "en-030",
+   "lang": "en",
+   "text": "The pandal near Mahanayak Uttam Kumar metro station drew large crowds on Saptami.",
+   "spans": [
+    {
+     "start": 16,
+     "end": 37,
+     "type": "place",
+     "text": "Mahanayak Uttam Kumar"
+    }
+   ]
+  },
+  {
+   "id": "en-031",
+   "lang": "en",
+   "text": "Retired teacher Arijit Roy, 67, told reporters the footpath on Sarat Bose Road was broken.",
+   "spans": [
+    {
+     "start": 16,
+     "end": 26,
+     "type": "person",
+     "text": "Arijit Roy"
+    },
+    {
+     "start": 28,
+     "end": 30,
+     "type": "age",
+     "text": "67"
+    },
+    {
+     "start": 63,
+     "end": 78,
+     "type": "place",
+     "text": "Sarat Bose Road"
+    }
+   ]
+  },
+  {
+   "id": "en-032",
+   "lang": "en",
+   "text": "Water stood knee-deep at Kalighat and on Shyama Prasad Mukherjee Road at high tide.",
+   "spans": [
+    {
+     "start": 25,
+     "end": 33,
+     "type": "place",
+     "text": "Kalighat"
+    },
+    {
+     "start": 41,
+     "end": 69,
+     "type": "place",
+     "text": "Shyama Prasad Mukherjee Road"
+    }
+   ]
+  },
+  {
+   "id": "en-033",
+   "lang": "en",
+   "text": "Mr Kaushik Adhikari, who runs a tea stall on Lenin Sarani, said sales had halved.",
+   "spans": [
+    {
+     "start": 3,
+     "end": 19,
+     "type": "person",
+     "text": "Kaushik Adhikari"
+    },
+    {
+     "start": 45,
+     "end": 57,
+     "type": "place",
+     "text": "Lenin Sarani"
+    }
+   ]
+  },
+  {
+   "id": "en-034",
+   "lang": "en",
+   "text": "Fire tenders reached Bipin Behari Ganguly Street within 15 minutes, the fire department said.",
+   "spans": [
+    {
+     "start": 21,
+     "end": 48,
+     "type": "place",
+     "text": "Bipin Behari Ganguly Street"
+    },
+    {
+     "start": 68,
+     "end": 87,
+     "type": "office",
+     "text": "the fire department"
+    }
+   ]
+  },
+  {
+   "id": "en-035",
+   "lang": "en",
+   "text": "Volunteers led by Paromita Pal distributed water at Santosh Mitra Square.",
+   "spans": [
+    {
+     "start": 18,
+     "end": 30,
+     "type": "person",
+     "text": "Paromita Pal"
+    },
+    {
+     "start": 52,
+     "end": 72,
+     "type": "place",
+     "text": "Santosh Mitra Square"
+    }
+   ]
+  },
+  {
+   "id": "en-036",
+   "lang": "en",
+   "text": "Tanmoy Halder (29) was arrested for rash driving on Hemanta Basu Sarani.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 13,
+     "type": "person",
+     "text": "Tanmoy Halder"
+    },
+    {
+     "start": 15,
+     "end": 17,
+     "type": "age",
+     "text": "29"
+    },
+    {
+     "start": 52,
+     "end": 71,
+     "type": "place",
+     "text": "Hemanta Basu Sarani"
+    }
+   ]
+  },
+  {
+   "id": "en-037",
+   "lang": "en",
+   "text": "For lost property call +91 90070 23418; the counter at Howrah Station is open all night.",
+   "spans": [
+    {
+     "start": 23,
+     "end": 38,
+     "type": "phone",
+     "text": "+91 90070 23418"
+    },
+    {
+     "start": 55,
+     "end": 69,
+     "type": "place",
+     "text": "Howrah Station"
+    }
+   ]
+  },
+  {
+   "id": "en-038",
+   "lang": "en",
+   "text": "Students of a school on Ashutosh Mukherjee Road were sent home early because of the rain.",
+   "spans": [
+    {
+     "start": 24,
+     "end": 47,
+     "type": "place",
+     "text": "Ashutosh Mukherjee Road"
+    }
+   ]
+  },
+  {
+   "id": "en-039",
+   "lang": "en",
+   "text": "The Commissioner of Police reviewed crowd arrangements at Eden Gardens ahead of the match.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 26,
+     "type": "office",
+     "text": "The Commissioner of Police"
+    },
+    {
+     "start": 58,
+     "end": 70,
+     "type": "place",
+     "text": "Eden Gardens"
+    }
+   ]
+  },
+  {
+   "id": "en-040",
+   "lang": "en",
+   "text": "Smt Shampa Basak said the queue at the Sealdah taxi stand stretched to the flyover.",
+   "spans": [
+    {
+     "start": 4,
+     "end": 16,
+     "type": "person",
+     "text": "Shampa Basak"
+    },
+    {
+     "start": 39,
+     "end": 46,
+     "type": "place",
+     "text": "Sealdah"
+    }
+   ]
+  },
+  {
+   "id": "bn-001",
+   "lang": "bn",
+   "text": "রাসবিহারী অ্যাভিনিউতে জল জমেছে, স্থানীয় বাসিন্দা সুব্রত মণ্ডল জানালেন।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 21,
+     "type": "place",
+     "text": "রাসবিহারী অ্যাভিনিউতে"
+    },
+    {
+     "start": 50,
+     "end": 62,
+     "type": "person",
+     "text": "সুব্রত মণ্ডল"
+    }
+   ]
+  },
+  {
+   "id": "bn-002",
+   "lang": "bn",
+   "text": "শরৎ বসু রোডে বাস বিকল, চালক অমিত পাল আহত।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "place",
+     "text": "শরৎ বসু রোডে"
+    },
+    {
+     "start": 28,
+     "end": 36,
+     "type": "person",
+     "text": "অমিত পাল"
+    }
+   ]
+  },
+  {
+   "id": "bn-003",
+   "lang": "bn",
+   "text": "বিধান সরণিতে যানজট, ট্রাফিক বিভাগের ডেপুটি কমিশনার জানিয়েছেন দুপুরের মধ্যে স্বাভাবিক হবে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "place",
+     "text": "বিধান সরণিতে"
+    },
+    {
+     "start": 20,
+     "end": 50,
+     "type": "office",
+     "text": "ট্রাফিক বিভাগের ডেপুটি কমিশনার"
+    }
+   ]
+  },
+  {
+   "id": "bn-004",
+   "lang": "bn",
+   "text": "নেতাজি সুভাষ রোডে একটি গাছ ভেঙে পড়েছে, কেউ আহত হননি।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "নেতাজি সুভাষ রোডে"
+    }
+   ]
+  },
+  {
+   "id": "bn-005",
+   "lang": "bn",
+   "text": "চিত্তরঞ্জন অ্যাভিনিউ দিয়ে মিছিল যাবে, তাই যতীন্দ্রমোহন অ্যাভিনিউ দিয়ে গাড়ি ঘোরানো হচ্ছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 20,
+     "type": "place",
+     "text": "চিত্তরঞ্জন অ্যাভিনিউ"
+    },
+    {
+     "start": 43,
+     "end": 65,
+     "type": "place",
+     "text": "যতীন্দ্রমোহন অ্যাভিনিউ"
+    }
+   ]
+  },
+  {
+   "id": "bn-006",
+   "lang": "bn",
+   "text": "শ্যামাপ্রসাদ মুখার্জি রোডে হাঁটুজল, দোকানদার পার্থ চক্রবর্তী বললেন দোকানে জল ঢুকেছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 26,
+     "type": "place",
+     "text": "শ্যামাপ্রসাদ মুখার্জি রোডে"
+    },
+    {
+     "start": 45,
+     "end": 60,
+     "type": "person",
+     "text": "পার্থ চক্রবর্তী"
+    }
+   ]
+  },
+  {
+   "id": "bn-007",
+   "lang": "bn",
+   "text": "রবীন্দ্র সরোবরে প্রাতর্ভ্রমণকারীরা ভেঙে পড়া ডাল দেখতে পান।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 15,
+     "type": "place",
+     "text": "রবীন্দ্র সরোবরে"
+    }
+   ]
+  },
+  {
+   "id": "bn-008",
+   "lang": "bn",
+   "text": "রবীন্দ্র সদনে অনুষ্ঠান রাত ন'টায় শেষ হবে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 13,
+     "type": "place",
+     "text": "রবীন্দ্র সদনে"
+    }
+   ]
+  },
+  {
+   "id": "bn-009",
+   "lang": "bn",
+   "text": "বিদ্যাসাগর সেতুতে রবিবার সকালে ভারী গাড়ি চলবে না।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "বিদ্যাসাগর সেতুতে"
+    }
+   ]
+  },
+  {
+   "id": "bn-010",
+   "lang": "bn",
+   "text": "ঝড়ের পরে নেতাজি সুভাষচন্দ্র বসু আন্তর্জাতিক বিমানবন্দরে বিমান দেরিতে ছেড়েছে।",
+   "spans": [
+    {
+     "start": 10,
+     "end": 56,
+     "type": "place",
+     "text": "নেতাজি সুভাষচন্দ্র বসু আন্তর্জাতিক বিমানবন্দরে"
+    }
+   ]
+  },
+  {
+   "id": "bn-011",
+   "lang": "bn",
+   "text": "অরবিন্দ সরণিতে জলের পাইপ ফেটেছে, পুরসভার কর্মীরা কাজ করছেন।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 14,
+     "type": "place",
+     "text": "অরবিন্দ সরণিতে"
+    }
+   ]
+  },
+  {
+   "id": "bn-012",
+   "lang": "bn",
+   "text": "আচার্য জগদীশচন্দ্র বসু রোডে সিগন্যাল এক ঘণ্টা বন্ধ ছিল।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 27,
+     "type": "place",
+     "text": "আচার্য জগদীশচন্দ্র বসু রোডে"
+    }
+   ]
+  },
+  {
+   "id": "bn-013",
+   "lang": "bn",
+   "text": "মহড়ার জন্য রানি রাসমণি অ্যাভিনিউ বন্ধ থাকবে, জানিয়েছেন পুলিশ কমিশনার।",
+   "spans": [
+    {
+     "start": 12,
+     "end": 33,
+     "type": "place",
+     "text": "রানি রাসমণি অ্যাভিনিউ"
+    },
+    {
+     "start": 57,
+     "end": 70,
+     "type": "office",
+     "text": "পুলিশ কমিশনার"
+    }
+   ]
+  },
+  {
+   "id": "bn-014",
+   "lang": "bn",
+   "text": "কাজী নজরুল ইসলাম অ্যাভিনিউতে টোল প্লাজার কাছে লম্বা লাইন।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 28,
+     "type": "place",
+     "text": "কাজী নজরুল ইসলাম অ্যাভিনিউতে"
+    }
+   ]
+  },
+  {
+   "id": "bn-015",
+   "lang": "bn",
+   "text": "বাঘাযতীনে মঙ্গলবার রাতে ট্রান্সফরমারে আগুন লাগে, কেউ আহত হননি।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 9,
+     "type": "place",
+     "text": "বাঘাযতীনে"
+    }
+   ]
+  },
+  {
+   "id": "bn-016",
+   "lang": "bn",
+   "text": "দেশবন্ধু পার্কের কাছে দোকানে জল ঢুকেছে বলে জানালেন ব্যবসায়ী তন্ময় হালদার।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 16,
+     "type": "place",
+     "text": "দেশবন্ধু পার্কের"
+    },
+    {
+     "start": 61,
+     "end": 74,
+     "type": "person",
+     "text": "তন্ময় হালদার"
+    }
+   ]
+  },
+  {
+   "id": "bn-017",
+   "lang": "bn",
+   "text": "শুক্রবার পর্যন্ত মাদার টেরিজা সরণি একমুখী থাকবে।",
+   "spans": [
+    {
+     "start": 17,
+     "end": 34,
+     "type": "place",
+     "text": "মাদার টেরিজা সরণি"
+    }
+   ]
+  },
+  {
+   "id": "bn-018",
+   "lang": "bn",
+   "text": "প্রফুল্লচন্দ্র রোডে ইট বোঝাই লরি উল্টে গেছে, খালাসি রাকেশ যাদব হাসপাতালে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 19,
+     "type": "place",
+     "text": "প্রফুল্লচন্দ্র রোডে"
+    },
+    {
+     "start": 52,
+     "end": 62,
+     "type": "person",
+     "text": "রাকেশ যাদব"
+    }
+   ]
+  },
+  {
+   "id": "bn-019",
+   "lang": "bn",
+   "text": "সন্ধ্যা সাতটার পর বিবাদী বাগে যানজট কমেছে।",
+   "spans": [
+    {
+     "start": 18,
+     "end": 29,
+     "type": "place",
+     "text": "বিবাদী বাগে"
+    }
+   ]
+  },
+  {
+   "id": "bn-020",
+   "lang": "bn",
+   "text": "৪৫ বছর বয়সী মৌমিতা সাহা গড়িয়াহাট মোড়ে দুর্ঘটনায় আহত হয়েছেন।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "age",
+     "text": "৪৫ বছর বয়সী"
+    },
+    {
+     "start": 13,
+     "end": 24,
+     "type": "person",
+     "text": "মৌমিতা সাহা"
+    },
+    {
+     "start": 25,
+     "end": 41,
+     "type": "place",
+     "text": "গড়িয়াহাট মোড়ে"
+    }
+   ]
+  },
+  {
+   "id": "bn-021",
+   "lang": "bn",
+   "text": "শ্রীমতী রীতা সেন জানান, বিধান সরণির নর্দমা আবার বুজে গেছে।",
+   "spans": [
+    {
+     "start": 8,
+     "end": 16,
+     "type": "person",
+     "text": "রীতা সেন"
+    },
+    {
+     "start": 24,
+     "end": 35,
+     "type": "place",
+     "text": "বিধান সরণির"
+    }
+   ]
+  },
+  {
+   "id": "bn-022",
+   "lang": "bn",
+   "text": "ডাঃ অনির্বাণ মিত্র বলেন, আহত পথচারীর অবস্থা স্থিতিশীল।",
+   "spans": [
+    {
+     "start": 4,
+     "end": 18,
+     "type": "person",
+     "text": "অনির্বাণ মিত্র"
+    }
+   ]
+  },
+  {
+   "id": "bn-023",
+   "lang": "bn",
+   "text": "দেবাশিস সরকার ও সঞ্চিতা ভট্টাচার্যকে জলমগ্ন গলি থেকে উদ্ধার করা হয়।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 13,
+     "type": "person",
+     "text": "দেবাশিস সরকার"
+    },
+    {
+     "start": 16,
+     "end": 36,
+     "type": "person",
+     "text": "সঞ্চিতা ভট্টাচার্যকে"
+    }
+   ]
+  },
+  {
+   "id": "bn-024",
+   "lang": "bn",
+   "text": "নিকাশি নালা বুজে গেলে ৯৮৩০০ ৪১৫২৬ নম্বরে ফোন করুন।",
+   "spans": [
+    {
+     "start": 22,
+     "end": 33,
+     "type": "phone",
+     "text": "৯৮৩০০ ৪১৫২৬"
+    }
+   ]
+  },
+  {
+   "id": "bn-025",
+   "lang": "bn",
+   "text": "জরুরি প্রয়োজনে ১১২ নম্বরে ফোন করুন, অ্যাম্বুলেন্সের জন্য ১০৮।",
+   "spans": [
+    {
+     "start": 16,
+     "end": 19,
+     "type": "public_number",
+     "text": "১১২"
+    },
+    {
+     "start": 58,
+     "end": 61,
+     "type": "public_number",
+     "text": "১০৮"
+    }
+   ]
+  },
+  {
+   "id": "bn-026",
+   "lang": "bn",
+   "text": "এসপ্ল্যানেডে রওনা হওয়ার পর থেকে পায়েল দে-র খোঁজ মিলছে না বলে পরিবার জানিয়েছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "place",
+     "text": "এসপ্ল্যানেডে"
+    },
+    {
+     "start": 33,
+     "end": 42,
+     "type": "person",
+     "text": "পায়েল দে"
+    }
+   ]
+  },
+  {
+   "id": "bn-027",
+   "lang": "bn",
+   "text": "অবসরপ্রাপ্ত শিক্ষক অরিজিৎ রায় জানালেন, শরৎ বসু রোডের ফুটপাত ভাঙা।",
+   "spans": [
+    {
+     "start": 19,
+     "end": 30,
+     "type": "person",
+     "text": "অরিজিৎ রায়"
+    },
+    {
+     "start": 40,
+     "end": 53,
+     "type": "place",
+     "text": "শরৎ বসু রোডের"
+    }
+   ]
+  },
+  {
+   "id": "bn-028",
+   "lang": "bn",
+   "text": "কালীঘাটে ও শ্যামাপ্রসাদ মুখার্জি রোডে জোয়ারের সময় হাঁটুজল।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 8,
+     "type": "place",
+     "text": "কালীঘাটে"
+    },
+    {
+     "start": 11,
+     "end": 37,
+     "type": "place",
+     "text": "শ্যামাপ্রসাদ মুখার্জি রোডে"
+    }
+   ]
+  },
+  {
+   "id": "bn-029",
+   "lang": "bn",
+   "text": "গিরিশ পার্ক মেট্রো স্টেশনের কাছে একটি পরিত্যক্ত মোটরবাইক উদ্ধার হয়েছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 11,
+     "type": "place",
+     "text": "গিরিশ পার্ক"
+    }
+   ]
+  },
+  {
+   "id": "bn-030",
+   "lang": "bn",
+   "text": "মাস্টারদা সূর্য সেন মেট্রো স্টেশনে সিগন্যাল বিভ্রাটে যাত্রীরা আটকে পড়েন।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 19,
+     "type": "place",
+     "text": "মাস্টারদা সূর্য সেন"
+    }
+   ]
+  },
+  {
+   "id": "bn-031",
+   "lang": "bn",
+   "text": "স্বেচ্ছাসেবক শ্রেয়া মজুমদার সন্তোষ মিত্র স্কোয়্যারে জল বিতরণ করেন।",
+   "spans": [
+    {
+     "start": 13,
+     "end": 28,
+     "type": "person",
+     "text": "শ্রেয়া মজুমদার"
+    },
+    {
+     "start": 29,
+     "end": 53,
+     "type": "place",
+     "text": "সন্তোষ মিত্র স্কোয়্যারে"
+    }
+   ]
+  },
+  {
+   "id": "bn-032",
+   "lang": "bn",
+   "text": "সল্টলেক স্টেডিয়ামের সামনে ম্যাচের পরে ভিড়, বিধাননগর পুলিশের এক আধিকারিক জানান।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 20,
+     "type": "place",
+     "text": "সল্টলেক স্টেডিয়ামের"
+    },
+    {
+     "start": 45,
+     "end": 73,
+     "type": "office",
+     "text": "বিধাননগর পুলিশের এক আধিকারিক"
+    }
+   ]
+  },
+  {
+   "id": "bn-033",
+   "lang": "bn",
+   "text": "বেপরোয়া গাড়ি চালানোর অভিযোগে সৌগত কুণ্ডুকে গ্রেফতার করা হয়েছে।",
+   "spans": [
+    {
+     "start": 31,
+     "end": 44,
+     "type": "person",
+     "text": "সৌগত কুণ্ডুকে"
+    }
+   ]
+  },
+  {
+   "id": "bn-034",
+   "lang": "bn",
+   "text": "হাওড়া স্টেশনে হারানো জিনিসের কাউন্টার সারা রাত খোলা।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 14,
+     "type": "place",
+     "text": "হাওড়া স্টেশনে"
+    }
+   ]
+  },
+  {
+   "id": "bn-035",
+   "lang": "bn",
+   "text": "মেয়র জানিয়েছেন, ঠনঠনিয়ায় পাম্প পুরোদমে চলছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 5,
+     "type": "office",
+     "text": "মেয়র"
+    },
+    {
+     "start": 18,
+     "end": 28,
+     "type": "place",
+     "text": "ঠনঠনিয়ায়"
+    }
+   ]
+  },
+  {
+   "id": "bn-036",
+   "lang": "bn",
+   "text": "লেনিন সরণিতে চায়ের দোকান চালান কৌশিক অধিকারী, তিনি বলেন বিক্রি অর্ধেক হয়ে গেছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "place",
+     "text": "লেনিন সরণিতে"
+    },
+    {
+     "start": 32,
+     "end": 45,
+     "type": "person",
+     "text": "কৌশিক অধিকারী"
+    }
+   ]
+  },
+  {
+   "id": "bn-037",
+   "lang": "bn",
+   "text": "হেমন্ত বসু সরণিতে গাড়ি দুর্ঘটনায় বিশ্বজিৎ নস্কর (৩৮) আহত।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "হেমন্ত বসু সরণিতে"
+    },
+    {
+     "start": 35,
+     "end": 49,
+     "type": "person",
+     "text": "বিশ্বজিৎ নস্কর"
+    },
+    {
+     "start": 51,
+     "end": 53,
+     "type": "age",
+     "text": "৩৮"
+    }
+   ]
+  },
+  {
+   "id": "bn-038",
+   "lang": "bn",
+   "text": "আশুতোষ মুখার্জি রোডের একটি স্কুল বৃষ্টির জন্য আগে ছুটি দিয়েছে।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 21,
+     "type": "place",
+     "text": "আশুতোষ মুখার্জি রোডের"
+    }
+   ]
+  },
+  {
+   "id": "hi-001",
+   "lang": "hi",
+   "text": "रासबिहारी एवेन्यू पर जलभराव, स्थानीय निवासी सुनीता शर्मा ने बताया कि नाली जाम है।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "रासबिहारी एवेन्यू"
+    },
+    {
+     "start": 44,
+     "end": 56,
+     "type": "person",
+     "text": "सुनीता शर्मा"
+    }
+   ]
+  },
+  {
+   "id": "hi-002",
+   "lang": "hi",
+   "text": "शरत बोस रोड पर बस खराब, ड्राइवर राकेश यादव घायल।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 11,
+     "type": "place",
+     "text": "शरत बोस रोड"
+    },
+    {
+     "start": 32,
+     "end": 42,
+     "type": "person",
+     "text": "राकेश यादव"
+    }
+   ]
+  },
+  {
+   "id": "hi-003",
+   "lang": "hi",
+   "text": "विधान सरणी पर जाम, यातायात उपायुक्त ने कहा दोपहर तक सामान्य होगा।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 10,
+     "type": "place",
+     "text": "विधान सरणी"
+    },
+    {
+     "start": 19,
+     "end": 35,
+     "type": "office",
+     "text": "यातायात उपायुक्त"
+    }
+   ]
+  },
+  {
+   "id": "hi-004",
+   "lang": "hi",
+   "text": "नेताजी सुभाष रोड पर पेड़ गिरा, कोई घायल नहीं।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 16,
+     "type": "place",
+     "text": "नेताजी सुभाष रोड"
+    }
+   ]
+  },
+  {
+   "id": "hi-005",
+   "lang": "hi",
+   "text": "चित्तरंजन एवेन्यू पर जुलूस के कारण यातायात जतींद्र मोहन एवेन्यू की ओर मोड़ा गया।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "चित्तरंजन एवेन्यू"
+    },
+    {
+     "start": 43,
+     "end": 63,
+     "type": "place",
+     "text": "जतींद्र मोहन एवेन्यू"
+    }
+   ]
+  },
+  {
+   "id": "hi-006",
+   "lang": "hi",
+   "text": "विद्यासागर सेतु पर रविवार सुबह भारी वाहनों पर रोक रहेगी।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 15,
+     "type": "place",
+     "text": "विद्यासागर सेतु"
+    }
+   ]
+  },
+  {
+   "id": "hi-007",
+   "lang": "hi",
+   "text": "तूफ़ान के बाद नेताजी सुभाष चंद्र बोस अंतरराष्ट्रीय हवाई अड्डे पर उड़ानें देर से चलीं।",
+   "spans": [
+    {
+     "start": 14,
+     "end": 61,
+     "type": "place",
+     "text": "नेताजी सुभाष चंद्र बोस अंतरराष्ट्रीय हवाई अड्डे"
+    }
+   ]
+  },
+  {
+   "id": "hi-008",
+   "lang": "hi",
+   "text": "दुकानदार मनोज गुप्ता ने कहा बीबीडी बाग के पास दुकान में पानी घुस गया।",
+   "spans": [
+    {
+     "start": 9,
+     "end": 20,
+     "type": "person",
+     "text": "मनोज गुप्ता"
+    },
+    {
+     "start": 28,
+     "end": 38,
+     "type": "place",
+     "text": "बीबीडी बाग"
+    }
+   ]
+  },
+  {
+   "id": "hi-009",
+   "lang": "hi",
+   "text": "45 वर्षीय पूजा सिंह हावड़ा ब्रिज पर हादसे में घायल हुईं।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 9,
+     "type": "age",
+     "text": "45 वर्षीय"
+    },
+    {
+     "start": 10,
+     "end": 19,
+     "type": "person",
+     "text": "पूजा सिंह"
+    },
+    {
+     "start": 20,
+     "end": 32,
+     "type": "place",
+     "text": "हावड़ा ब्रिज"
+    }
+   ]
+  },
+  {
+   "id": "hi-010",
+   "lang": "hi",
+   "text": "इमरान अंसारी और सलमा खातून को रवींद्र सरोवर के पास जलमग्न गली से निकाला गया।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "person",
+     "text": "इमरान अंसारी"
+    },
+    {
+     "start": 16,
+     "end": 26,
+     "type": "person",
+     "text": "सलमा खातून"
+    },
+    {
+     "start": 30,
+     "end": 43,
+     "type": "place",
+     "text": "रवींद्र सरोवर"
+    }
+   ]
+  },
+  {
+   "id": "hi-011",
+   "lang": "hi",
+   "text": "नाली जाम होने पर 98300 41526 पर फ़ोन करें।",
+   "spans": [
+    {
+     "start": 17,
+     "end": 28,
+     "type": "phone",
+     "text": "98300 41526"
+    }
+   ]
+  },
+  {
+   "id": "hi-012",
+   "lang": "hi",
+   "text": "आपात स्थिति में 112 पर कॉल करें, एम्बुलेंस के लिए 108।",
+   "spans": [
+    {
+     "start": 16,
+     "end": 19,
+     "type": "public_number",
+     "text": "112"
+    },
+    {
+     "start": 50,
+     "end": 53,
+     "type": "public_number",
+     "text": "108"
+    }
+   ]
+  },
+  {
+   "id": "hi-013",
+   "lang": "hi",
+   "text": "पुलिस आयुक्त ने ईडन गार्डन्स में भीड़ प्रबंधन की समीक्षा की।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "office",
+     "text": "पुलिस आयुक्त"
+    },
+    {
+     "start": 16,
+     "end": 28,
+     "type": "place",
+     "text": "ईडन गार्डन्स"
+    }
+   ]
+  },
+  {
+   "id": "hi-014",
+   "lang": "hi",
+   "text": "डॉ. अनिल वर्मा ने कहा घायल पैदल यात्री की हालत स्थिर है।",
+   "spans": [
+    {
+     "start": 4,
+     "end": 14,
+     "type": "person",
+     "text": "अनिल वर्मा"
+    }
+   ]
+  },
+  {
+   "id": "hi-015",
+   "lang": "hi",
+   "text": "काज़ी नज़रुल इस्लाम एवेन्यू पर टोल प्लाज़ा के पास लंबी कतार।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 27,
+     "type": "place",
+     "text": "काज़ी नज़रुल इस्लाम एवेन्यू"
+    }
+   ]
+  },
+  {
+   "id": "hi-016",
+   "lang": "hi",
+   "text": "सियालदह स्टेशन पर टैक्सी की कतार में खड़े विकास तिवारी ने बताया कि एक घंटा लगा।",
+   "spans": [
+    {
+     "start": 0,
+     "end": 7,
+     "type": "place",
+     "text": "सियालदह"
+    },
+    {
+     "start": 42,
+     "end": 54,
+     "type": "person",
+     "text": "विकास तिवारी"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-001",
+   "lang": "bn-Latn",
+   "text": "Rashbehari Avenue te jol jomeche, Subrata da bollen 2 foot jol.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 17,
+     "type": "place",
+     "text": "Rashbehari Avenue"
+    },
+    {
+     "start": 34,
+     "end": 41,
+     "type": "person",
+     "text": "Subrata"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-002",
+   "lang": "bn-Latn",
+   "text": "Sarat Bose Road e bus kharap hoye geche, driver Bapi Mondal ahoto.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 15,
+     "type": "place",
+     "text": "Sarat Bose Road"
+    },
+    {
+     "start": 48,
+     "end": 59,
+     "type": "person",
+     "text": "Bapi Mondal"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-003",
+   "lang": "bn-Latn",
+   "text": "Bidhan Sarani te jam, amar boudi Mitali Ghosh 1 ghonta atke ache.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 13,
+     "type": "place",
+     "text": "Bidhan Sarani"
+    },
+    {
+     "start": 33,
+     "end": 45,
+     "type": "person",
+     "text": "Mitali Ghosh"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-004",
+   "lang": "bn-Latn",
+   "text": "Gariahat more e accident, Ananya Das er scooty te dhakka dieche ekta taxi.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 8,
+     "type": "place",
+     "text": "Gariahat"
+    },
+    {
+     "start": 26,
+     "end": 36,
+     "type": "person",
+     "text": "Ananya Das"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-005",
+   "lang": "bn-Latn",
+   "text": "Aaj Rabindra Sarobar er gate bondho, morning walk e jawa jabe na.",
+   "spans": [
+    {
+     "start": 4,
+     "end": 20,
+     "type": "place",
+     "text": "Rabindra Sarobar"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-006",
+   "lang": "bn-Latn",
+   "text": "Netaji Subhas Chandra Bose International Airport e flight delay, Rina Sen bollen 2 ghonta wait korchi.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 48,
+     "type": "place",
+     "text": "Netaji Subhas Chandra Bose International Airport"
+    },
+    {
+     "start": 65,
+     "end": 73,
+     "type": "person",
+     "text": "Rina Sen"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-007",
+   "lang": "bn-Latn",
+   "text": "Vidyasagar Setu te heavy jam, office jete late hobe.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 15,
+     "type": "place",
+     "text": "Vidyasagar Setu"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-008",
+   "lang": "bn-Latn",
+   "text": "Chittaranjan Avenue diye michil jabe, tai Jatindra Mohan Avenue diye ghuriye dicche.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 19,
+     "type": "place",
+     "text": "Chittaranjan Avenue"
+    },
+    {
+     "start": 42,
+     "end": 63,
+     "type": "place",
+     "text": "Jatindra Mohan Avenue"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-009",
+   "lang": "bn-Latn",
+   "text": "Pujor bhir Deshbandhu Park er samne, Tumpa Sinha r sathe dekha holo.",
+   "spans": [
+    {
+     "start": 11,
+     "end": 26,
+     "type": "place",
+     "text": "Deshbandhu Park"
+    },
+    {
+     "start": 37,
+     "end": 48,
+     "type": "person",
+     "text": "Tumpa Sinha"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-010",
+   "lang": "bn-Latn",
+   "text": "AJC Bose Road e signal bondho, traffic police haath diye control korche.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 13,
+     "type": "place",
+     "text": "AJC Bose Road"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-011",
+   "lang": "bn-Latn",
+   "text": "Kazi Nazrul Islam Avenue e long queue, Joydeep Kundu bollo toll plaza te 30 min.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 24,
+     "type": "place",
+     "text": "Kazi Nazrul Islam Avenue"
+    },
+    {
+     "start": 39,
+     "end": 52,
+     "type": "person",
+     "text": "Joydeep Kundu"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-012",
+   "lang": "bn-Latn",
+   "text": "Contact Sudipta da for flood relief: 9830015577.",
+   "spans": [
+    {
+     "start": 8,
+     "end": 15,
+     "type": "person",
+     "text": "Sudipta"
+    },
+    {
+     "start": 37,
+     "end": 47,
+     "type": "phone",
+     "text": "9830015577"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-013",
+   "lang": "bn-Latn",
+   "text": "Ki obostha Rani Rashmoni Avenue te? Rehearsal er jonno bondho naki?",
+   "spans": [
+    {
+     "start": 11,
+     "end": 31,
+     "type": "place",
+     "text": "Rani Rashmoni Avenue"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-014",
+   "lang": "bn-Latn",
+   "text": "Bagha Jatin e transformer e agun legeche, kew ahoto noy.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 11,
+     "type": "place",
+     "text": "Bagha Jatin"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-015",
+   "lang": "bn-Latn",
+   "text": "Mother Teresa Sarani one-way, Park Street er dike jaoa jabe na.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 20,
+     "type": "place",
+     "text": "Mother Teresa Sarani"
+    },
+    {
+     "start": 30,
+     "end": 41,
+     "type": "place",
+     "text": "Park Street"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-016",
+   "lang": "bn-Latn",
+   "text": "Prafulla Chandra Road e lorry ulte geche, khalashi Raju Naskar hospital e.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 21,
+     "type": "place",
+     "text": "Prafulla Chandra Road"
+    },
+    {
+     "start": 51,
+     "end": 62,
+     "type": "person",
+     "text": "Raju Naskar"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-017",
+   "lang": "bn-Latn",
+   "text": "BBD Bag e sondhe 7 tar por jam kome geche.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 7,
+     "type": "place",
+     "text": "BBD Bag"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-018",
+   "lang": "bn-Latn",
+   "text": "Amar neighbour Arnab Biswas Shyama Prasad Mukherjee Road e atke ache, knee deep jol.",
+   "spans": [
+    {
+     "start": 15,
+     "end": 27,
+     "type": "person",
+     "text": "Arnab Biswas"
+    },
+    {
+     "start": 28,
+     "end": 56,
+     "type": "place",
+     "text": "Shyama Prasad Mukherjee Road"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-019",
+   "lang": "bn-Latn",
+   "text": "Email tapas.dey84@example.com if you found a blue bag near Sealdah.",
+   "spans": [
+    {
+     "start": 6,
+     "end": 29,
+     "type": "email",
+     "text": "tapas.dey84@example.com"
+    },
+    {
+     "start": 59,
+     "end": 66,
+     "type": "place",
+     "text": "Sealdah"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-020",
+   "lang": "bn-Latn",
+   "text": "WB 11 C 4321 number er car ta Howrah Bridge e breakdown.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 12,
+     "type": "plate",
+     "text": "WB 11 C 4321"
+    },
+    {
+     "start": 30,
+     "end": 43,
+     "type": "place",
+     "text": "Howrah Bridge"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-021",
+   "lang": "bn-Latn",
+   "text": "Rabindra Sadan e program ache, Exide more e slow traffic.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 14,
+     "type": "place",
+     "text": "Rabindra Sadan"
+    },
+    {
+     "start": 31,
+     "end": 36,
+     "type": "place",
+     "text": "Exide"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-022",
+   "lang": "bn-Latn",
+   "text": "Pritam bhai bollo Ultadanga te jol nei, EM Bypass clear.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 6,
+     "type": "person",
+     "text": "Pritam"
+    },
+    {
+     "start": 18,
+     "end": 27,
+     "type": "place",
+     "text": "Ultadanga"
+    },
+    {
+     "start": 40,
+     "end": 49,
+     "type": "place",
+     "text": "EM Bypass"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-023",
+   "lang": "bn-Latn",
+   "text": "Aurobindo Sarani te pipe burst, KMC lok kaaj korche.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 16,
+     "type": "place",
+     "text": "Aurobindo Sarani"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-024",
+   "lang": "bn-Latn",
+   "text": "Acharya Jagadish Chandra Bose Road e signal fail, ek ghonta dhore.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 34,
+     "type": "place",
+     "text": "Acharya Jagadish Chandra Bose Road"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-025",
+   "lang": "bn-Latn",
+   "text": "Didi Swapna Saha Kalighat theke bollen ghater dike jol uthche.",
+   "spans": [
+    {
+     "start": 5,
+     "end": 16,
+     "type": "person",
+     "text": "Swapna Saha"
+    },
+    {
+     "start": 17,
+     "end": 25,
+     "type": "place",
+     "text": "Kalighat"
+    }
+   ]
+  },
+  {
+   "id": "bn-Latn-026",
+   "lang": "bn-Latn",
+   "text": "Mayor bollen Thanthania te pump puro dome cholche.",
+   "spans": [
+    {
+     "start": 0,
+     "end": 5,
+     "type": "office",
+     "text": "Mayor"
+    },
+    {
+     "start": 13,
+     "end": 23,
+     "type": "place",
+     "text": "Thanthania"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,126 @@
+{
+ "vehicle_id": "44f24e0b-27cd-4bc0-845b-912edb50b506",
+ "plate": "WB06EM9001",
+ "sightings": {
+  "stolen_total": 12,
+  "stolen_this_run": 4,
+  "cameras": [
+   "EM-CAM-01",
+   "EM-CAM-02",
+   "EM-CAM-03",
+   "EM-CAM-04"
+  ],
+  "speeds_kmh": [
+   105.0,
+   95.0,
+   109.0,
+   103.0
+  ],
+  "source": "emulated_anpr"
+ },
+ "recommendation": {
+  "fired_rules": [
+   "R_STOLEN_SIGHTING",
+   "R_STOLEN_SIGHTING",
+   "R_STOLEN_SIGHTING",
+   "R_STOLEN_SIGHTING"
+  ],
+  "withheld_rules": [
+   "R_SPD_SEGMENT",
+   "R_SPD_SEGMENT",
+   "R_SPD_SEGMENT",
+   "R_SPD_SEGMENT"
+  ],
+  "evidence_recs_this_run": 4,
+  "penal_recs_this_run": 0,
+  "eval_errors": [],
+  "chosen": {
+   "id": "148f8eca-1d37-4159-873c-06af84a9a185",
+   "rule_id": "R_STOLEN_SIGHTING",
+   "text": "stolen vehicle (FIR 4401/2026) sighted at EM-CAM-04 \u2014 e-challan withheld, vehicle reported stolen",
+   "camera_id": "EM-CAM-04",
+   "read_t": "2026-10-28T16:13:40.109527+00:00",
+   "withheld": [
+    {
+     "rule_id": "R_SPD_SEGMENT",
+     "speed_kmh": 105.0,
+     "speed_limit_kmh": 60.0
+    },
+    {
+     "rule_id": "R_CLOSED_CORRIDOR_ENTRY",
+     "speed_kmh": null,
+     "speed_limit_kmh": null
+    }
+   ]
+  }
+ },
+ "approval": {
+  "status": "approved",
+  "officer": "Scripted demo officer (showcase script)",
+  "note": "pursuit authorised on a reported-stolen vehicle (evidence, no fine)",
+  "audit_tail_last": {
+   "actor": "Scripted demo officer (showcase script)",
+   "action": "decision:approved",
+   "at": "2026-10-28T16:14:10.049899+00:00",
+   "note": "pursuit authorised on a reported-stolen vehicle (evidence, no fine)"
+  }
+ },
+ "penal_approval_probe": {
+  "exercised": false,
+  "why": "no pending e-challan recommendation on the plate in this store (every read since the FIR is evidence-only)"
+ },
+ "pursuit_event": {
+  "event_id": "6f974d65-b676-4af1-b62a-ce7d8e7de894",
+  "kind": "vehicle_pursuit",
+  "status": "planning",
+  "metadata": {
+   "fir": "FIR 4401/2026, Hare Street PS",
+   "source": "emulated",
+   "opened_by": "Scripted demo officer (showcase script)",
+   "vehicle_id": "44f24e0b-27cd-4bc0-845b-912edb50b506",
+   "fir_is_demo": true,
+   "scripted_by": "scripts/showcase_run.sh",
+   "evidence_source": "emulated",
+   "recommendation_id": "148f8eca-1d37-4159-873c-06af84a9a185"
+  },
+  "title": "PURSUIT \u2014 stolen WB06EM9001 (FIR 4401/2026, Hare Street PS)",
+  "metadata_source": "events.corridor_events (persisted row merged; the POST response echoes metadata as {})"
+ },
+ "interception": {
+  "n_junctions": 10,
+  "top": {
+   "junction_id": 7,
+   "name": "Esplanade",
+   "junction_type": "intersection",
+   "signal_control": false,
+   "position": [
+    88.351665,
+    22.565293
+   ],
+   "graph_cost_sec": 58.9,
+   "downstream": true,
+   "likely_passed": false,
+   "choke_weight": 0.7,
+   "score": 0.011678
+  },
+  "latest_sighting": {
+   "sighting_id": "7409fa51-0318-54cd-87a5-4e325ea81a07",
+   "plate": "WB06EM9001",
+   "camera_id": "EM-CAM-04",
+   "t": "2026-10-28T16:13:40.109527+00:00",
+   "position": [
+    88.358225,
+    22.570703
+   ],
+   "speed_kmh": 105.0,
+   "heading": 214.3000030517578,
+   "source": "emulated_anpr"
+  }
+ },
+ "trace": {
+  "points": 12,
+  "source": "emulated_anpr",
+  "first": "2026-10-28T16:01:09.961337+00:00",
+  "last": "2026-10-28T16:13:40.109527+00:00"
+ }
+}

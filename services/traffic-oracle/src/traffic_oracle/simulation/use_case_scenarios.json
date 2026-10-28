@@ -1,0 +1,1552 @@
+{
+ "about": "The city's use-case scenarios (the twin's copy of the event emulator's use-case library configs: services/event-emulator/src/event_emulator/use_case_library.json scenarioConfig, every field the twin reads). scripts/city_build.py re-syncs it from the library when every library route is a legal path on the city's network. SIMULATED scenarios; crowd loads, speeds and demand are modelled assumptions.",
+ "source": "services/event-emulator/src/event_emulator/use_case_library.json",
+ "scenarios": [
+  {
+   "scenario_id": "vvip_convoy_base",
+   "name": "VIP Movement — Base Case (Nabanna to Kolkata Airport)",
+   "description": "SIMULATED BASE CASE. A Z+ protected movement from Nabanna, the state secretariat on the Howrah side, to Kolkata Airport on a Monday afternoon: across the Hooghly on Vidyasagar Setu, along the AJC Bose Road flyover to Park Circus, over the Maa Flyover to Science City, north on EM Bypass past Chingrighata and Salt Lake Stadium to Ultadanga, then up VIP Road past Lake Town, Kestopur and Baguiati to the airport and its approach road to the terminal forecourt. Maximum-protocol closure (180 s advance, full closure), default event rates, no weather — the reference movement every other scenario generalises. One planted cause (the profile): a goods vehicle stalls on EM Bypass ten minutes in. Public-safety logistics only: no person is named or tracked. The convoy speed (60 km/h) and the timings are modelled assumptions; the AI proposes the plan and a named officer decides.",
+   "category": "baseline",
+   "route_segment_ids": [
+    1003,
+    1028,
+    1029,
+    1036,
+    1037,
+    1038,
+    1039,
+    1040,
+    1041,
+    1042,
+    1043,
+    1065
+   ],
+   "departure_time": "2026-11-02T15:00:00+05:30",
+   "vvip_class": "Z+",
+   "closure_policy": {
+    "advance_closure_sec": 180,
+    "closure_type": "full_closure"
+   },
+   "horizon_min": 45,
+   "n_replications": 10,
+   "seed": 20261102,
+   "convoy_speed_kmh": 60,
+   "weather": {},
+   "event_overrides": {},
+   "forced_events": [],
+   "expected_features": [
+    "zplus_protocol",
+    "secretariat_to_airport",
+    "reference_case"
+   ],
+   "event_kind": "protected_movement",
+   "crowd_class": "LOW",
+   "duration_class": "minutes"
+  },
+  {
+   "scenario_id": "durga_puja_north",
+   "name": "Durga Puja Night — Pandal Crowds and Ambulance Access",
+   "description": "FLAGSHIP. 21:30 on Maha Ashtami (30 Sep 2025, between Saptami and Navami), the busiest stretch of a Puja night. In the North Kolkata belt pandal-hoppers spill off the footpaths around Kumartuli Park and Bagbazar Sarbojanin, along Bidhan Sarani (Hatibagan), around College Square and Santosh Mitra Square; in the South belt the crowd around Deshapriya Park and Ekdalia Evergreen fills Rash Behari Avenue towards Gariahat. Goods vehicles are kept off the pandal belts for the night (the restriction is modelled as fewer heavy-vehicle breakdowns, breakdown x0.6) and food stalls load the kerbs (market x2.0). Ten minutes in, an ambulance (108) on an emergency call asks for a green corridor from the riverside north of Howrah Bridge up Strand Bank Road past Kumartuli, along Bagbazar Street to Shyambazar and down Bidhan Sarani to Kolkata Medical College. Closure policy signal_hold at 45 s: the crowd is regulated, not stopped. Two Kolkata Traffic Police beats and the ambulance are animated (EMULATED units). Crowd loads and speeds are modelled assumptions; the AI proposes each hold and a named officer decides.",
+   "category": "multi_event",
+   "route_segment_ids": [
+    1061,
+    1060,
+    1058
+   ],
+   "departure_time": "2025-09-30T21:30:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 45,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 12,
+   "seed": 202509301,
+   "convoy_speed_kmh": 20.0,
+   "weather": {},
+   "event_overrides": {
+    "market": 2.0,
+    "breakdown": 0.6,
+    "ambulance": 1.0
+   },
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1060,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.95,
+     "label": "Bagbazar Sarbojanin — pandal crowd spills onto Bagbazar Street",
+     "extra_demand_veh_h": 950.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1061,
+     "start_sec": 300.0,
+     "duration_sec": 3300.0,
+     "severity": 0.85,
+     "label": "Kumartuli Park — queues along Strand Bank Road",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1058,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.85,
+     "label": "Bidhan Sarani (Hatibagan) — pandal-hoppers between the North Kolkata pandals",
+     "extra_demand_veh_h": 850.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1055,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.7,
+     "label": "College Square — food stalls and queues by the pandal"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1063,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.8,
+     "label": "Santosh Mitra Square — crowd overflow towards Sealdah",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1032,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.95,
+     "label": "Deshapriya Park — crowd fills Rash Behari Avenue (South belt)",
+     "extra_demand_veh_h": 950.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1033,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.85,
+     "label": "Ekdalia Evergreen — queues towards Gariahat (South belt)",
+     "extra_demand_veh_h": 850.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1033,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.7,
+     "label": "Gariahat — late-night Puja shoppers and stalls"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1061,
+     "start_sec": 600.0,
+     "duration_sec": 732.0,
+     "severity": 0.9,
+     "label": "ambulance (108) green-corridor window — Strand Bank Road past Kumartuli"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1060,
+     "start_sec": 1211.7,
+     "duration_sec": 301.0,
+     "severity": 0.9,
+     "label": "ambulance (108) green-corridor window — Bagbazar Street"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1058,
+     "start_sec": 1392.8,
+     "duration_sec": 647.0,
+     "severity": 0.9,
+     "label": "ambulance (108) green-corridor window — Bidhan Sarani to Kolkata Medical College"
+    }
+   ],
+   "expected_features": [
+    "multi_event_composition",
+    "festival_crowd",
+    "pandal_crowd_spill",
+    "goods_vehicle_restriction",
+    "green_corridor_request",
+    "signal_hold_regulated_passage"
+   ],
+   "event_kind": "mass_gathering",
+   "crowd_class": "EXTREME",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "cloudburst_high_tide",
+   "name": "Cloudburst at High Tide — Waterlogging, Pumps and Live-Wire Hazard",
+   "description": "SIMULATED. A monsoon evening (a scenario date, not a forecast): a cloudburst-class cell (rain modelled at 100 mm/h) breaks over North and Central Kolkata at 17:30 while the Hooghly is at high water (MODELLED tide phase). With the outfall gates shut against the river the drains cannot empty by gravity and KMC's pumping stations carry the whole load (pump capacity modelled), so the water spreads instead of draining: Thanthania on Bidhan Sarani first, then the Ultadanga approaches, MG Road by College Street, APC Road at Maniktala, AJC Bose Road at Moulali and Park Circus. A car stalls in standing water; signals at Ultadanga go dark (a modelled precautionary power cut). Where water stands around street-light poles and overhead lines the risk is electrocution: the stack may PROPOSE a live-wire hazard advisory to the power utility (CESC / WBSEDCL) — a proposal a named duty officer approves or rejects; nothing is sent by itself. An ambulance (108) from Lake Town to Kolkata Medical College needs windows through the water. Rain rate, tide, pump capacity and spread times are modelled assumptions, not measurements.",
+   "category": "weather",
+   "route_segment_ids": [
+    1039,
+    1062,
+    1058
+   ],
+   "departure_time": "2026-08-18T17:30:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20260818,
+   "convoy_speed_kmh": 30,
+   "weather": {
+    "monsoon": true,
+    "rain_intensity_mm_h": 100.0
+   },
+   "event_overrides": {
+    "breakdown": 1.8,
+    "waterlogging": 3.0,
+    "signal_fault": 1.5
+   },
+   "forced_events": [
+    {
+     "type": "waterlogging",
+     "segment_id": 1058,
+     "start_sec": 300.0,
+     "duration_sec": 3300.0,
+     "severity": 0.85,
+     "label": "Thanthania (Bidhan Sarani) — low-lying stretch waterlogged; water around lamp posts (live-wire risk)"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1062,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.8,
+     "label": "Ultadanga — water collects on Bidhannagar Road"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1039,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.75,
+     "label": "VIP Road at Ultadanga — water on the approach"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1055,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.75,
+     "label": "MG Road by College Street — outfall shut at high tide, pumps lag"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1057,
+     "start_sec": 1200.0,
+     "duration_sec": 2400.0,
+     "severity": 0.7,
+     "label": "APC Road at Maniktala — water spreading"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1025,
+     "start_sec": 1200.0,
+     "duration_sec": 2400.0,
+     "severity": 0.7,
+     "label": "AJC Bose Road at Moulali — water spreading"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1027,
+     "start_sec": 1500.0,
+     "duration_sec": 2100.0,
+     "severity": 0.7,
+     "label": "Park Circus — water spreading on Mother Teresa Sarani"
+    },
+    {
+     "type": "signal_fault",
+     "segment_id": 1039,
+     "start_sec": 1200.0,
+     "duration_sec": 2400.0,
+     "severity": 0.6,
+     "label": "Ultadanga signals dark — precautionary power cut in standing water"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1062,
+     "start_sec": 1500.0,
+     "duration_sec": 1800.0,
+     "severity": 0.7,
+     "label": "car stalled in standing water at Ultadanga"
+    }
+   ],
+   "expected_features": [
+    "cloudburst",
+    "high_tide_outfall_closed",
+    "pump_constraint",
+    "waterlogging_spread",
+    "live_wire_hazard_proposal",
+    "green_corridor_request"
+   ],
+   "event_kind": "emergency_evacuation",
+   "crowd_class": "MEDIUM",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "cyclone_landfall_recovery",
+   "name": "Cyclone Recovery — Tree-Falls on Arterials, Staged Reopening",
+   "description": "SIMULATED. The morning after a severe cyclone has crossed the coast and passed over Kolkata (a scenario, not a forecast). Squalls linger (STORM, modelled). Uprooted trees block the arterials south from Esplanade: Jawaharlal Nehru Road along the Maidan, Ashutosh Mukherjee Road and SP Mukherjee Road, with Red Road and Queensway closed alongside. KMC and fire-service crews clear them lane by lane, so the corridor reopens in stages (each blockage is a lane-loss cause with its own clearance time). Signals at Exide are dark after the overnight power cut. An ambulance (108) heads for SSKM Hospital through the cleared lanes. Clearance times are modelled assumptions; every reopening is an officer's decision.",
+   "category": "weather",
+   "route_segment_ids": [
+    1016,
+    1017,
+    1018,
+    1019,
+    1020
+   ],
+   "departure_time": "2026-05-27T06:30:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "partial_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 8,
+   "seed": 20260527,
+   "convoy_speed_kmh": 30,
+   "weather": {
+    "monsoon": false,
+    "rain_intensity_mm_h": 12.0
+   },
+   "event_overrides": {
+    "breakdown": 1.5,
+    "signal_fault": 2.5
+   },
+   "forced_events": [
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1019,
+     "start_sec": 0.0,
+     "duration_sec": 1200.0,
+     "severity": 0.9,
+     "label": "uprooted tree across Ashutosh Mukherjee Road (lane-loss; cleared first)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1017,
+     "start_sec": 0.0,
+     "duration_sec": 2100.0,
+     "severity": 0.85,
+     "label": "uprooted tree on Jawaharlal Nehru Road by the Maidan (cleared second)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1020,
+     "start_sec": 0.0,
+     "duration_sec": 3000.0,
+     "severity": 0.8,
+     "label": "uprooted tree on SP Mukherjee Road (cleared last)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1013,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.9,
+     "label": "Red Road closed — trees down along the Maidan"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1015,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.85,
+     "label": "Queensway closed — trees down"
+    },
+    {
+     "type": "signal_fault",
+     "segment_id": 1018,
+     "start_sec": 0.0,
+     "duration_sec": 2400.0,
+     "severity": 0.7,
+     "label": "signals dark at Exide crossing after the overnight power cut"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1018,
+     "start_sec": 1500.0,
+     "duration_sec": 303.0,
+     "severity": 0.85,
+     "label": "ambulance (108) window to SSKM Hospital — Jawaharlal Nehru Road to Exide"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1019,
+     "start_sec": 1683.4,
+     "duration_sec": 365.0,
+     "severity": 0.85,
+     "label": "ambulance (108) window to SSKM Hospital — Ashutosh Mukherjee Road"
+    }
+   ],
+   "expected_features": [
+    "cyclone_recovery",
+    "tree_fall_lane_loss",
+    "staged_reopening",
+    "signals_dark",
+    "green_corridor_request"
+   ],
+   "event_kind": "work_zone",
+   "crowd_class": "LOW",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "eden_gardens_egress",
+   "name": "Eden Gardens — Match-Night Egress",
+   "description": "SIMULATED. A full house leaves Eden Gardens after a night match (the crowd is modelled from a full stadium; no fixture or attendance figure is claimed). The dispersal wave pours out onto Sahid Khudiram Bose Road and splits: north along Strand Road past Babughat and over Howrah Bridge to Howrah Station for the last trains, and east along Rani Rashmoni Avenue to Esplanade and its Metro station. A stalled app cab blocks a dispersal lane on Strand Road twenty minutes in. Two ambulance (108) green-corridor requests (the profile) cut through the wave. Closure policy signal_hold at 60 s; crowd loads are modelled assumptions.",
+   "category": "event",
+   "route_segment_ids": [
+    1012,
+    1004,
+    1001
+   ],
+   "departure_time": "2026-04-18T22:50:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 12,
+   "seed": 20260418,
+   "convoy_speed_kmh": 40,
+   "weather": {},
+   "event_overrides": {},
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1012,
+     "start_sec": 0.0,
+     "duration_sec": 5400.0,
+     "severity": 0.95,
+     "label": "Eden Gardens gates — spectators pour onto Sahid Khudiram Bose Road",
+     "extra_demand_veh_h": 1500.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1004,
+     "start_sec": 600.0,
+     "duration_sec": 4800.0,
+     "severity": 0.8,
+     "label": "spectators walking north on Strand Road towards Howrah",
+     "extra_demand_veh_h": 1000.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1001,
+     "start_sec": 900.0,
+     "duration_sec": 4200.0,
+     "severity": 0.75,
+     "label": "the wave crosses Howrah Bridge to Howrah Station",
+     "extra_demand_veh_h": 900.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1010,
+     "start_sec": 600.0,
+     "duration_sec": 4200.0,
+     "severity": 0.7,
+     "label": "egress wave towards Esplanade Metro on Rani Rashmoni Avenue",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1004,
+     "start_sec": 1200.0,
+     "duration_sec": 1500.0,
+     "severity": 0.7,
+     "label": "stalled app cab blocking one dispersal lane on Strand Road"
+    }
+   ],
+   "expected_features": [
+    "stadium_egress",
+    "extreme_crowd",
+    "green_corridor_request",
+    "signal_hold_policy"
+   ],
+   "event_kind": "egress_surge",
+   "crowd_class": "EXTREME",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "howrah_surge_bridge_breakdown",
+   "name": "Howrah Station Evening Surge + Howrah Bridge Breakdown",
+   "description": "SIMULATED. A weekday evening: offices around Esplanade and BBD Bag empty towards Howrah Station for the suburban trains — up Chittaranjan Avenue, west along MG Road through Burrabazar and over Howrah Bridge — and the bridge's footpaths and the station approach fill (commuter load modelled). Ten minutes in, a bus breaks down mid-span on Howrah Bridge and one lane is lost until the tow clears it; the queue backs up MG Road through the Burrabazar handcarts, and one breakdown on one of the city's busiest crossings is felt on both banks. The scenario has Kolkata Traffic Police at the Kolkata end and Howrah City Police at the station end. Closure policy signal_hold at 60 s; loads and the tow time are modelled assumptions.",
+   "category": "multi_event",
+   "route_segment_ids": [
+    1051,
+    1054,
+    1001
+   ],
+   "departure_time": "2026-11-04T18:15:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20261104,
+   "convoy_speed_kmh": 30,
+   "weather": {},
+   "event_overrides": {
+    "market": 1.5
+   },
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1001,
+     "start_sec": 0.0,
+     "duration_sec": 4500.0,
+     "severity": 0.85,
+     "label": "evening commuter surge onto Howrah Bridge and the station approach",
+     "extra_demand_veh_h": 950.0
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1001,
+     "start_sec": 600.0,
+     "duration_sec": 1500.0,
+     "severity": 0.85,
+     "label": "bus broken down mid-span on Howrah Bridge — one lane lost until the tow"
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1054,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.7,
+     "label": "Burrabazar handcarts and hawkers on MG Road"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1054,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.6,
+     "label": "queue backing up MG Road from the bridge",
+     "extra_demand_veh_h": 500.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1008,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.6,
+     "label": "handcarts on Brabourne Road"
+    }
+   ],
+   "expected_features": [
+    "station_surge",
+    "bridge_choke_point",
+    "breakdown_cascade",
+    "two_bank_coordination"
+   ],
+   "event_kind": "egress_surge",
+   "crowd_class": "HIGH",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "red_road_parade",
+   "name": "Red Road Parade — Republic Day / Independence Day",
+   "description": "SIMULATED. The ceremonial parade on Red Road on a national day (Republic Day 26 Jan, Independence Day 15 Aug). The dignitaries' ceremonial movement to the dais is a Z-class protected movement (no person is named): from Esplanade along Jawaharlal Nehru Road and the Old Court House Street link to the north end of Red Road, then down Red Road to the dais. Red Road is held for the parade and the contingents; spectators and their parking load Sahid Khudiram Bose Road and Queensway. Full closure at 150 s advance; crowd loads are modelled.",
+   "category": "event",
+   "route_segment_ids": [
+    1016,
+    1011,
+    1013
+   ],
+   "departure_time": "2027-01-26T08:30:00+05:30",
+   "vvip_class": "Z",
+   "closure_policy": {
+    "advance_closure_sec": 150,
+    "closure_type": "full_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20270126,
+   "convoy_speed_kmh": 30,
+   "weather": {},
+   "event_overrides": {},
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1013,
+     "start_sec": 0.0,
+     "duration_sec": 5400.0,
+     "severity": 0.75,
+     "label": "Red Road — parade contingents and the grandstand",
+     "extra_demand_veh_h": 700.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1012,
+     "start_sec": 0.0,
+     "duration_sec": 5400.0,
+     "severity": 0.6,
+     "label": "spectator parking and approach on Sahid Khudiram Bose Road",
+     "extra_demand_veh_h": 500.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1015,
+     "start_sec": 600.0,
+     "duration_sec": 4800.0,
+     "severity": 0.5,
+     "label": "spectator approach from the south on Queensway",
+     "extra_demand_veh_h": 400.0
+    }
+   ],
+   "expected_features": [
+    "ceremonial",
+    "z_protocol",
+    "recurring_civic_event"
+   ],
+   "event_kind": "ceremonial",
+   "crowd_class": "HIGH",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "gangasagar_transit",
+   "name": "Gangasagar Transit — Babughat Camp and the Bus Waves South",
+   "description": "SIMULATED. In the days before Makar Sankranti, pilgrims bound for Gangasagar on Sagar Island arrive at Howrah Station, cross Howrah Bridge and walk or ride along Strand Road to the transit camp at Babughat on the Hooghly bank, then leave by bus in waves towards the ferry crossings in the south: past Prinsep Ghat, through Hastings and Kidderpore and down Diamond Harbour Road over the Majerhat bridge. A morning wave: arrivals on the bridge and Strand Road, queues and boarding at the camp, stalls by Prinsep Ghat, and a pilgrim bus broken down on Diamond Harbour Road. Volumes and timings are modelled assumptions; signal_hold at 90 s keeps the bus waves moving.",
+   "category": "event",
+   "route_segment_ids": [
+    1001,
+    1004,
+    1005,
+    1006,
+    1047,
+    1048
+   ],
+   "departure_time": "2027-01-12T06:00:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 90,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20270112,
+   "convoy_speed_kmh": 35,
+   "weather": {},
+   "event_overrides": {},
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1005,
+     "start_sec": 0.0,
+     "duration_sec": 21600.0,
+     "severity": 0.9,
+     "label": "Babughat transit camp — pilgrim queues and bus boarding on Strand Road",
+     "extra_demand_veh_h": 1200.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1004,
+     "start_sec": 0.0,
+     "duration_sec": 14400.0,
+     "severity": 0.75,
+     "label": "pilgrims arriving along Strand Road from Howrah",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1001,
+     "start_sec": 0.0,
+     "duration_sec": 10800.0,
+     "severity": 0.6,
+     "label": "pilgrims crossing Howrah Bridge from Howrah Station",
+     "extra_demand_veh_h": 600.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1006,
+     "start_sec": 0.0,
+     "duration_sec": 10800.0,
+     "severity": 0.6,
+     "label": "camp stalls and waiting buses along Strand Road by Prinsep Ghat"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1048,
+     "start_sec": 1800.0,
+     "duration_sec": 1200.0,
+     "severity": 0.7,
+     "label": "pilgrim bus broken down on Diamond Harbour Road"
+    }
+   ],
+   "expected_features": [
+    "pilgrim_transit",
+    "bus_waves",
+    "riverbank_camp",
+    "staged_departures"
+   ],
+   "event_kind": "mass_gathering",
+   "crowd_class": "HIGH",
+   "duration_class": "multi_day"
+  },
+  {
+   "scenario_id": "kolkata_marathon",
+   "name": "Kolkata Marathon — Red Road and Riverside Loop",
+   "description": "SIMULATED. A city marathon on a winter Sunday morning on a modelled loop (not an official route map): the gun at 05:30 by Eden Gardens on Sahid Khudiram Bose Road, down Red Road along the Maidan, out on Kidderpore Road to Hastings and back north along the river on Strand Road past Prinsep Ghat to Babughat. The field and its spectators hold each stretch in turn and the loop reopens in stages behind the sweep vehicle. Full closure at 60 s advance; the lead vehicle runs at race pace (12 km/h). Field size and timings are modelled assumptions.",
+   "category": "event",
+   "route_segment_ids": [
+    1012,
+    1013,
+    1014,
+    1006,
+    1005
+   ],
+   "departure_time": "2026-12-20T05:30:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "full_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20261220,
+   "convoy_speed_kmh": 12,
+   "weather": {},
+   "event_overrides": {},
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1012,
+     "start_sec": 0.0,
+     "duration_sec": 2400.0,
+     "severity": 0.85,
+     "label": "the start by Eden Gardens — runners and spectators (reopens after the sweep)",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1013,
+     "start_sec": 300.0,
+     "duration_sec": 2700.0,
+     "severity": 0.8,
+     "label": "runners down Red Road along the Maidan",
+     "extra_demand_veh_h": 700.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1014,
+     "start_sec": 900.0,
+     "duration_sec": 3000.0,
+     "severity": 0.7,
+     "label": "runners on Kidderpore Road",
+     "extra_demand_veh_h": 600.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1006,
+     "start_sec": 1800.0,
+     "duration_sec": 3600.0,
+     "severity": 0.7,
+     "label": "runners north on Strand Road by the river",
+     "extra_demand_veh_h": 600.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1005,
+     "start_sec": 2400.0,
+     "duration_sec": 3600.0,
+     "severity": 0.75,
+     "label": "the run-in past Prinsep Ghat to Babughat",
+     "extra_demand_veh_h": 650.0
+    }
+   ],
+   "expected_features": [
+    "race",
+    "rolling_closure",
+    "staged_reopening"
+   ],
+   "event_kind": "race",
+   "crowd_class": "HIGH",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "park_street_new_year",
+   "name": "New Year's Eve on Park Street",
+   "description": "SIMULATED. New Year's Eve, 23:15 to 00:15: the lights on Park Street and the crowds that come to see them. The scenario holds Park Street to vehicles for the night (an assumption the duty officer can change), the crowd fills Park Street from Jawaharlal Nehru Road to Mother Teresa Sarani, restaurant queues and food stalls load the kerbs, and after midnight the wave heads for Esplanade and Park Street Metro along Jawaharlal Nehru Road. An ambulance (108) window through the post-midnight dispersal. Crowd loads are modelled.",
+   "category": "event",
+   "route_segment_ids": [
+    1017,
+    1026,
+    1027
+   ],
+   "departure_time": "2026-12-31T23:15:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 120,
+    "closure_type": "full_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20261231,
+   "convoy_speed_kmh": 20,
+   "weather": {},
+   "event_overrides": {
+    "market": 1.8
+   },
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1026,
+     "start_sec": 0.0,
+     "duration_sec": 7200.0,
+     "severity": 0.95,
+     "label": "Park Street — New Year's Eve crowd under the lights",
+     "extra_demand_veh_h": 1300.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1026,
+     "start_sec": 0.0,
+     "duration_sec": 7200.0,
+     "severity": 0.75,
+     "label": "restaurant queues and food stalls on Park Street"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1027,
+     "start_sec": 900.0,
+     "duration_sec": 5400.0,
+     "severity": 0.7,
+     "label": "crowd overflow on Mother Teresa Sarani",
+     "extra_demand_veh_h": 700.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1017,
+     "start_sec": 2700.0,
+     "duration_sec": 3600.0,
+     "severity": 0.8,
+     "label": "post-midnight wave towards Esplanade and Park Street Metro",
+     "extra_demand_veh_h": 900.0
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1017,
+     "start_sec": 2700.0,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window through the post-midnight dispersal"
+    }
+   ],
+   "expected_features": [
+    "festival_crowd",
+    "pedestrianised_street",
+    "midnight_egress",
+    "green_corridor_request"
+   ],
+   "event_kind": "mass_gathering",
+   "crowd_class": "EXTREME",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "em_bypass_accident_ambulance",
+   "name": "EM Bypass Crash — Ambulance Window",
+   "description": "SIMULATED. A Friday morning peak: a two-vehicle crash between Ruby and Science City blocks two lanes of EM Bypass (crash debris; no casualty details are modelled). An ambulance (108) leaves the scene four minutes later for SSKM Hospital: north on EM Bypass, over the Maa Flyover to Park Circus, along Mother Teresa Sarani and AJC Bose Road to Exide crossing, a short run from the hospital. Each stretch needs a green-corridor window as the ambulance reaches it, timed on the roads' lengths; the AI proposes each window and a named officer approves it. The rest of the queue on EM Bypass is held until the crash is cleared. Times and speeds are modelled assumptions.",
+   "category": "incident",
+   "route_segment_ids": [
+    1035,
+    1029,
+    1027,
+    1023
+   ],
+   "departure_time": "2026-11-06T08:40:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 45,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 45,
+   "n_replications": 10,
+   "seed": 20261106,
+   "convoy_speed_kmh": 40,
+   "weather": {},
+   "event_overrides": {
+    "ambulance": 1.0
+   },
+   "forced_events": [
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1035,
+     "start_sec": 0.0,
+     "duration_sec": 2700.0,
+     "severity": 0.85,
+     "label": "two-vehicle crash blocks two lanes of EM Bypass (debris)"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1035,
+     "start_sec": 240.0,
+     "duration_sec": 408.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to SSKM Hospital — Eastern Metropolitan Bypass"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1029,
+     "start_sec": 528.1,
+     "duration_sec": 469.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to SSKM Hospital — Maa Flyover"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1027,
+     "start_sec": 876.8,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to SSKM Hospital — Mother Teresa Sarani (Park Street)"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1023,
+     "start_sec": 935.2,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to SSKM Hospital — Acharya Jagadish Chandra Bose Road"
+    }
+   ],
+   "expected_features": [
+    "road_crash",
+    "green_corridor_request",
+    "ambulance_window",
+    "peak_hour"
+   ],
+   "event_kind": "emergency_evacuation",
+   "crowd_class": "LOW",
+   "duration_class": "minutes"
+  },
+  {
+   "scenario_id": "metro_work_zone",
+   "name": "Metro Work Zone — Diamond Harbour Road",
+   "description": "SIMULATED. A planned, published work zone: metro construction along Diamond Harbour Road holds barricaded lanes for weeks between Behala Chowrasta, Taratala and Kidderpore (a modelled work zone; no project timeline is claimed). On a weekday morning an inspection convoy runs the stretch from Behala over the Majerhat bridge to Kidderpore while the barricades pinch the carriageway and the Behala bazaar's traffic squeezes the remaining lanes. Partial closure at 60 s advance; lane losses and loads are modelled.",
+   "category": "ops",
+   "route_segment_ids": [
+    1050,
+    1049,
+    1048
+   ],
+   "departure_time": "2026-11-10T09:15:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "partial_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 8,
+   "seed": 20250814,
+   "convoy_speed_kmh": 40,
+   "weather": {},
+   "event_overrides": {
+    "market": 1.5
+   },
+   "forced_events": [
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1050,
+     "start_sec": 0.0,
+     "duration_sec": 39600.0,
+     "severity": 0.9,
+     "label": "metro works — two lanes barricaded on Diamond Harbour Road at Behala"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1048,
+     "start_sec": 0.0,
+     "duration_sec": 39600.0,
+     "severity": 0.85,
+     "label": "metro works — a lane barricaded towards Kidderpore"
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1050,
+     "start_sec": 0.0,
+     "duration_sec": 10800.0,
+     "severity": 0.7,
+     "label": "Behala bazaar traffic squeezed by the barricades"
+    }
+   ],
+   "expected_features": [
+    "planned_work_zone",
+    "standing_lane_loss",
+    "published_diversion"
+   ],
+   "event_kind": "work_zone",
+   "crowd_class": "LOW",
+   "duration_class": "multi_week"
+  },
+  {
+   "scenario_id": "burrabazar_market_fire",
+   "name": "Burrabazar Market Fire — Fire-Tender Access and Ambulance Window",
+   "description": "SIMULATED. A weekday afternoon in Burrabazar (Wednesday 18 Nov 2026, 14:40; a scenario date, not a record): a fire breaks out in a market building in the narrow lanes between Mahatma Gandhi Road and Brabourne Road, a short walk from the Kolkata end of Howrah Bridge. The nearest fire tender, from C R Avenue Fire Station at the Chittaranjan Avenue crossing, needs a window west along MG Road (one-way towards the bridge); a second tender line from the West Bengal Fire & Emergency Services headquarters near Park Street needs a green corridor up Jawaharlal Nehru Road to Esplanade, along Chittaranjan Avenue and MG Road, round the Howrah Bridge end and into Brabourne Road (one-way towards BBD Bag). Once the tenders are in, parked tenders and hose lines take lanes on MG Road and Brabourne Road, a police cordon narrows Strand Road at the lane mouths, handcarts are pushed out onto Chittaranjan Avenue, diverted traffic loads Strand Road north and the afternoon goods traffic queues on Howrah Bridge. The AI proposes each tender window, a goods-vehicle hold on the Howrah Bridge approaches (Howrah City Police at the Howrah end, Kolkata Traffic Police at the Kolkata end), a request to the power utility to isolate supply to the block, and the staged reopening of the cordoned roads; a named officer approves or rejects each, and nothing is sent by itself. Twenty-five minutes in, an ambulance (108) standing by at the east cordon needs a window along MG Road to Kolkata Medical College (no casualty details are modelled). Fire spread, turnout and travel times, lane losses and loads are modelled assumptions, not measurements.",
+   "category": "incident",
+   "route_segment_ids": [
+    1017,
+    1016,
+    1051,
+    1054,
+    1008
+   ],
+   "departure_time": "2026-11-18T14:40:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 45,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20261118,
+   "convoy_speed_kmh": 25.0,
+   "weather": {},
+   "event_overrides": {
+    "market": 1.5
+   },
+   "forced_events": [
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1054,
+     "start_sec": 60.0,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "fire tender (C R Avenue Fire Station) green-corridor window — Mahatma Gandhi Road west from the Chittaranjan Avenue crossing"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1017,
+     "start_sec": 120.0,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "fire tender (WBFES HQ) green-corridor window — Jawaharlal Nehru Road, Park Street to Esplanade"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1016,
+     "start_sec": 254.3,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "fire tender (WBFES HQ) green-corridor window — Jawaharlal Nehru Road at Esplanade"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1051,
+     "start_sec": 284.2,
+     "duration_sec": 391.0,
+     "severity": 0.9,
+     "label": "fire tender (WBFES HQ) green-corridor window — Chittaranjan Avenue to the MG Road crossing"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1054,
+     "start_sec": 555.6,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "fire tender (WBFES HQ) green-corridor window — Mahatma Gandhi Road to the Howrah Bridge end"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1008,
+     "start_sec": 728.5,
+     "duration_sec": 326.0,
+     "severity": 0.9,
+     "label": "fire tender (WBFES HQ) green-corridor window — Brabourne Road towards BBD Bag"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1054,
+     "start_sec": 300.0,
+     "duration_sec": 3300.0,
+     "severity": 0.9,
+     "label": "parked fire tenders and hose lines on Mahatma Gandhi Road at the Burrabazar fire ground (lanes lost)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1008,
+     "start_sec": 750.0,
+     "duration_sec": 2850.0,
+     "severity": 0.85,
+     "label": "second tender line and hose lines on Brabourne Road (lanes lost)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1004,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.6,
+     "label": "police cordon at the Burrabazar lane mouths narrows Strand Road (one lane)"
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1051,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.6,
+     "label": "handcarts and porters pushed out of the cordoned lanes onto Chittaranjan Avenue"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1001,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.7,
+     "label": "afternoon goods traffic for the Burrabazar wholesale market queued on Howrah Bridge (the load the proposed goods-vehicle hold would take off)",
+     "extra_demand_veh_h": 600.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1061,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.6,
+     "label": "traffic diverted from MG Road and Brabourne Road onto Strand Road north",
+     "extra_demand_veh_h": 450.0
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1055,
+     "start_sec": 1500.0,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to Kolkata Medical College — Mahatma Gandhi Road east from the Chittaranjan Avenue crossing to College Street"
+    }
+   ],
+   "expected_features": [
+    "fire_response",
+    "fire_tender_green_corridor",
+    "narrow_lane_access",
+    "cordon_lane_loss",
+    "goods_vehicle_hold_proposal",
+    "power_isolation_request_proposal",
+    "ambulance_window",
+    "two_bank_coordination",
+    "staged_reopening"
+   ],
+   "event_kind": "emergency_evacuation",
+   "crowd_class": "HIGH",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "dvc_release_howrah_waterlogging",
+   "name": "DVC Release and Howrah Waterlogging — Cross-River Diversion",
+   "description": "SIMULATED. A monsoon weekday morning (Tuesday 14 Sep 2027, 08:45; a scenario, not a forecast and not a record of any real release). Damodar Valley Corporation (DVC) has announced a release from its Maithon and Panchet reservoirs; the release figure in this scenario is a SIMULATED input, not a DVC figure. The scenario assumes that, with the lower Damodar high, steady rain (modelled at 12 mm/h) and a high tide on the Hooghly (MODELLED tide phase), Howrah's drains back up: Grand Trunk Road between Nabanna and Howrah Station goes under water and a bus stalls in it, and water stands on the Howrah Station approach and at the foot of the Nabanna approach to Vidyasagar Setu. On the network Sahoshi models, the only dry way from Nabanna to Howrah Station is across the river twice: over Vidyasagar Setu, along Strand Road past Prinsep Ghat and Babughat, and back over Howrah Bridge, so diverted traffic loads both bridges. A WBSDMA pump-and-relief column runs that diversion behind a Howrah City Police pilot vehicle. The AI proposes the diversion, signal holds on Strand Road, a bus re-routing note for WBTC and a three-language traffic advisory; named officers of Howrah City Police and Kolkata Traffic Police each decide on their side of the river, and nothing is published by itself. Rain, tide, water depth, spread and loads are modelled assumptions.",
+   "category": "weather",
+   "route_segment_ids": [
+    1003,
+    1007,
+    1006,
+    1005,
+    1004,
+    1001
+   ],
+   "departure_time": "2027-09-14T08:45:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20270914,
+   "convoy_speed_kmh": 30,
+   "weather": {
+    "monsoon": true,
+    "rain_intensity_mm_h": 12.0
+   },
+   "event_overrides": {
+    "waterlogging": 2.5,
+    "breakdown": 1.4
+   },
+   "forced_events": [
+    {
+     "type": "waterlogging",
+     "segment_id": 1002,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.85,
+     "label": "Grand Trunk Road between Nabanna and Howrah Station under water (drains backed up)"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1003,
+     "start_sec": 300.0,
+     "duration_sec": 3300.0,
+     "severity": 0.7,
+     "label": "traffic diverted from Grand Trunk Road onto Vidyasagar Setu",
+     "extra_demand_veh_h": 700.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1001,
+     "start_sec": 300.0,
+     "duration_sec": 3300.0,
+     "severity": 0.75,
+     "label": "traffic diverted from the flooded Howrah-side roads onto Howrah Bridge",
+     "extra_demand_veh_h": 800.0
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1001,
+     "start_sec": 600.0,
+     "duration_sec": 3000.0,
+     "severity": 0.55,
+     "label": "water on the Howrah Station approach at the Howrah end of Howrah Bridge"
+    },
+    {
+     "type": "waterlogging",
+     "segment_id": 1003,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.45,
+     "label": "standing water at the foot of the Nabanna approach to Vidyasagar Setu"
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1004,
+     "start_sec": 900.0,
+     "duration_sec": 2700.0,
+     "severity": 0.55,
+     "label": "cross-river diverted traffic along Strand Road between the two bridges",
+     "extra_demand_veh_h": 400.0
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1002,
+     "start_sec": 1200.0,
+     "duration_sec": 1800.0,
+     "severity": 0.75,
+     "label": "bus stalled in the water on Grand Trunk Road"
+    }
+   ],
+   "expected_features": [
+    "river_release_flood",
+    "high_tide_drainage",
+    "waterlogging",
+    "cross_river_diversion",
+    "two_bank_coordination",
+    "relief_priority",
+    "trilingual_advisory"
+   ],
+   "event_kind": "emergency_evacuation",
+   "crowd_class": "MEDIUM",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "kali_puja_air_quality",
+   "name": "Kali Puja Night — Air-Quality Advisory, Kalighat Crowd and Ambulance Priority",
+   "description": "SIMULATED. Kali Puja night (Sunday 8 Nov 2026, 21:30, the Amavasya night; a scenario, not a forecast). Firecrackers across the city push fine-particle pollution up through the evening: the scenario's PM2.5 readings (SIMULATED, not measurements) climb from the Moderately Polluted band at 18:00 to the Very Poor band by 21:00 and touch Severe near midnight, banded indicatively against India's National Air Quality Index (whose bands are defined on 24-hour averages). Devotees fill SP Mukherjee Road around Kalighat temple, flower, lamp and sweet stalls line the road from Hazra to Rashbehari and pandal stalls load Rash Behari Avenue, so traffic slows along the whole stretch. Breathing-difficulty calls rise (modelled as ambulance x1.5). Fifteen minutes in, an ambulance (108) on a breathing-difficulty call needs windows from Tollygunge past Kalighat, Rashbehari and Hazra to Exide crossing, a short run from SSKM Hospital. The AI proposes each window, a priority flag for breathing-difficulty calls and a public health advisory in Bengali, English and Hindi; a named duty officer approves or rejects each, and nothing is published by itself. Crowd loads, readings and speeds are modelled assumptions; no individual is identified.",
+   "category": "multi_event",
+   "route_segment_ids": [
+    1022,
+    1021,
+    1020,
+    1019
+   ],
+   "departure_time": "2026-11-08T21:30:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 45,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20261108,
+   "convoy_speed_kmh": 20,
+   "weather": {},
+   "event_overrides": {
+    "market": 1.8,
+    "ambulance": 1.5
+   },
+   "forced_events": [
+    {
+     "type": "rally_spillover",
+     "segment_id": 1021,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.85,
+     "label": "Kali Puja night crowd for Kalighat temple on SP Mukherjee Road",
+     "extra_demand_veh_h": 850.0
+    },
+    {
+     "type": "rally_spillover",
+     "segment_id": 1022,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.7,
+     "label": "temple-bound crowd and parked vehicles on SP Mukherjee Road south of Kalighat",
+     "extra_demand_veh_h": 600.0
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1020,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.65,
+     "label": "flower, lamp and sweet stalls on SP Mukherjee Road between Hazra and Rashbehari"
+    },
+    {
+     "type": "market_spillover",
+     "segment_id": 1032,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.5,
+     "label": "Kali Puja pandal stalls on Rash Behari Avenue"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1022,
+     "start_sec": 900.0,
+     "duration_sec": 392.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window on a breathing-difficulty call to SSKM Hospital — SP Mukherjee Road, Tollygunge to Kalighat"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1021,
+     "start_sec": 1172.3,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window on a breathing-difficulty call to SSKM Hospital — SP Mukherjee Road past Kalighat to Rashbehari"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1020,
+     "start_sec": 1219.7,
+     "duration_sec": 300.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window on a breathing-difficulty call to SSKM Hospital — SP Mukherjee Road, Rashbehari to Hazra"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1019,
+     "start_sec": 1365.8,
+     "duration_sec": 487.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window on a breathing-difficulty call to SSKM Hospital — Ashutosh Mukherjee Road, Hazra to Exide"
+    }
+   ],
+   "expected_features": [
+    "festival_night",
+    "air_quality_advisory_proposal",
+    "trilingual_advisory",
+    "temple_crowd",
+    "respiratory_call_priority",
+    "ambulance_window"
+   ],
+   "event_kind": "mass_gathering",
+   "crowd_class": "HIGH",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "pre_monsoon_heatwave",
+   "name": "Pre-Monsoon Heatwave Afternoon — Overheated Vehicles and Duty Rotations",
+   "description": "SIMULATED. A pre-monsoon heatwave afternoon (Tuesday 27 Apr 2027, 14:00; a scenario, not a forecast). The scenario assumes IMD's heatwave criteria for the plains are met: a SIMULATED maximum of 41.8 °C against a SIMULATED normal of 36.2 °C (departure +5.6 °C; the criteria are a maximum of at least 40 °C with a departure of at least 4.5 °C, or a maximum of at least 45 °C). No real IMD bulletin is quoted. Vehicles overheat: a bus stalls on Vidyasagar Setu, a car with a burst tyre stops on the Maa Flyover, a goods vehicle overheats on EM Bypass between Science City and Chingrighata and a car stalls near Ultadanga (breakdowns modelled at x1.6). Pedestrian flows and street trading thin out in the heat (modelled crowd LOW, market x0.7) and heat-illness calls rise (ambulance x1.3). A Kolkata Traffic Police recovery van runs the corridor from the Nabanna end of Vidyasagar Setu over the AJC Bose Road flyover and the Maa Flyover and up EM Bypass to Ultadanga, clearing each breakdown. The AI proposes where to pre-position recovery vans, shorter duty rotations with shade and water for traffic staff at the most exposed crossings (Esplanade, Park Street, Shyambazar, Ultadanga) and a heat advisory for road users in Bengali, English and Hindi; a named duty officer approves or rejects each. Temperatures, breakdown rates and loads are modelled assumptions.",
+   "category": "weather",
+   "route_segment_ids": [
+    1003,
+    1028,
+    1029,
+    1036,
+    1037,
+    1038
+   ],
+   "departure_time": "2027-04-27T14:00:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 30,
+    "closure_type": "signal_hold"
+   },
+   "horizon_min": 60,
+   "n_replications": 10,
+   "seed": 20270427,
+   "convoy_speed_kmh": 35,
+   "weather": {},
+   "event_overrides": {
+    "breakdown": 1.6,
+    "market": 0.7,
+    "ambulance": 1.3
+   },
+   "forced_events": [
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1003,
+     "start_sec": 300.0,
+     "duration_sec": 1800.0,
+     "severity": 0.75,
+     "label": "bus overheated and stalled on Vidyasagar Setu (one lane lost until the recovery van clears it)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1029,
+     "start_sec": 900.0,
+     "duration_sec": 900.0,
+     "severity": 0.55,
+     "label": "car with a burst tyre stopped on the Maa Flyover"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1036,
+     "start_sec": 1200.0,
+     "duration_sec": 1500.0,
+     "severity": 0.7,
+     "label": "goods vehicle overheated on EM Bypass between Science City and Chingrighata"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1038,
+     "start_sec": 2100.0,
+     "duration_sec": 1200.0,
+     "severity": 0.6,
+     "label": "car stalled with an overheated engine on EM Bypass near Ultadanga"
+    }
+   ],
+   "expected_features": [
+    "heatwave",
+    "vehicle_overheating_breakdowns",
+    "recovery_van_prepositioning",
+    "duty_rotation_proposal",
+    "reduced_pedestrian_flow",
+    "trilingual_advisory"
+   ],
+   "event_kind": "work_zone",
+   "crowd_class": "LOW",
+   "duration_class": "hours"
+  },
+  {
+   "scenario_id": "norwester_squall_treefall",
+   "name": "Nor'wester Squall — Tree-Falls, Live-Wire Hazard and Staged Reopening",
+   "description": "SIMULATED. A Nor'wester (Kalbaishakhi) evening (Thursday 6 May 2027; a scenario, not a forecast). A squall line crossed the city at about 17:20 with gusts SIMULATED at 70-90 km/h and heavy rain (modelled at 25 mm/h, STORM). At 17:40 the rain lingers and trees are down across the arterials: EM Bypass between Ultadanga and Ruby in three places (a weakened tree falls in a later gust), Red Road along the Maidan, AJC Bose Road between Exide and Moulali, and Rash Behari Avenue, where an overhead wire is also down across the road near Gariahat (live-wire hazard). Signals at Ultadanga are dark after a feeder trips (MODELLED). A KMC tree-clearing crew with a West Bengal Fire & Emergency Services rescue tender, escorted by Kolkata Traffic Police (and the Bidhannagar Police Commissionerate on its stretch), works south along EM Bypass from Ultadanga, so the corridor reopens in stages behind it. The stack may PROPOSE a request to the power utility (and to WBTC if it is a tram overhead line) to isolate the wire on Rash Behari Avenue — a proposal a named duty officer approves or rejects; nothing is sent by itself. Twenty minutes in, an ambulance (108) from Gariahat to Ruby General Hospital needs a window over the Bijon Setu connector. Every reopening is proposed by the AI and decided by a named officer. Gusts, rain, clearance times and loads are modelled assumptions.",
+   "category": "weather",
+   "route_segment_ids": [
+    1038,
+    1037,
+    1036,
+    1035
+   ],
+   "departure_time": "2027-05-06T17:40:00+05:30",
+   "vvip_class": "X",
+   "closure_policy": {
+    "advance_closure_sec": 60,
+    "closure_type": "partial_closure"
+   },
+   "horizon_min": 60,
+   "n_replications": 8,
+   "seed": 20270506,
+   "convoy_speed_kmh": 20,
+   "weather": {
+    "monsoon": false,
+    "rain_intensity_mm_h": 25.0
+   },
+   "event_overrides": {
+    "breakdown": 1.5,
+    "signal_fault": 2.0
+   },
+   "forced_events": [
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1037,
+     "start_sec": 0.0,
+     "duration_sec": 1500.0,
+     "severity": 0.9,
+     "label": "tree down across EM Bypass between Chingrighata and Salt Lake Stadium (cleared first)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1036,
+     "start_sec": 0.0,
+     "duration_sec": 2400.0,
+     "severity": 0.85,
+     "label": "tree down on EM Bypass between Science City and Chingrighata (cleared second)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1013,
+     "start_sec": 0.0,
+     "duration_sec": 3600.0,
+     "severity": 0.9,
+     "label": "Red Road closed — trees down along the Maidan"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1023,
+     "start_sec": 0.0,
+     "duration_sec": 1800.0,
+     "severity": 0.6,
+     "label": "branches down on AJC Bose Road between Exide and Mullickbazar (one lane)"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1032,
+     "start_sec": 0.0,
+     "duration_sec": 1800.0,
+     "severity": 0.75,
+     "label": "tree down on Rash Behari Avenue between Rashbehari crossing and Deshapriya Park"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1033,
+     "start_sec": 0.0,
+     "duration_sec": 3000.0,
+     "severity": 0.9,
+     "label": "overhead wire down across Rash Behari Avenue between Deshapriya Park and Gariahat — closed until the line is isolated (live-wire hazard)"
+    },
+    {
+     "type": "signal_fault",
+     "segment_id": 1038,
+     "start_sec": 0.0,
+     "duration_sec": 2400.0,
+     "severity": 0.7,
+     "label": "signals dark at Ultadanga after a feeder trips in the squall"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1024,
+     "start_sec": 300.0,
+     "duration_sec": 2400.0,
+     "severity": 0.8,
+     "label": "hoarding frame and branches down on AJC Bose Road between Mullickbazar and Moulali"
+    },
+    {
+     "type": "vehicle_breakdown",
+     "segment_id": 1035,
+     "start_sec": 600.0,
+     "duration_sec": 2700.0,
+     "severity": 0.8,
+     "label": "tree down in a later gust on EM Bypass between Ruby and Science City (cleared last)"
+    },
+    {
+     "type": "emergency_vehicle",
+     "segment_id": 1034,
+     "start_sec": 1200.0,
+     "duration_sec": 710.0,
+     "severity": 0.9,
+     "label": "ambulance (108) window to Ruby General Hospital — Rash Behari Avenue Connector (Bijon Setu), Gariahat to Ruby"
+    }
+   ],
+   "expected_features": [
+    "norwester_squall",
+    "tree_fall_lane_loss",
+    "live_wire_hazard_proposal",
+    "staged_reopening",
+    "signals_dark",
+    "ambulance_window"
+   ],
+   "event_kind": "work_zone",
+   "crowd_class": "LOW",
+   "duration_class": "hours"
+  }
+ ]
+}

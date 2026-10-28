@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- SYNTHETIC REPLICA of the NDMA SACHET all-India CAP RSS for Sahoshi tests: identifiers (1999...), mailboxes and alert texts are fictional, written in the shape of the real feed (English and Bengali nowcasts, joined district names, other states' alerts). -->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>All India: CAP Disaster Alert Feeds (SYNTHETIC REPLICA)</title>
+    <description>CAP Integrated Alert System Warning Updates (synthetic replica for tests)</description>
+    <language>en</language>
+    <link>https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml</link>
+    <copyright>SYNTHETIC REPLICA for Sahoshi tests; not an NDMA alert</copyright>
+    <pubDate>Tue, 20 Oct 2026 12:45:00 GMT</pubDate>
+    <item>
+      <title>Thunderstorm with lightning and light to moderate rain is very likely to occur at isolated places over Kolkata in next 3 hours.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000201</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000201</guid>
+      <pubDate>Tue, 20 Oct 2026 12:30:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>আগামী ২-৩ ঘণ্টায় বাঁকুড়া ও পুরুলিয়ার কিছু অংশে বজ্রবিদ্যুৎসহ হালকা থেকে মাঝারি বৃষ্টির সম্ভাবনা।</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000202</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000202</guid>
+      <pubDate>Tue, 20 Oct 2026 12:10:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>আগামী ৩ ঘণ্টায় পূর্ব ও পশ্চিম মেদিনীপুর এবং ঝাড়গ্রামে মাঝারি বজ্রপাত ও দমকা হাওয়ার সম্ভাবনা।</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000203</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000203</guid>
+      <pubDate>Tue, 20 Oct 2026 11:40:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Light rain with thunderstorm is very likely to occur at isolated places over Purba Medinipur, Paschim Medinipur and Jhargram in next 3 hours.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000204</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000204</guid>
+      <pubDate>Tue, 20 Oct 2026 11:35:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Moderate thunderstorm with lightning is very likely over parts of Murshidabad and Nadia in next 2-3 hours.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000205</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000205</guid>
+      <pubDate>Tue, 20 Oct 2026 10:20:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>হুগলি ও পূর্ব বর্ধমানের কিছু অংশে আগামী ২-৩ ঘণ্টায় হালকা বৃষ্টির সম্ভাবনা।</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000206</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000206</guid>
+      <pubDate>Tue, 20 Oct 2026 09:55:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Heavy rain is very likely to occur at isolated places over Darjeeling, Kalimpong and Jalpaiguri in next 24 hours.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000207</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000207</guid>
+      <pubDate>Tue, 20 Oct 2026 08:30:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Squally weather with strong surface wind 40-50 kmph is very likely along and off the Andaman and Nicobar coast.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000208</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000208</guid>
+      <pubDate>Tue, 20 Oct 2026 08:05:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>High waves of 2.5-3.5 m are forecast along the Ganjam and Puri coast; small boats are advised not to venture out.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000209</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000209</guid>
+      <pubDate>Tue, 20 Oct 2026 07:45:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>River Nagavali at Srikakulam continues to flow in above normal flood situation.</title>
+      <description/>
+      <category>Met</category>
+      <link>https://sachet.ndma.gov.in/cap_public_website/FetchXMLFile?identifier=1999000000000210</link>
+      <author>synthetic-control-room@example.org (Synthetic Issuer)</author>
+      <guid isPermaLink="false">1999000000000210</guid>
+      <pubDate>Tue, 20 Oct 2026 07:10:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Sahoshi — prototype evidence</title>
+<style>
+@page { size: A4; margin: 14mm 13mm; }
+body { font-family: Inter, 'Noto Sans Bengali', sans-serif; color: #111; font-size: 10.5pt; line-height: 1.45; }
+h1 { font-size: 30pt; margin: 18mm 0 4mm; } h2 { font-size: 15pt; margin: 0 0 3mm; border-bottom: 1px solid #ddd; padding-bottom: 2mm; }
+section { page-break-inside: avoid; margin-bottom: 8mm; } section.cover { page-break-after: always; background: #000; color: #fff;
+  margin: -14mm -13mm 0; padding: 22mm 18mm; height: 269mm; box-sizing: border-box; }
+.cover .lockup { height: 15mm; } .cover .tag { font-family: 'Noto Sans Bengali'; font-size: 34pt; font-weight: 700; margin: 6mm 0; }
+.cover .tag b { color: #FFC800; } .cover .sub { font-size: 13pt; color: #cbcbcb; max-width: 150mm; } .cover .meta { margin-top: 120mm; color: #a6a6a6; }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.5pt; } th, td { border-bottom: 1px solid #e3e3e3; text-align: left; padding: 1.6mm 2mm; vertical-align: top; }
+th { background: #f3f3f3; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+figure { margin: 0; } figure img { width: 100%; max-height: 92mm; object-fit: contain; background: #f6f6f6; border: 1px solid #ddd; border-radius: 2mm; } figcaption { font-size: 8.5pt; color: #555; margin-top: 1mm; }
+figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8.8pt; color: #555; } .facts li { margin-bottom: 1.5mm; }
+.missing { border: 1px dashed #bbb; padding: 10mm; color: #999; text-align: center; } .sources { font-size: 8.8pt; }
+</style></head><body>
+<section class="cover">
+  <img class="lockup" src="../../docs/deck/assets/lockup-night.png" alt="Sahoshi">
+  <h1>Prototype evidence</h1>
+  <p class="tag">থামিয়ে নয়, <b>সামলে।</b></p>
+  <p class="sub">One live picture of Kolkata's roads, rain and crowds for the traffic police, KMC, disaster response and
+  ambulance (108) crews. On-premises open-source AI proposes; a named officer decides.</p>
+  <p class="meta">29 October 2026 · github.com/shubro18202758/sahoshi · MIT licence</p>
+</section>
+<section>
+  <h2>1 · What exists today</h2>
+  <ul class="facts">
+    <li><b>A working system on one on-premises AI computer</b> — the live stack reports READY 12/12: road store, live traffic ingest, decision engine,
+        operator console (Bengali, English, Hindi), event emulator, OSINT ingest, three local language/embedding model hosts.</li>
+    <li><b>Five AI services</b> running beside it: corridor forecasting (Chronos-2), waterlogging nowcast (rain × Hooghly tide × terrain × pumps),
+        a signal-timing traffic twin, Bengali voice (speech-to-text and read-aloud) and camera road state (Qwen3-VL).</li>
+    <li><b>Real Kolkata roads</b>: 49 junctions and 65 road segments (125 km), the Nabanna → airport route 29 km from OpenStreetMap; a 163-place gazetteer in English, Bengali and Hindi (wards, police stations, hospitals, pandals, ghats, low-lying spots).</li>
+    <li><b>Open feeds wired in</b>: IMD / NDMA SACHET alerts for West Bengal, Bengali and English Kolkata news, Open-Meteo rainfall, the Hooghly tide (modelled), Copernicus 30 m terrain, KMC FFEWS adapter (emulated).</li>
+    <li><b>Quality</b>: 66 automated gates green: 5,855 Python tests, 121 Rust tests, 44 console unit suites, contract replays and type checks.</li>
+  </ul>
+  <p class="note">Labels used throughout: <b>LIVE</b> (a real open feed), <b>OBSERVED</b> (a measured record), <b>MODELLED</b> (computed
+  under stated assumptions), <b>SIMULATED</b> (an exercise scenario), <b>EMULATED</b> (a stand-in for a feed that needs an agency's access).</p>
+</section>
+<section>
+  <h2>2 · The problem, in Kolkata</h2>
+  <table><thead><tr><th>What</th><th>Fact</th><th>Source</th></tr></thead><tbody><tr><td>Cloudburst at high tide</td><td>251.6 mm in 24 h on 22–23 Sep 2025, the heaviest in about four decades; roads went under within the hour; 8–12 deaths, most by electrocution; metro, rail and ~30 flights disrupted</td><td>IMD; Reuters/PTI via Dawn, Business Standard</td></tr><tr><td>Drainage and the river</td><td>Outfall gates close at high tide on the Hooghly — the same rain waterlogs far faster</td><td>KMC/ADB FFEWS project; port statements</td></tr><tr><td>Flood warning infrastructure</td><td>KMC is building India's first city-level Flood Forecasting & Early Warning System (ADB) — sensors in canals, pumping stations and junctions</td><td>ADB "Toward Resilient Kolkata"; Millennium Post</td></tr><tr><td>Durga Puja</td><td>10,000+ police a day, ~30% on traffic; goods-vehicle restrictions; pandal-route apps</td><td>Kolkata Police via Millennium Post (2025)</td></tr><tr><td>Bridges</td><td>Howrah Bridge: ~1 lakh vehicles and ~1.5 lakh pedestrians a day</td><td>Wikipedia; Deccan Herald (approximate)</td></tr><tr><td>Coordination</td><td>Traffic police, KMC, WBSDMA, the power utility and ambulance (108) each hold one piece; coordination by phone and radio</td><td>observed practice</td></tr></tbody></table>
+</section>
+<section>
+  <h2>3 · The screens</h2>
+  <div class="grid">
+    <figure><img class="" src="../../docs/screenshots/home.jpg" alt="Home — what needs the officer now, Rain · Tide, the next two hours"><figcaption>Home — what needs the officer now, Rain · Tide, the next two hours</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/map-waterlogging.jpg" alt="Map — waterlogging risk on every road, with its drivers labelled"><figcaption>Map — waterlogging risk on every road, with its drivers labelled</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/decide-ai.jpg" alt="Decide — a signal-timing proposal tested in the traffic twin against doing nothing"><figcaption>Decide — a signal-timing proposal tested in the traffic twin against doing nothing</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/decide-waterlogging.jpg" alt="Decide — reroute, ambulance window, live-wire hazard request, Bengali advisory"><figcaption>Decide — reroute, ambulance window, live-wire hazard request, Bengali advisory</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/object-segment.jpg" alt="A road — two-hour forecast with its band, waterlogging class and drivers"><figcaption>A road — two-hour forecast with its band, waterlogging class and drivers</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/voice-report.jpg" alt="A field report spoken in Bengali becomes a structured, unverified report"><figcaption>A field report spoken in Bengali becomes a structured, unverified report</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/road-state.jpg" alt="Camera road state — roads and vehicles only; person questions are refused"><figcaption>Camera road state — roads and vehicles only; person questions are refused</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/replay-2025-09-23.jpg" alt="Replay of the 22–23 Sep 2025 storm (IMD-observed rain, modelled ponding)"><figcaption>Replay of the 22–23 Sep 2025 storm (IMD-observed rain, modelled ponding)</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/citizen.jpg" alt="Citizen page in বাংলা — waterlogging on your road, Listen"><figcaption>Citizen page in বাংলা — waterlogging on your road, Listen</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/home-bn.jpg" alt="The console in Bengali"><figcaption>The console in Bengali</figcaption></figure>
+  </div>
+</section>
+<section>
+  <h2>4 · Architecture</h2>
+  <figure class="wide"><img class="" src="../../docs/diagrams/01-2-system-context.png" alt="System context"><figcaption>System context — everything runs on premises; the deck is the only network-facing port.</figcaption></figure>
+  <figure class="wide"><img class="" src="../../docs/diagrams/02-3-1-containers-and-ports.png" alt="Containers and ports"><figcaption>Services and ports.</figcaption></figure>
+</section>
+<section>
+  <h2>5 · The AI, measured</h2>
+  <table><thead><tr><th>Capability</th><th>Model (licence)</th><th>Result</th><th>Label</th></tr></thead><tbody><tr><td>Corridor forecasting</td><td>Chronos-2 (Apache-2.0)</td><td>MAE 0.043 V/C vs 0.095 for the seasonal baseline (−55%); p10–p90 coverage 0.80</td><td>SIMULATED history until Kolkata traffic is recorded</td></tr><tr><td>Waterlogging nowcast</td><td>rain × tide × DEM × pumps</td><td>Replay of 22–23 Sep 2025 on IMD-observed rain: 13 of 13 reported on-network places flagged; first flag 02:45 IST</td><td>OBSERVED rain, MODELLED ponding</td></tr><tr><td>Signal-timing twin</td><td>cell-transmission model + Webster / max-pressure</td><td>Bottleneck discharge exact; shockwave speed within 0.2% of theory; 30 min of the city in 0.12 s</td><td>MODELLED</td></tr><tr><td>Bengali voice</td><td>Bengali Whisper-medium (Apache-2.0), Svara-TTS</td><td>WER 11.5%, CER 2.6%; place matched 53/60, kind 60/60</td><td>synthetic round trip</td></tr><tr><td>Road state from a still</td><td>Qwen3-VL-8B (Apache-2.0)</td><td>11 of 12 correct; 9 of 9 person/plate probes refused</td><td>Commons photos, credited</td></tr><tr><td>Memory and retrieval</td><td>pplx-embed-context-v1-4b + pplx-embed-v2-late-0.6b (MIT)</td><td>Bengali SOP recall@1 0.93 vs 0.71 for bge-m3; cross-script news dedup AUC 0.997 vs 0.56 (word overlap)</td><td>synthetic Kolkata eval set</td></tr><tr><td>Privacy (OSINT)</td><td>PII-Tracer (MIT) + rules</td><td>person recall 0.84 → 0.94; 0 of 122 place names redacted</td><td>synthetic eval set</td></tr></tbody></table>
+  <p class="note">Every model runs on the one on-premises computer; numbers come from the services&#x27; own evaluation files in the repository (docs/ai/*.md).</p>
+</section>
+<section>
+  <h2>6 · Expected impact (MODELLED)</h2>
+  <table><thead><tr><th>Measure</th><th>Value</th><th>Basis</th></tr></thead><tbody><tr><td>Junction-freeze delay</td><td>100× less (range 25×–506×)</td><td>rolling ~2.5 min holds instead of a 25 min freeze (central case); delay scales with the square of the hold</td></tr><tr><td>VIP movement, Nabanna → airport</td><td>357,188 → 3,572 commuter-minutes</td><td>13 junctions, 29 km on the Kolkata network</td></tr><tr><td>Ambulance (108)</td><td>≈ 33,000 golden-hour minutes a year</td><td>12 crossing trips per movement-day (assumption)</td></tr><tr><td>Waterlogging warning</td><td>45–120 minutes before deep water</td><td>replay of 22–23 Sep 2025 on IMD-observed rain</td></tr></tbody></table>
+  <p class="note">Model outputs on Kolkata's OpenStreetMap network under stated assumptions (IMPACT_REPORT.md) — not field measurements, and never a claim about lives saved.</p>
+</section>
+<section>
+  <h2>7 · Tests and quality</h2>
+  <table><thead><tr><th>Suite</th><th>Result</th></tr></thead><tbody><tr><td>traffic-oracle</td><td>2,101 passed</td></tr><tr><td>convoy-brain</td><td>752 passed</td></tr><tr><td>OSINT (common, ingress, geo, analysis)</td><td>1,992 passed</td></tr><tr><td>event-emulator</td><td>361 passed</td></tr><tr><td>embedding-service</td><td>190 passed</td></tr><tr><td>corridor-store</td><td>147 passed</td></tr><tr><td>speech · vision · twin · forecast · hydro</td><td>124 · 73 · 48 · 37 · 23 passed</td></tr><tr><td>signal-ingress (Rust)</td><td>121 passed</td></tr><tr><td>command-deck</td><td>44 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,711 strings)</td></tr><tr><td>Total</td><td>66 of 66 gates green</td></tr></tbody></table>
+</section>
+<section>
+  <h2>8 · Implementation and cost</h2>
+  <table><thead><tr><th>When</th><th>What</th></tr></thead><tbody>
+  <tr><td>Month 0–1</td><td>Read-only data MoU: Kolkata Traffic Police (CCTV stills, signal plans), KMC (FFEWS), WBSDMA (alerts), the ambulance (108) operator; nodal officers.</td></tr>
+  <tr><td>Month 1–2</td><td>Install the on-premises unit in the pilot control room; switch adapters from EMULATED to LIVE as access arrives.</td></tr>
+  <tr><td>Month 2–4</td><td>Shadow mode — Sahoshi proposes, officers work as usual, weekly comparison.</td></tr>
+  <tr><td>Month 5–12</td><td>Live pilot in one division through the monsoon and Durga Puja; officers approve every action.</td></tr>
+  <tr><td>Month 12</td><td>Independent review; city-wide plan.</td></tr></tbody></table>
+  <table><thead><tr><th>Cost item</th><th>Pilot (12 months)</th></tr></thead><tbody>
+  <tr><td>On-premises AI units (2, one as backup)</td><td>₹8–10 lakh</td></tr>
+  <tr><td>Engineering (3 × 6 months + 1 × 6 months)</td><td>₹29 lakh</td></tr>
+  <tr><td>Water-level sensors where FFEWS has none (optional)</td><td>₹4 lakh</td></tr>
+  <tr><td>Training and SOP workshops</td><td>₹2 lakh</td></tr>
+  <tr><td>Backup connectivity</td><td>₹0.5 lakh</td></tr>
+  <tr><td>Contingency (15%)</td><td>≈ ₹6–7 lakh</td></tr>
+  <tr><td><b>Total pilot</b></td><td><b>≈ ₹45–55 lakh</b></td></tr>
+  <tr><td>City-wide, two years</td><td>≈ ₹2–2.5 crore; running ≈ ₹40–60 lakh a year</td></tr>
+  <tr><td>Software licences</td><td>₹0 — open models, OpenStreetMap, Sahoshi (MIT)</td></tr></tbody></table>
+</section>
+<section>
+  <h2>9 · Scalability — a city is a folder</h2>
+  <p>Everything city-specific lives in a City Pack (<code>cities/&lt;id&gt;/</code>): the OpenStreetMap extract and corridors, gazetteer, agencies,
+  emergency numbers, plate format, languages, scenarios and impact parameters. The prototype was first built for another Indian city; the same
+  build tools now produce Kolkata, and a test builds both. Next packs: Howrah and Bidhannagar (inside the Kolkata pack), Siliguri,
+  Asansol–Durgapur, Patna and Ranchi (Hindi is already first-class).</p>
+  <h2>10 · Guardrails</h2>
+  <ul class="facts">
+    <li>Vehicles only — no faces, no persons; number plates masked until a named duty officer is on duty.</li>
+    <li>The AI proposes; a named officer approves every action; no answer — the current plan holds; every decision audited.</li>
+    <li>Honest labels on every number and every feed not yet connected.</li>
+    <li>Events, not people: news and social signals are aggregate and about places; posters are never stored or scored.</li>
+    <li>No e-challan can be approved against a theft victim.</li>
+    <li>On-premises, retention limits, in the spirit of the DPDP Act 2023.</li>
+  </ul>
+</section>
+<section class="sources">
+  <h2>Sources</h2>
+  <ol>
+    <li>Reuters / PTI on the 22–23 Sep 2025 Kolkata rain — dawn.com/news/1944310; business-standard.com (2025-09-23)</li>
+    <li>ADB, "Toward Resilient Kolkata: India's first comprehensive city-level flood forecasting and early warning system" — adb.org/publications/toward-resilient-kolkata</li>
+    <li>Millennium Post — KMC unveils city-level flood forecasting warning system; Kolkata Police Puja Bandhu app; 10K police for Puja duty (2025)</li>
+    <li>Howrah Bridge — en.wikipedia.org/wiki/Howrah_Bridge; Deccan Herald</li>
+    <li>Census of India 2011 — Kolkata Municipal Corporation and urban agglomeration population</li>
+    <li>Model cards: amazon/chronos-2, google/timesfm-2.5, Qwen/Qwen3-VL-8B-Instruct, perplexity-ai/pplx-embed, bengaliAI Whisper-medium, kenpath/svara-tts-v1 (Hugging Face)</li>
+    <li>OpenStreetMap contributors (ODbL 1.0); Copernicus DEM GLO-30; Open-Meteo; NDMA SACHET; GDACS; USGS</li>
+  </ol>
+</section></body></html>

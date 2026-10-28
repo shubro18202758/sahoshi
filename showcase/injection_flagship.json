@@ -1,0 +1,44 @@
+{
+ "run_id": 11,
+ "use_case_id": "durga_puja_north",
+ "status": "completed",
+ "reason": null,
+ "event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+ "movement_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+ "event_status": "completed",
+ "seed": 202509301,
+ "clock_scale": 30.0,
+ "progress": {
+  "frame": 807,
+  "total": 807,
+  "delivered": 807,
+  "failed": 0,
+  "skipped": 0,
+  "late": 0
+ },
+ "delivery": {
+  "late": 0,
+  "failed": 0,
+  "frames": 1171,
+  "skipped": 0,
+  "progress": {
+   "late": 0,
+   "frame": 807,
+   "total": 807,
+   "failed": 0,
+   "skipped": 0,
+   "delivered": 807
+  },
+  "delivered": 1171
+ },
+ "event_activation": {
+  "late": false,
+  "error": null,
+  "active": true,
+  "attempts": 1
+ },
+ "scenario_precondition": null,
+ "created_at": "2026-10-28T16:11:21.300576+00:00",
+ "ended_at": "2026-10-28T16:13:21.329384+00:00",
+ "poll_error": null
+}

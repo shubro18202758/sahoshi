@@ -1,0 +1,68 @@
+{
+ "_sample": {
+  "source": "POST /speech/report?lang=bn with JSON {\"text\": ...} (a typed field report) on services/speech, run locally on 28 Oct 2026; no ASR model was loaded for this path"
+ },
+ "report_id": "87eb41f2-c070-493f-9287-4cfc3d92e56b",
+ "received_at": "2026-10-28T13:03:28+00:00",
+ "place": {
+  "id": "gariahat",
+  "name_en": "Gariahat crossing",
+  "name_bn": "গড়িয়াহাট মোড়",
+  "lat": 22.519,
+  "lon": 88.366,
+  "match_score": 1.0,
+  "matched_text": "গড়িয়াহাট মোড়",
+  "source": "landmarks"
+ },
+ "place_candidates": [
+  {
+   "id": "gariahat",
+   "name_en": "Gariahat crossing",
+   "name_bn": "গড়িয়াহাট মোড়",
+   "lat": 22.519,
+   "lon": 88.366,
+   "match_score": 1.0,
+   "matched_text": "গড়িয়াহাট মোড়",
+   "source": "landmarks"
+  },
+  {
+   "id": "kestopur",
+   "name_en": "VIP Road, Kestopur",
+   "name_bn": "ভিআইপি রোড, কেষ্টপুর",
+   "lat": 22.6,
+   "lon": 88.43,
+   "match_score": 0.587,
+   "matched_text": "বাস চলতে পারছে",
+   "source": "landmarks"
+  },
+  {
+   "id": "prinsep_ghat",
+   "name_en": "Prinsep Ghat",
+   "name_bn": "প্রিন্সেপ ঘাট",
+   "lat": 22.555,
+   "lon": 88.332,
+   "match_score": 0.587,
+   "matched_text": "পারছে না",
+   "source": "landmarks"
+  }
+ ],
+ "kind": "waterlogging",
+ "kind_cues": [
+  "জল জম"
+ ],
+ "severity": "medium",
+ "severity_cues": [
+  "গাড়ি আটকে"
+ ],
+ "transcript": "গড়িয়াহাট মোড়ে জল জমেছে, গাড়ি আটকে যাচ্ছে। বাস চলতে পারছে না।",
+ "language": "bn",
+ "source": "field-text",
+ "asr": null,
+ "verification_state": "UNVERIFIED-FIELD",
+ "requires_confirmation": true,
+ "note": {
+  "en": "Field report awaiting an officer's confirmation. It is not an action.",
+  "bn": "মাঠ থেকে আসা রিপোর্ট, অফিসারের নিশ্চিতকরণের অপেক্ষায়। এটি কোনো পদক্ষেপ নয়।"
+ },
+ "latency_s": 0.022
+}

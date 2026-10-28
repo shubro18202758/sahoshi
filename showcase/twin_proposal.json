@@ -1,0 +1,20 @@
+{
+ "http": 200,
+ "junction_ids": [
+  20
+ ],
+ "recommendation": "propose",
+ "candidates_evaluated": 14,
+ "labels": {
+  "result": "MODELLED",
+  "demand": "EMULATED",
+  "note": "A traffic model (cell-transmission twin), not measured traffic."
+ },
+ "proposal_id": "twin-f774c3ee3fed",
+ "kind": "extend_green",
+ "state": null,
+ "summary": "Give the main-road (through) movement at Rashbehari crossing 6 s more green for 30 min (taken from the cross-street movement; cycle 110 s unchanged).",
+ "summary_bn": "রাসবিহারী মোড়-এ মূল রাস্তার সিগন্যালে 30 মিনিটের জন্য 6 সেকেন্ড বেশি সবুজ (আড়াআড়ি রাস্তার সময় থেকে নেওয়া; সাইকেল 110 সেকেন্ড অপরিবর্তিত)।",
+ "duration_min": 30.0,
+ "detail": null
+}

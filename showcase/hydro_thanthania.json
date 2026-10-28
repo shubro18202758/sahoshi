@@ -1,0 +1,93 @@
+{
+ "segment_id": 1058,
+ "twin_simulated": {
+  "http": 200,
+  "replications": 10,
+  "calibrated": false,
+  "waterlogging_events": 13,
+  "on_segment": [
+   "stochastic waterlogging",
+   "Thanthania (Bidhan Sarani) — low-lying stretch waterlogged; water around lamp posts (live-wire risk)"
+  ],
+  "labels_sample": [
+   "stochastic waterlogging",
+   "Thanthania (Bidhan Sarani) — low-lying stretch waterlogged; water around lamp posts (live-wire risk)",
+   "Ultadanga — water collects on Bidhannagar Road",
+   "VIP Road at Ultadanga — water on the approach"
+  ],
+  "emergency_windows": 0,
+  "label": "SIMULATED scenario; rain, tide, pumps and spread MODELLED"
+ },
+ "live_nowcast": {
+  "http": 200,
+  "labels": {
+   "rain": "LIVE",
+   "tide": "MODELLED (approximate)",
+   "susceptibility": "MODELLED",
+   "pumps": "EMULATED",
+   "risk": "MODELLED"
+  },
+  "rain_now_mm_h": 0.0,
+  "rain_source": "Open-Meteo forecast API, minutely_15 precipitation (model nowcast, not a gauge)",
+  "counts_by_class": {
+   "0": 65,
+   "1": 0,
+   "2": 0,
+   "3": 0
+  },
+  "segment": {
+   "risk_class": 0,
+   "risk_name": "dry",
+   "expected_depth_band": "0–2 cm",
+   "lead_time_min": 0,
+   "drivers": [
+    "pumps",
+    "rain",
+    "susceptibility",
+    "tide"
+   ]
+  },
+  "proposals": 0,
+  "proposals_on_segment": []
+ },
+ "hindsight_replay_2025_09_23": {
+  "http": 200,
+  "event": "2025-09-23",
+  "title": "Kolkata deluge, 22–23 September 2025",
+  "label": "HINDSIGHT — the observed rain used as if it had been a perfect nowcast",
+  "at_ist": "2025-09-23T02:00:00+05:30",
+  "alipore_window_total_mm": 248.8,
+  "flagged_segments": 60,
+  "segment": {
+   "road_name": "Bidhan Sarani",
+   "peak_class": 2,
+   "peak_band": "10–30 cm",
+   "peak_depth_cm": 23.1,
+   "first_class1_ist": "2025-09-23 02:15",
+   "first_class2_ist": "2025-09-23 03:30",
+   "peak_at_ist": "2025-09-23 05:30"
+  },
+  "proposal_counts": {
+   "ambulance_window": 60,
+   "live_wire_hazard": 60,
+   "public_advisory_draft": 1,
+   "waterlogging_reroute": 60
+  },
+  "proposal_kinds": [
+   "ambulance_window",
+   "live_wire_hazard",
+   "public_advisory_draft",
+   "waterlogging_reroute"
+  ],
+  "proposal_examples": [
+   "Gariahat crossing (Rash Behari Avenue): waterlogging risk 3 (> 30 cm), deep water in about 45 min; no detour on the city network that avoids flagged roads — propose closing to small vehicles with officer judgement on site.",
+   "Ambulance (108) note — Gariahat crossing (Rash Behari Avenue): passable for about 45 min more; no detour avoiding flagged roads.",
+   "Live-wire hazard — Gariahat crossing (Rash Behari Avenue): waterlogging risk 3 (> 30 cm). Propose asking the power utility (CESC / WBSEDCL) to inspect and, where needed, isolate street-light and overhead supply along this road."
+  ],
+  "every_proposal_proposed": true,
+  "labels": [
+   "HINDSIGHT",
+   "MODELLED"
+  ]
+ }
+}

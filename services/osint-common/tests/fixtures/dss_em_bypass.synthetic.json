@@ -1,0 +1,707 @@
+{
+  "dss_id": "9281b249-7178-5f50-8a97-70d22a474c27",
+  "event_urn": "osint_event:55b4d632-1492-5fa6-babc-44cf65fea8a6",
+  "state": "proposed",
+  "generated_at": "2026-10-20T15:05:00Z",
+  "horizon_min": 45,
+  "seed": 20261024,
+  "situation": {
+    "summary": "5 reports across 2 related classes (road_accident, public_conflict) correlated into one situation on Eastern Metropolitan Bypass near Kasba: Car crashes into three vehicles on EM Bypass near Kasba; 3 injured",
+    "event_class": "road_accident",
+    "correlated_classes": [
+      "road_accident",
+      "public_conflict"
+    ],
+    "subtype": "affray+collision",
+    "sahoshi_event_kind": "road_accident",
+    "toponym": "Eastern Metropolitan Bypass",
+    "segment_id": 1035,
+    "junction_id": null,
+    "rep_lonlat": [
+      88.3957601,
+      22.5255148
+    ],
+    "credibility": 0.65,
+    "independent_publishers": 2,
+    "source_tiers": [
+      "aggregator"
+    ],
+    "cross_type_corroborated": false,
+    "attach": {
+      "novel": true,
+      "corroborates_live_urn": null,
+      "distance_m": null
+    },
+    "verification_state": "NEWS-REPORTED",
+    "geocode_confidence": 0.68,
+    "composite_confidence": 0.688
+  },
+  "criteria": [
+    {
+      "id": "safety_risk_reduction",
+      "label": "Public-safety risk reduction (fixed prior by COA actions, not simulated)",
+      "direction": "benefit",
+      "weight": 0.3121,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "time_to_effect",
+      "label": "Speed of effect (nominal time by COA kind, not a unit ETA)",
+      "direction": "benefit",
+      "weight": 0.1075,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "resource_cost",
+      "label": "Resource cost",
+      "direction": "cost",
+      "weight": 0.0247,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "public_disruption",
+      "label": "Public traffic disruption",
+      "direction": "cost",
+      "weight": 0.0507,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "cascade_risk",
+      "label": "Cascade / spillover risk",
+      "direction": "cost",
+      "weight": 0.0739,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "reversibility",
+      "label": "Reversibility",
+      "direction": "benefit",
+      "weight": 0.0183,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "affected_population",
+      "label": "Affected population",
+      "direction": "cost",
+      "weight": 0.035,
+      "weight_source": "ahp",
+      "role": "discriminating"
+    },
+    {
+      "id": "protocol_compliance",
+      "label": "Protocol compliance",
+      "direction": "benefit",
+      "weight": 0.2223,
+      "weight_source": "ahp",
+      "role": "gate (non-discriminating)"
+    },
+    {
+      "id": "legality",
+      "label": "Legality",
+      "direction": "benefit",
+      "weight": 0.1555,
+      "weight_source": "ahp",
+      "role": "gate (non-discriminating)"
+    }
+  ],
+  "ahp": {
+    "consistency_ratio": 0.0346,
+    "acceptable": true,
+    "rank_order": [
+      "safety_risk_reduction",
+      "protocol_compliance",
+      "legality",
+      "time_to_effect",
+      "cascade_risk",
+      "public_disruption",
+      "affected_population",
+      "resource_cost",
+      "reversibility"
+    ]
+  },
+  "scoring_note": "TOPSIS runs over the 7 discriminating criteria ['safety_risk_reduction', 'time_to_effect', 'resource_cost', 'public_disruption', 'cascade_risk', 'reversibility', 'affected_population']; the 2 gate criteria ['protocol_compliance', 'legality'] are constant across the surviving COAs (handled by the lexical veto) and are reported as gate-passed.",
+  "coa_set": [
+    {
+      "coa_id": "coa_base",
+      "kind": "baseline",
+      "label": "Monitor only (do nothing)",
+      "actions": [
+        {
+          "verb": "monitor",
+          "target_urn": null,
+          "params": {},
+          "requires_officer": false,
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "response_time_to_scene_sec": null,
+        "total_disruption_vehicle_hours": {
+          "mean": 0.0,
+          "p90": 0.0,
+          "p90_mean_ratio": null,
+          "replications": 240
+        },
+        "cascade": {
+          "spillover_vehicle_hours": {
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "neighbourhoods_touched": [],
+          "parallel_routes_loaded": [],
+          "affected_segment_ids": []
+        },
+        "emergency_impact": {
+          "ambulance_delay_sec": 0.0,
+          "green_corridor_ok": true
+        },
+        "time_to_effect_sec": 0.0,
+        "event_resolution_prob": 0.3,
+        "method": "DSS Monte-Carlo surrogate (SIMULATED, 240 replications, seeded); production: the seeded corridor twin for per-route disruption plus the DSS-layer cascade over the segment neighbours"
+      },
+      "resource_feasibility": {
+        "required_resources": {
+          "none": 0
+        },
+        "availability": {},
+        "eta_to_scene_sec": null,
+        "feasible": true,
+        "shortfalls": []
+      },
+      "attributes": {
+        "safety_risk_reduction": 0.0,
+        "time_to_effect": 1.0,
+        "resource_cost": 1.0,
+        "public_disruption": 1.0,
+        "cascade_risk": 1.0,
+        "reversibility": 1.0,
+        "affected_population": 1.0,
+        "protocol_compliance": 1.0,
+        "legality": 1.0
+      },
+      "score": {
+        "method": "topsis",
+        "closeness": 0.2192,
+        "rank": 3,
+        "feasible": true
+      },
+      "ethics": {
+        "touches_persons": false,
+        "legal": true,
+        "protocol_ok": true,
+        "irreversible_without_officer": false,
+        "vetoed": false,
+        "veto_reason": null
+      }
+    },
+    {
+      "coa_id": "coa_min",
+      "kind": "minimal",
+      "label": "Driver and citizen advisory only (VMS + app push)",
+      "actions": [
+        {
+          "verb": "advisory",
+          "target_urn": "place:em_bypass_kasba",
+          "params": {},
+          "requires_officer": false,
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "response_time_to_scene_sec": null,
+        "total_disruption_vehicle_hours": {
+          "mean": 98.8,
+          "p90": 115.1,
+          "p90_mean_ratio": 1.165,
+          "replications": 240
+        },
+        "cascade": {
+          "spillover_vehicle_hours": {
+            "mean": 40.3,
+            "p90": 47.1
+          },
+          "neighbourhoods_touched": [],
+          "parallel_routes_loaded": [],
+          "affected_segment_ids": []
+        },
+        "emergency_impact": {
+          "ambulance_delay_sec": 0.0,
+          "green_corridor_ok": true
+        },
+        "time_to_effect_sec": 120.0,
+        "event_resolution_prob": 0.38,
+        "method": "DSS Monte-Carlo surrogate (SIMULATED, 240 replications, seeded); production: the seeded corridor twin for per-route disruption plus the DSS-layer cascade over the segment neighbours"
+      },
+      "resource_feasibility": {
+        "required_resources": {
+          "none": 0
+        },
+        "availability": {},
+        "eta_to_scene_sec": null,
+        "feasible": true,
+        "shortfalls": []
+      },
+      "attributes": {
+        "safety_risk_reduction": 0.0,
+        "time_to_effect": 0.8,
+        "resource_cost": 1.0,
+        "public_disruption": 0.962,
+        "cascade_risk": 0.973,
+        "reversibility": 1.0,
+        "affected_population": 1.0,
+        "protocol_compliance": 1.0,
+        "legality": 1.0
+      },
+      "score": {
+        "method": "topsis",
+        "closeness": 0.19,
+        "rank": 4,
+        "feasible": true
+      },
+      "ethics": {
+        "touches_persons": false,
+        "legal": true,
+        "protocol_ok": true,
+        "irreversible_without_officer": false,
+        "vetoed": false,
+        "veto_reason": null
+      }
+    },
+    {
+      "coa_id": "coa_std",
+      "kind": "standard",
+      "label": "Advisory + 108 ambulance + 1 patrol + signal priority",
+      "actions": [
+        {
+          "verb": "advisory",
+          "target_urn": "place:em_bypass_kasba",
+          "params": {},
+          "requires_officer": false,
+          "reversible": true
+        },
+        {
+          "verb": "dispatch",
+          "target_urn": "segment:1035",
+          "params": {
+            "agency": "ambulance",
+            "count": 1
+          },
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "dispatch",
+          "target_urn": "segment:1035",
+          "params": {
+            "agency": "police",
+            "count": 1
+          },
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "signal_hold",
+          "target_urn": "junction:29",
+          "params": {
+            "mode": "emergency_priority"
+          },
+          "requires_officer": true,
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "response_time_to_scene_sec": 393.0,
+        "total_disruption_vehicle_hours": {
+          "mean": 866.7,
+          "p90": 1062.0,
+          "p90_mean_ratio": 1.225,
+          "replications": 240
+        },
+        "cascade": {
+          "spillover_vehicle_hours": {
+            "mean": 353.6,
+            "p90": 433.9
+          },
+          "neighbourhoods_touched": [
+            "Kasba",
+            "Mukundapur"
+          ],
+          "parallel_routes_loaded": [
+            "Rash Behari Avenue Connector",
+            "Prince Anwar Shah Road"
+          ],
+          "affected_segment_ids": [
+            1035
+          ]
+        },
+        "emergency_impact": {
+          "ambulance_delay_sec": -60.0,
+          "green_corridor_ok": true
+        },
+        "time_to_effect_sec": 300.0,
+        "event_resolution_prob": 0.88,
+        "method": "DSS Monte-Carlo surrogate (SIMULATED, 240 replications, seeded); production: the seeded corridor twin for per-route disruption plus the DSS-layer cascade over the segment neighbours"
+      },
+      "resource_feasibility": {
+        "required_resources": {
+          "ambulance_108": 1,
+          "police_patrol": 1
+        },
+        "availability": {
+          "ambulance_108": 1,
+          "police_patrol": 1
+        },
+        "eta_to_scene_sec": 480.0,
+        "feasible": true,
+        "shortfalls": []
+      },
+      "attributes": {
+        "safety_risk_reduction": 0.88,
+        "time_to_effect": 0.5,
+        "resource_cost": 0.5,
+        "public_disruption": 0.667,
+        "cascade_risk": 0.764,
+        "reversibility": 1.0,
+        "affected_population": 0.4,
+        "protocol_compliance": 1.0,
+        "legality": 1.0
+      },
+      "score": {
+        "method": "topsis",
+        "closeness": 0.8555,
+        "rank": 1,
+        "feasible": true
+      },
+      "ethics": {
+        "touches_persons": false,
+        "legal": true,
+        "protocol_ok": true,
+        "irreversible_without_officer": false,
+        "vetoed": false,
+        "veto_reason": null
+      }
+    },
+    {
+      "coa_id": "coa_agg",
+      "kind": "aggressive",
+      "label": "Close carriageway + full diversion + 108 + 2 police units",
+      "actions": [
+        {
+          "verb": "closure",
+          "target_urn": "segment:1035",
+          "params": {},
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "diversion",
+          "target_urn": "segment:1035",
+          "params": {
+            "via": [
+              "Rash Behari Avenue Connector",
+              "Prince Anwar Shah Road"
+            ]
+          },
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "dispatch",
+          "target_urn": "segment:1035",
+          "params": {
+            "agency": "ambulance",
+            "count": 1
+          },
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "dispatch",
+          "target_urn": "segment:1035",
+          "params": {
+            "agency": "police",
+            "count": 2
+          },
+          "requires_officer": true,
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "response_time_to_scene_sec": 480.0,
+        "total_disruption_vehicle_hours": {
+          "mean": 2514.9,
+          "p90": 3566.7,
+          "p90_mean_ratio": 1.418,
+          "replications": 240
+        },
+        "cascade": {
+          "spillover_vehicle_hours": {
+            "mean": 1026.7,
+            "p90": 1467.0
+          },
+          "neighbourhoods_touched": [
+            "Kasba",
+            "Mukundapur",
+            "Ballygunge"
+          ],
+          "parallel_routes_loaded": [
+            "Rash Behari Avenue Connector",
+            "Prince Anwar Shah Road"
+          ],
+          "affected_segment_ids": [
+            1035
+          ]
+        },
+        "emergency_impact": {
+          "ambulance_delay_sec": 180.0,
+          "green_corridor_ok": false
+        },
+        "time_to_effect_sec": 420.0,
+        "event_resolution_prob": 0.97,
+        "method": "DSS Monte-Carlo surrogate (SIMULATED, 240 replications, seeded); production: the seeded corridor twin for per-route disruption plus the DSS-layer cascade over the segment neighbours"
+      },
+      "resource_feasibility": {
+        "required_resources": {
+          "ambulance_108": 1,
+          "police_patrol": 2
+        },
+        "availability": {
+          "ambulance_108": 1,
+          "police_patrol": 1
+        },
+        "eta_to_scene_sec": 480.0,
+        "feasible": false,
+        "shortfalls": [
+          "police_patrol: need 2, 1 free"
+        ]
+      },
+      "attributes": {
+        "safety_risk_reduction": 0.72,
+        "time_to_effect": 0.3,
+        "resource_cost": 0.08,
+        "public_disruption": 0.033,
+        "cascade_risk": 0.316,
+        "reversibility": 0.75,
+        "affected_population": 0.1,
+        "protocol_compliance": 1.0,
+        "legality": 1.0
+      },
+      "score": {
+        "method": "topsis",
+        "closeness": 0.7098,
+        "rank": 5,
+        "feasible": false
+      },
+      "ethics": {
+        "touches_persons": false,
+        "legal": true,
+        "protocol_ok": true,
+        "irreversible_without_officer": false,
+        "vetoed": false,
+        "veto_reason": null
+      }
+    },
+    {
+      "coa_id": "coa_info",
+      "kind": "information",
+      "label": "Verify first: 1 patrol to confirm + ICCC situation check (no identification) + 10-min hold",
+      "actions": [
+        {
+          "verb": "dispatch",
+          "target_urn": "segment:1035",
+          "params": {
+            "agency": "police",
+            "count": 1,
+            "role": "verify"
+          },
+          "requires_officer": true,
+          "reversible": true
+        },
+        {
+          "verb": "request_cctv",
+          "target_urn": "junction:29",
+          "params": {},
+          "requires_officer": false,
+          "reversible": true
+        }
+      ],
+      "predicted_outcome": {
+        "response_time_to_scene_sec": null,
+        "total_disruption_vehicle_hours": {
+          "mean": 22.1,
+          "p90": 25.9,
+          "p90_mean_ratio": 1.171,
+          "replications": 240
+        },
+        "cascade": {
+          "spillover_vehicle_hours": {
+            "mean": 9.0,
+            "p90": 10.6
+          },
+          "neighbourhoods_touched": [],
+          "parallel_routes_loaded": [],
+          "affected_segment_ids": []
+        },
+        "emergency_impact": {
+          "ambulance_delay_sec": 0.0,
+          "green_corridor_ok": true
+        },
+        "time_to_effect_sec": 240.0,
+        "event_resolution_prob": 0.68,
+        "method": "DSS Monte-Carlo surrogate (SIMULATED, 240 replications, seeded); production: the seeded corridor twin for per-route disruption plus the DSS-layer cascade over the segment neighbours"
+      },
+      "resource_feasibility": {
+        "required_resources": {
+          "police_patrol": 1
+        },
+        "availability": {
+          "police_patrol": 1
+        },
+        "eta_to_scene_sec": 420.0,
+        "feasible": true,
+        "shortfalls": []
+      },
+      "attributes": {
+        "safety_risk_reduction": 0.28,
+        "time_to_effect": 0.6,
+        "resource_cost": 0.82,
+        "public_disruption": 0.992,
+        "cascade_risk": 0.994,
+        "reversibility": 1.0,
+        "affected_population": 1.0,
+        "protocol_compliance": 1.0,
+        "legality": 1.0
+      },
+      "score": {
+        "method": "topsis",
+        "closeness": 0.3529,
+        "rank": 2,
+        "feasible": true
+      },
+      "ethics": {
+        "touches_persons": false,
+        "legal": true,
+        "protocol_ok": true,
+        "irreversible_without_officer": false,
+        "vetoed": false,
+        "veto_reason": null
+      }
+    }
+  ],
+  "recommendation": {
+    "ranked_coa_ids": [
+      "coa_std",
+      "coa_info",
+      "coa_base",
+      "coa_min",
+      "coa_agg"
+    ],
+    "top_coa_id": "coa_std",
+    "margin": 0.5026,
+    "sensitivity": {
+      "rank_stability": 1.0,
+      "flips_to": {}
+    },
+    "value_of_information": {
+      "evoi": -0.0105,
+      "L_act_now": 0.36,
+      "L_gather_then_act": 0.3705,
+      "info_cost": 0.2,
+      "advise_gather": false,
+      "info_coa_id": "coa_info",
+      "why": "acting now dominates: EVOI -0.011 <= info cost 0.200 (credibility 0.65 and margin 0.503 already justify committing to the recommended feasible COA)"
+    },
+    "dissent": "Runner-up is coa_info (verify first, closeness 0.353 vs 0.855). It is not chosen because it is dominated on the heavily weighted safety and cascade criteria, with 100% rank stability under weight perturbation. It would flip if the weighting moved toward time to effect, or if an official source (police or ICCC confirmation) changed the credibility. Corroboration is real but within one tier: 2 independent news publishers, no official confirmation yet, so the report stays NEWS-REPORTED. The full-closure COA is resource-infeasible this cycle (police_patrol: need 2, 1 free) and is ranked last and labelled, not hidden.",
+    "decision": "await_officer",
+    "strategy_prior": null,
+    "best_blocked": null,
+    "public_safety_floor": "none"
+  },
+  "provenance": {
+    "feeds": [
+      "google_news_rss"
+    ],
+    "publishers": [
+      "news-a.example",
+      "news-b.example"
+    ],
+    "sources": [
+      {
+        "signal_id": "0eb96824a7f1a77d3e595dcce81aa9545695da28",
+        "source": "google_news_rss",
+        "publisher": "news-a.example",
+        "url": "https://news-a.example/city/em-bypass-report-1",
+        "title": "Car crashes into three vehicles on EM Bypass near Kasba; 3 injured",
+        "event_class": "road_accident",
+        "credibility": 0.6,
+        "fetch_mode": "cached-sample",
+        "role": "primary"
+      },
+      {
+        "signal_id": "c426c9d30859cc1956b2b0f04988cc09f255d311",
+        "source": "google_news_rss",
+        "publisher": "news-b.example",
+        "url": "https://news-b.example/city/em-bypass-report-2",
+        "title": "Multi-vehicle crash on EM Bypass near Kasba leaves three injured",
+        "event_class": "road_accident",
+        "credibility": 0.6,
+        "fetch_mode": "cached-sample",
+        "role": "corroborating"
+      },
+      {
+        "signal_id": "57e643b067c2571c4c77abe675aa3b83038443cf",
+        "source": "google_news_rss",
+        "publisher": "news-b.example",
+        "url": "https://news-b.example/city/em-bypass-report-3",
+        "title": "EM Bypass accident: vehicles collided near Kasba, one lane blocked",
+        "event_class": "road_accident",
+        "credibility": 0.6,
+        "fetch_mode": "cached-sample",
+        "role": "corroborating"
+      },
+      {
+        "signal_id": "119265080a5ac0f3204348d6b74266efb9858c93",
+        "source": "google_news_rss",
+        "publisher": "news-a.example",
+        "url": "https://news-a.example/city/em-bypass-report-4",
+        "title": "Three injured after car rammed vehicles on EM Bypass near Kasba",
+        "event_class": "road_accident",
+        "credibility": 0.6,
+        "fetch_mode": "cached-sample",
+        "role": "corroborating"
+      },
+      {
+        "signal_id": "238ca23c9c0930d3e75c7d72a818062ecc6a86cf",
+        "source": "google_news_rss",
+        "publisher": "news-b.example",
+        "url": "https://news-b.example/city/em-bypass-report-5",
+        "title": "Driver beaten by mob after EM Bypass crash near Kasba",
+        "event_class": "public_conflict",
+        "credibility": 0.6,
+        "fetch_mode": "cached-sample",
+        "role": "corroborating"
+      }
+    ],
+    "sim_run_ids": [],
+    "model_tiers": [],
+    "wargame_method": "surrogate",
+    "brain_degraded": false
+  },
+  "human_gate": {
+    "state": "proposed",
+    "required_role": "duty_officer",
+    "officer": null,
+    "decided_at": null,
+    "audit_ref": null
+  },
+  "labels": [
+    "NEWS-REPORTED",
+    "SIMULATED"
+  ]
+}

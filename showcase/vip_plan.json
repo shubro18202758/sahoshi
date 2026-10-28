@@ -1,0 +1,63 @@
+{
+ "http": 200,
+ "movement_id": "4bd18c52-5d42-40f0-a4d3-01bcb2e5bdd1",
+ "from": "Nabanna (junction 1)",
+ "to": "Kolkata Airport, terminal forecourt (junction 49)",
+ "request": {
+  "origin": [
+   88.3208745,
+   22.5639606
+  ],
+  "destination": [
+   88.4411766,
+   22.6510369
+  ],
+  "vvip_class": "Z",
+  "planned_departure": "2026-10-28T23:44:00+05:30"
+ },
+ "status": "conditional",
+ "event_id": "e013c9bd-8e39-41af-9712-f43ac6005ab3",
+ "routing_tier": "gemma",
+ "confidence": "medium",
+ "primary_route": {
+  "route_id": "mip_cfd56e07",
+  "segment_ids": [
+   1002,
+   1003,
+   1028,
+   1029,
+   1036,
+   1044,
+   1045,
+   1046,
+   1043,
+   1065
+  ],
+  "distance_m": 38517.8,
+  "score": 0.8838,
+  "road_names": [
+   "Grand Trunk Road",
+   "Vidyasagar Setu (NH12, Vidyasagar Flyover)",
+   "AJC Bose Road Flyover",
+   "Maa Flyover",
+   "Eastern Metropolitan Bypass",
+   "Salt Lake Bypass",
+   "Sector V - New Town link",
+   "Biswa Bangla Sarani",
+   "VIP Road (Kazi Nazrul Islam Avenue)",
+   "Airport approach road"
+  ]
+ },
+ "alternates": 4,
+ "decider_pick": {
+  "route_id": "mip_cfd56e07",
+  "confidence": 0.5607,
+  "tier": "decider",
+  "choice": "route_518dc3eb526d",
+  "applied": true,
+  "reason": "strategic tier confirms the tactical primary"
+ },
+ "overall_reasoning": "The primary route is mip_cfd56e07 with a weighted score of 0.8838. The alternate routes are ksp_4a5715de, ksp_eee8ae18, and ksp_fde2cfef with weighted scores of 0.7899, 0.765, and 0.7622 respectively. All routes have at least one lane violation. No fully compliant route: 1 segment(s) below the 4-lane floor for Z (1065). Re-routing around those segments found no connected alternative (1 attempt(s))",
+ "detail": null,
+ "note": "planned only: no escort launched, no approval made; traffic in the plan is SIMULATED"
+}

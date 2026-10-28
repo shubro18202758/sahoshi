@@ -1,0 +1,21 @@
+{
+ "replications": 12,
+ "seed": 202509301,
+ "route_segment_ids": [
+  1061,
+  1060,
+  1058
+ ],
+ "green_corridor_windows": 3,
+ "window_labels": [
+  "ambulance (108) green-corridor window \u2014 Strand Bank Road past Kumartuli",
+  "ambulance (108) green-corridor window \u2014 Bagbazar Street",
+  "ambulance (108) green-corridor window \u2014 Bidhan Sarani to Kolkata Medical College"
+ ],
+ "window_segments": [
+  1061,
+  1060,
+  1058
+ ],
+ "ambulance_delay_sec_mean": 0.0
+}

@@ -1,0 +1,93 @@
+{
+  "chrome": "/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome",
+  "origin": "http://127.0.0.1:5373",
+  "pursuitTitle": "PURSUIT — stolen WB06EM9001 (FIR 4401/2026, Hare Street PS)",
+  "shots": {
+    "pursuit": {
+      "checks": {
+        "flagged-vehicle-live": {
+          "ok": true,
+          "detail": "vehicles feed=? vehicleId=44f24e0b-27cd-4bc0-845b-912edb50b506"
+        },
+        "trace-positions": {
+          "ok": true,
+          "detail": "points=12 source=emulated_anpr"
+        }
+      }
+    },
+    "pursuitTrace": {
+      "checks": {
+        "phase-ready": {
+          "ok": true,
+          "detail": "phase=ready"
+        },
+        "imagery": {
+          "ok": true,
+          "detail": "imagery=photoreal attempt=1"
+        },
+        "entities-rendered": {
+          "ok": true,
+          "detail": "entities=66 layers=[events,traces,enforcement,signals,units,photoreal-3d]"
+        },
+        "live-layer-on": {
+          "ok": true,
+          "detail": "layer=traces liveVehicles=1"
+        },
+        "vehicles-feed-live": {
+          "ok": true,
+          "detail": "vehicles=1"
+        },
+        "live-canvas-nonblank": {
+          "ok": true,
+          "detail": "distinct colours=4715"
+        },
+        "png-nonblank": {
+          "ok": true,
+          "detail": "png colours=8220 opaque=100.0%"
+        }
+      },
+      "file": "showcase_pursuit_trace.png"
+    },
+    "citizen": {
+      "checks": {
+        "advisory-rendered": {
+          "ok": true,
+          "detail": "kicker=\"Your road, next 2 hours\" strip=calm"
+        },
+        "pursuit-not-public": {
+          "ok": true,
+          "detail": "tactical operations stay operator-only (holds.ts PUBLIC_EVENT_KINDS); 4 card(s) by source {\"emulated\":3,\"live\":1}"
+        },
+        "no-plate-on-public-page": {
+          "ok": true,
+          "detail": "none"
+        },
+        "emulated-never-labelled-live": {
+          "ok": true,
+          "detail": "0 emulated card(s) wearing LIVE; 4 card(s) by source {\"emulated\":3,\"live\":1}"
+        },
+        "content-present": {
+          "ok": true,
+          "detail": "body text 6978 chars"
+        },
+        "png-nonblank": {
+          "ok": true,
+          "detail": "png colours=1186 opaque=100.0%"
+        }
+      },
+      "file": "showcase_citizen_advisory.png"
+    }
+  },
+  "operatorGate": "on (signed in)",
+  "pursuitFeed": {
+    "found": true,
+    "traceOk": true,
+    "vehicleId": "44f24e0b-27cd-4bc0-845b-912edb50b506",
+    "points": 12,
+    "source": "emulated_anpr",
+    "centroid": [
+      88.35094850000002,
+      22.577632000000005
+    ]
+  }
+}

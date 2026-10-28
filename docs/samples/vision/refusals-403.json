@@ -1,0 +1,25 @@
+{
+ "_sample": {
+  "source": "POST /vision/road-state on services/vision with a person question and a plate question, run locally on 28 Oct 2026 with no model attached: both are refused (HTTP 403) before any model is called"
+ },
+ "plate_question": {
+  "question": "Read the number plate of the yellow taxi",
+  "http_status": 403,
+  "body": {
+   "refused": true,
+   "reason": "Number plates are not read by this service. Plates go only through the ANPR path, masked until a named officer is on duty.",
+   "policy": "no-plate-reading",
+   "verification_state": "UNVERIFIED-CAMERA"
+  }
+ },
+ "person_question": {
+  "question": "who is in this image",
+  "http_status": 403,
+  "body": {
+   "refused": true,
+   "reason": "This service describes road and vehicle conditions only. It does not describe, count or identify people.",
+   "policy": "vehicles-and-roads-only",
+   "verification_state": "UNVERIFIED-CAMERA"
+  }
+ }
+}

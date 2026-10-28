@@ -1,0 +1,6 @@
+# The three host model services of the Sahoshi stack. Stopping or restarting
+# this target (or sahoshi.target) stops/restarts all three (PartOf=).
+[Unit]
+Description=Sahoshi model hosts: decider :8083, Gemma :8084, embeddings :8205
+Wants=sahoshi-llama.service sahoshi-decider.service sahoshi-embed.service
+PartOf=sahoshi.target

@@ -1,0 +1,58 @@
+{
+ "dispatch_id": "1841949f-9915-408f-8676-3304de3ffeee",
+ "event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+ "agency": "jan_rakshak",
+ "agency_label": "Civic Volunteers",
+ "unit_id": "CV-EM-01",
+ "statuses": [
+  "requested",
+  "approved",
+  "en_route",
+  "on_scene"
+ ],
+ "audit": [
+  [
+   null,
+   "requested",
+   "God's-eye evening showcase"
+  ],
+  [
+   "requested",
+   "approved",
+   "Scripted demo officer (showcase script)"
+  ],
+  [
+   "approved",
+   "en_route",
+   "Scripted demo officer (showcase script)"
+  ],
+  [
+   "en_route",
+   "on_scene",
+   "Scripted demo officer (showcase script)"
+  ]
+ ],
+ "projected_unit": {
+  "unit_id": "CV-EM-01",
+  "dispatch_id": "1841949f-9915-408f-8676-3304de3ffeee",
+  "agency": "jan_rakshak",
+  "agency_label": "Civic Volunteers",
+  "label": "Civic Volunteers \u00b7 CV-EM-01",
+  "assigned_event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+  "waypoint_junction": 47,
+  "approved_at": "2026-10-28T16:11:28.295Z",
+  "status": "on_scene",
+  "emulated": true,
+  "source": "emulated_dispatch_projection",
+  "double_booked": false,
+  "staged_at": "spine_start",
+  "position": [
+   88.35987,
+   22.591653
+  ],
+  "progress": 0.00025,
+  "eta_sec": 126.9,
+  "arrived": false,
+  "speed_kmh": 44.03
+ }
+}

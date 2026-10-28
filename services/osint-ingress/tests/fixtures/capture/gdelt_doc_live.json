@@ -1,0 +1,54 @@
+{
+ "articles": [
+  {
+   "url": "https://news-a.example/city/kolkata/library-wing-opens-at-college-street",
+   "url_mobile": "",
+   "title": "Shri Vimal Fixturebhai inaugurates a public library wing at College Street",
+   "seendate": "20261020T110000Z",
+   "socialimage": "",
+   "domain": "news-a.example",
+   "language": "English",
+   "sourcecountry": "India"
+  },
+  {
+   "url": "https://news-b.example/west-bengal/kolkata/library-plan-gets-borough-nod",
+   "url_mobile": "",
+   "title": "Vimal Fixturebhai's library plan gets a nod from the borough committee",
+   "seendate": "20261020T111500Z",
+   "socialimage": "",
+   "domain": "news-b.example",
+   "language": "English",
+   "sourcecountry": "India"
+  },
+  {
+   "url": "https://news-a.example/city/kolkata/retired-teacher-donates-books-behala",
+   "url_mobile": "",
+   "title": "80-year-old retired teacher donates 500 books to a Behala school",
+   "seendate": "20261020T093000Z",
+   "socialimage": "",
+   "domain": "news-a.example",
+   "language": "English",
+   "sourcecountry": "India"
+  },
+  {
+   "url": "https://news-b.example/bangla/kolkata/new-city-bus-route",
+   "url_mobile": "",
+   "title": "কলকাতায় নতুন সিটি বাস পরিষেবা শুরু",
+   "seendate": "20261020T081500Z",
+   "socialimage": "",
+   "domain": "news-b.example",
+   "language": "Bengali",
+   "sourcecountry": "India"
+  },
+  {
+   "url": "https://news-b.example/hindi/kolkata/new-city-bus-service",
+   "url_mobile": "",
+   "title": "कोलकाता में नई सिटी बस सेवा शुरू",
+   "seendate": "20261020T080000Z",
+   "socialimage": "",
+   "domain": "news-b.example",
+   "language": "Hindi",
+   "sourcecountry": "India"
+  }
+ ]
+}

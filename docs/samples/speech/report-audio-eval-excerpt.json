@@ -1,0 +1,72 @@
+{
+ "_sample": {
+  "source": "services/speech/eval/results.json (api_end_to_end), the real ASR model through POST /speech/report on 60 synthetic clips, 28 Oct 2026",
+  "trimmed": "summary plus the first 3 of 60 rows",
+  "note": "the evaluation audio is synthetic (the service's own TTS); nobody was recorded"
+ },
+ "summary": {
+  "n": 60,
+  "wer": 0.1145,
+  "cer": 0.0264,
+  "wer_folded": 0.1051,
+  "cer_folded": 0.0218,
+  "place_accuracy": 0.883,
+  "kind_accuracy": 1.0,
+  "asr_seconds_median": 1.542,
+  "latency_s_median": 1.552,
+  "all_unverified_field": true
+ },
+ "rows": [
+  {
+   "id": "p01",
+   "voice": "female",
+   "ref": "গড়িয়াহাট মোড়ে হাঁটু জল, বাস আটকে আছে।",
+   "hyp": "গড়িয়া হাট মোড়ে হাঁটু জল বাস আটকে আছে",
+   "asr_s": 1.293,
+   "latency_s": 1.324,
+   "place": "gariahat",
+   "match_score": 0.96,
+   "expected_place": "gariahat",
+   "place_ok": true,
+   "kind": "waterlogging",
+   "expected_kind": "waterlogging",
+   "kind_ok": true,
+   "severity": "medium",
+   "verification_state": "UNVERIFIED-FIELD"
+  },
+  {
+   "id": "p02",
+   "voice": "female",
+   "ref": "ঠনঠনিয়ায় কোমর জল জমেছে, গাড়ি চলছে না।",
+   "hyp": "থনথনিয়ায় কোমর জল জমেছে গাড়ি চলছে না",
+   "asr_s": 1.365,
+   "latency_s": 1.384,
+   "place": "thanthania",
+   "match_score": 1.0,
+   "expected_place": "thanthania",
+   "place_ok": true,
+   "kind": "waterlogging",
+   "expected_kind": "waterlogging",
+   "kind_ok": true,
+   "severity": "high",
+   "verification_state": "UNVERIFIED-FIELD"
+  },
+  {
+   "id": "p03",
+   "voice": "female",
+   "ref": "ধর্মতলায় মিছিল চলছে, রাস্তা এক লেন খোলা।",
+   "hyp": "ধর্মতলায় মিছিল চলছে রাস্তা এক লেম খোলা",
+   "asr_s": 1.506,
+   "latency_s": 1.518,
+   "place": "esplanade",
+   "match_score": 1.0,
+   "expected_place": "esplanade",
+   "place_ok": true,
+   "kind": "procession",
+   "expected_kind": "procession",
+   "kind_ok": true,
+   "severity": "low",
+   "verification_state": "UNVERIFIED-FIELD"
+  }
+ ]
+}

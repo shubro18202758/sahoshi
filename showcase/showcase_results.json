@@ -1,0 +1,557 @@
+{
+  "flagship": {
+    "name": "God's-eye evening over Kolkata",
+    "story": "Durga Puja Navami night in North Kolkata + a cloudburst at high tide + a stolen vehicle reported, one evening, one live stack \u2014 waterlogging at Thanthania with the hydro proposals, the ambulance (108) green corridor across Howrah Bridge, the pursuit chain (evidence, never a fine), the Civic Volunteers dispatch, the city signal-policy guard and a VIP movement Nabanna -> Kolkata Airport planned only, end to end. Every scenario SIMULATED, every feed stand-in EMULATED.",
+    "composition_use_cases": [
+      {
+        "use_case_id": "durga_puja_north",
+        "run_id": 11,
+        "status": "completed",
+        "delivery": {
+          "frame": 807,
+          "total": 807,
+          "delivered": 807,
+          "failed": 0,
+          "skipped": 0,
+          "late": 0
+        },
+        "event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332"
+      },
+      {
+        "use_case_id": "cloudburst_high_tide",
+        "run_id": 12,
+        "status": "completed",
+        "delivery": {
+          "delivered": 377
+        },
+        "event_id": "04c28fd6-cae4-55aa-9f50-a19a1c986150"
+      },
+      {
+        "use_case_id": "watchlist_anpr_sweep",
+        "seed": 20666977,
+        "run_id": 13,
+        "status": "completed",
+        "delivery": {
+          "delivered": 581
+        },
+        "event_id": "6d4366c0-fe96-5b65-9bf8-b89cd21e0eae"
+      }
+    ],
+    "ambulance_route": "Howrah Bridge -> Strand Bank Road (Kumartuli) -> Bagbazar Street -> Bidhan Sarani -> Kolkata Medical College (1001->1061->1060->1058)",
+    "closure_policy": {
+      "closure_type": "signal_hold",
+      "advance_closure_sec": 45
+    }
+  },
+  "run_scoped_ids": {
+    "flagship_run_id": 11,
+    "flagship_event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+    "cloudburst_run_id": 12,
+    "cloudburst_event_id": "04c28fd6-cae4-55aa-9f50-a19a1c986150",
+    "sweep_run_id": 13,
+    "sweep_event_id": "6d4366c0-fe96-5b65-9bf8-b89cd21e0eae",
+    "pursuit_event_id": "6f974d65-b676-4af1-b62a-ce7d8e7de894",
+    "pursuit_authorising_recommendation_id": "148f8eca-1d37-4159-873c-06af84a9a185",
+    "civic_volunteers_dispatch_id": "1841949f-9915-408f-8676-3304de3ffeee",
+    "vip_movement_id": "4bd18c52-5d42-40f0-a4d3-01bcb2e5bdd1",
+    "vip_plan_event_id": "e013c9bd-8e39-41af-9712-f43ac6005ab3",
+    "vehicle_id": "44f24e0b-27cd-4bc0-845b-912edb50b506"
+  },
+  "scripted_pursuit_closed": true,
+  "scripted_vip_plan_closed": true,
+  "approvals": {
+    "officer": "Scripted demo officer (showcase script)",
+    "note": "this script runs unattended: the two approvals it makes (the Civic Volunteers dispatch, the sighting that authorises the pursuit) are recorded under this officer label; in a live demo a signed-in human approves on /ops (scripts/demo_reset.sh stops at PENDING)"
+  },
+  "signal_policy_writer": {
+    "recreated_for_this_run": false,
+    "pre_run_value": null,
+    "restored_to_pre_run_value": null,
+    "note": "already on before the run (left as found)"
+  },
+  "stack": {
+    "oracle": "http://127.0.0.1:8191",
+    "emulator": "http://127.0.0.1:8190",
+    "deck": "http://127.0.0.1:5373",
+    "compose_project": "sahoshi",
+    "postgis_container": "sahoshi-postgis"
+  },
+  "event_types": [
+    "mass_gathering",
+    "pandal_crowd_spill",
+    "goods_vehicle_restriction",
+    "cloudburst_high_tide",
+    "waterlogging",
+    "hydro_proposals",
+    "ambulance_green_corridor",
+    "stolen_vehicle_report",
+    "anpr_sweep",
+    "crime_incident",
+    "stolen_sighting_evidence",
+    "officer_approval",
+    "vehicle_pursuit",
+    "interception_plan",
+    "civic_volunteers_dispatch",
+    "signal_band_plan_guard",
+    "signal_timing_twin_proposal",
+    "vip_movement_plan"
+  ],
+  "pursuit_chain": [
+    {
+      "step": 1,
+      "name": "plate_earmarked",
+      "detail": "WB06EM9001 flagged (stolen_vehicle_fir, FIR 4401/2026, Hare Street PS); earmark_id 6d36d72d-bf7f-4c8d-95bb-0b6f9cf49c08",
+      "evidence": "POST /api/v1/vehicles/WB06EM9001/earmark"
+    },
+    {
+      "step": 2,
+      "name": "anpr_camera_sightings",
+      "detail": "4 emulated reads this run on cameras ['EM-CAM-01', 'EM-CAM-02', 'EM-CAM-03', 'EM-CAM-04'] at [105.0, 95.0, 109.0, 103.0] km/h (matched_plate_hit=stolen_vehicle, source=emulated_anpr)",
+      "evidence": "GET /api/v1/vehicles/44f24e0b-27cd-4bc0-845b-912edb50b506/sightings"
+    },
+    {
+      "step": 3,
+      "name": "stolen_sighting_evidence",
+      "detail": "4 R_STOLEN_SIGHTING (evidence only) for this run's reads; e-challan withheld (penal rules that would have fired: ['R_SPD_SEGMENT']); 0 penal recommendations; chosen: stolen vehicle (FIR 4401/2026) sighted at EM-CAM-04 \u2014 e-challan withheld, vehicle reported stolen",
+      "evidence": "POST /api/v1/enforcement/evaluate x4 -> recommendation 148f8eca-1d37-4159-873c-06af84a9a185 PENDING"
+    },
+    {
+      "step": 4,
+      "name": "officer_pursuit_authorisation",
+      "detail": "approved by Scripted demo officer (showcase script) \u2014 'pursuit authorised on a reported-stolen vehicle (evidence, no fine)'; no pending e-challan on the plate to probe in this store",
+      "evidence": "POST /api/v1/enforcement/recommendations/{id}/decision (audit tail append-only; a penal approval on a reported-stolen vehicle \u2192 409)"
+    },
+    {
+      "step": 5,
+      "name": "pursuit_event",
+      "detail": "PURSUIT \u2014 stolen WB06EM9001 (FIR 4401/2026, Hare Street PS) [planning; closed when the run ended: cancelled by the scripted officer]",
+      "evidence": "POST /api/v1/events vehicle_pursuit 6f974d65-b676-4af1-b62a-ce7d8e7de894 (metadata vehicle_id+recommendation_id)"
+    },
+    {
+      "step": 6,
+      "name": "interception_and_live_trace",
+      "detail": "10 choke junctions ranked (top 7); trace 12 positions source=emulated_anpr",
+      "evidence": "GET /api/v1/events/6f974d65-b676-4af1-b62a-ce7d8e7de894/interception-plan + GET /api/v1/vehicles/44f24e0b-27cd-4bc0-845b-912edb50b506/trace (canvas vehicle-traces layer)"
+    }
+  ],
+  "stolen_vehicle_rule": {
+    "rule": "C-N: a reported-stolen vehicle's reads are evidence only \u2014 no e-challan for the registered owner; approving a penal recommendation on it is refused (409)",
+    "evidence_recs_this_run": 4,
+    "penal_recs_this_run": 0,
+    "withheld_rules": [
+      "R_SPD_SEGMENT",
+      "R_SPD_SEGMENT",
+      "R_SPD_SEGMENT",
+      "R_SPD_SEGMENT"
+    ],
+    "penal_approval_probe": {
+      "exercised": false,
+      "why": "no pending e-challan recommendation on the plate in this store (every read since the FIR is evidence-only)"
+    }
+  },
+  "counts": {
+    "decisions_logged_audit_rows_this_run": 37,
+    "situation_log_rows_this_run": 27,
+    "param_override_rows_this_run": 10,
+    "band_transitions_total": 1,
+    "band_transitions_this_run": 1,
+    "bands": "AMBER:3,RED:24",
+    "green_corridor_windows": 3,
+    "ambulance_delay_escalations_this_run": 5,
+    "signal_plan_shifts_committed": 0,
+    "signal_policy_refusals": 1,
+    "twin_timing_proposals": 1,
+    "hydro_live_proposals": 0,
+    "hydro_hindsight_proposals": {
+      "ambulance_window": 60,
+      "live_wire_hazard": 60,
+      "public_advisory_draft": 1,
+      "waterlogging_reroute": 60
+    }
+  },
+  "waterlogging": {
+    "segment": "Bidhan Sarani at Thanthania (segment 1058)",
+    "cloudburst_twin": {
+      "http": 200,
+      "replications": 10,
+      "calibrated": false,
+      "waterlogging_events": 13,
+      "on_segment": [
+        "stochastic waterlogging",
+        "Thanthania (Bidhan Sarani) \u2014 low-lying stretch waterlogged; water around lamp posts (live-wire risk)"
+      ],
+      "labels_sample": [
+        "stochastic waterlogging",
+        "Thanthania (Bidhan Sarani) \u2014 low-lying stretch waterlogged; water around lamp posts (live-wire risk)",
+        "Ultadanga \u2014 water collects on Bidhannagar Road",
+        "VIP Road at Ultadanga \u2014 water on the approach"
+      ],
+      "emergency_windows": 0,
+      "label": "SIMULATED scenario; rain, tide, pumps and spread MODELLED"
+    },
+    "live_nowcast": {
+      "http": 200,
+      "labels": {
+        "rain": "LIVE",
+        "tide": "MODELLED (approximate)",
+        "susceptibility": "MODELLED",
+        "pumps": "EMULATED",
+        "risk": "MODELLED"
+      },
+      "rain_now_mm_h": 0.0,
+      "rain_source": "Open-Meteo forecast API, minutely_15 precipitation (model nowcast, not a gauge)",
+      "counts_by_class": {
+        "0": 65,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "segment": {
+        "risk_class": 0,
+        "risk_name": "dry",
+        "expected_depth_band": "0\u20132 cm",
+        "lead_time_min": 0,
+        "drivers": [
+          "pumps",
+          "rain",
+          "susceptibility",
+          "tide"
+        ]
+      },
+      "proposals": 0,
+      "proposals_on_segment": []
+    },
+    "hindsight_replay_2025_09_23": {
+      "http": 200,
+      "event": "2025-09-23",
+      "title": "Kolkata deluge, 22\u201323 September 2025",
+      "label": "HINDSIGHT \u2014 the observed rain used as if it had been a perfect nowcast",
+      "at_ist": "2025-09-23T02:00:00+05:30",
+      "alipore_window_total_mm": 248.8,
+      "flagged_segments": 60,
+      "segment": {
+        "road_name": "Bidhan Sarani",
+        "peak_class": 2,
+        "peak_band": "10\u201330 cm",
+        "peak_depth_cm": 23.1,
+        "first_class1_ist": "2025-09-23 02:15",
+        "first_class2_ist": "2025-09-23 03:30",
+        "peak_at_ist": "2025-09-23 05:30"
+      },
+      "proposal_counts": {
+        "ambulance_window": 60,
+        "live_wire_hazard": 60,
+        "public_advisory_draft": 1,
+        "waterlogging_reroute": 60
+      },
+      "proposal_kinds": [
+        "ambulance_window",
+        "live_wire_hazard",
+        "public_advisory_draft",
+        "waterlogging_reroute"
+      ],
+      "proposal_examples": [
+        "Gariahat crossing (Rash Behari Avenue): waterlogging risk 3 (> 30 cm), deep water in about 45 min; no detour on the city network that avoids flagged roads \u2014 propose closing to small vehicles with officer judgement on site.",
+        "Ambulance (108) note \u2014 Gariahat crossing (Rash Behari Avenue): passable for about 45 min more; no detour avoiding flagged roads.",
+        "Live-wire hazard \u2014 Gariahat crossing (Rash Behari Avenue): waterlogging risk 3 (> 30 cm). Propose asking the power utility (CESC / WBSEDCL) to inspect and, where needed, isolate street-light and overhead supply along this road."
+      ],
+      "every_proposal_proposed": true,
+      "labels": [
+        "HINDSIGHT",
+        "MODELLED"
+      ]
+    },
+    "note": "three sources, never blended: the SIMULATED cloudburst through the twin (MODELLED), the LIVE Open-Meteo nowcast (a dry night proposes nothing), and the 23 Sep 2025 storm replay (HINDSIGHT, MODELLED). Every proposal waits for a named officer."
+  },
+  "signal_timing_twin": {
+    "http": 200,
+    "junction_ids": [
+      20
+    ],
+    "recommendation": "propose",
+    "candidates_evaluated": 14,
+    "labels": {
+      "result": "MODELLED",
+      "demand": "EMULATED",
+      "note": "A traffic model (cell-transmission twin), not measured traffic."
+    },
+    "proposal_id": "twin-f774c3ee3fed",
+    "kind": "extend_green",
+    "state": null,
+    "summary": "Give the main-road (through) movement at Rashbehari crossing 6 s more green for 30 min (taken from the cross-street movement; cycle 110 s unchanged).",
+    "summary_bn": "\u09b0\u09be\u09b8\u09ac\u09bf\u09b9\u09be\u09b0\u09c0 \u09ae\u09cb\u09a1\u09bc-\u098f \u09ae\u09c2\u09b2 \u09b0\u09be\u09b8\u09cd\u09a4\u09be\u09b0 \u09b8\u09bf\u0997\u09a8\u09cd\u09af\u09be\u09b2\u09c7 30 \u09ae\u09bf\u09a8\u09bf\u099f\u09c7\u09b0 \u099c\u09a8\u09cd\u09af 6 \u09b8\u09c7\u0995\u09c7\u09a8\u09cd\u09a1 \u09ac\u09c7\u09b6\u09bf \u09b8\u09ac\u09c1\u099c (\u0986\u09a1\u09bc\u09be\u0986\u09a1\u09bc\u09bf \u09b0\u09be\u09b8\u09cd\u09a4\u09be\u09b0 \u09b8\u09ae\u09af\u09bc \u09a5\u09c7\u0995\u09c7 \u09a8\u09c7\u0993\u09af\u09bc\u09be; \u09b8\u09be\u0987\u0995\u09c7\u09b2 110 \u09b8\u09c7\u0995\u09c7\u09a8\u09cd\u09a1 \u0985\u09aa\u09b0\u09bf\u09ac\u09b0\u09cd\u09a4\u09bf\u09a4)\u0964",
+    "duration_min": 30.0,
+    "detail": null
+  },
+  "vip_movement": {
+    "plan": {
+      "http": 200,
+      "movement_id": "4bd18c52-5d42-40f0-a4d3-01bcb2e5bdd1",
+      "from": "Nabanna (junction 1)",
+      "to": "Kolkata Airport, terminal forecourt (junction 49)",
+      "request": {
+        "origin": [
+          88.3208745,
+          22.5639606
+        ],
+        "destination": [
+          88.4411766,
+          22.6510369
+        ],
+        "vvip_class": "Z",
+        "planned_departure": "2026-10-28T23:44:00+05:30"
+      },
+      "status": "conditional",
+      "event_id": "e013c9bd-8e39-41af-9712-f43ac6005ab3",
+      "routing_tier": "gemma",
+      "confidence": "medium",
+      "primary_route": {
+        "route_id": "mip_cfd56e07",
+        "segment_ids": [
+          1002,
+          1003,
+          1028,
+          1029,
+          1036,
+          1044,
+          1045,
+          1046,
+          1043,
+          1065
+        ],
+        "distance_m": 38517.8,
+        "score": 0.8838,
+        "road_names": [
+          "Grand Trunk Road",
+          "Vidyasagar Setu (NH12, Vidyasagar Flyover)",
+          "AJC Bose Road Flyover",
+          "Maa Flyover",
+          "Eastern Metropolitan Bypass",
+          "Salt Lake Bypass",
+          "Sector V - New Town link",
+          "Biswa Bangla Sarani",
+          "VIP Road (Kazi Nazrul Islam Avenue)",
+          "Airport approach road"
+        ]
+      },
+      "alternates": 4,
+      "decider_pick": {
+        "route_id": "mip_cfd56e07",
+        "confidence": 0.5607,
+        "tier": "decider",
+        "choice": "route_518dc3eb526d",
+        "applied": true,
+        "reason": "strategic tier confirms the tactical primary"
+      },
+      "overall_reasoning": "The primary route is mip_cfd56e07 with a weighted score of 0.8838. The alternate routes are ksp_4a5715de, ksp_eee8ae18, and ksp_fde2cfef with weighted scores of 0.7899, 0.765, and 0.7622 respectively. All routes have at least one lane violation. No fully compliant route: 1 segment(s) below the 4-lane floor for Z (1065). Re-routing around those segments found no connected alternative (1 attempt(s))",
+      "detail": null,
+      "note": "planned only: no escort launched, no approval made; traffic in the plan is SIMULATED"
+    },
+    "closed_after_run": true,
+    "note": "planned only: no escort launched, no approval made"
+  },
+  "signal_policy_guard": {
+    "ruling": "guard-fired + fully-auditable decision = PASS for the band->plan element; signal_plan_shifts counts COMMITTED writes only",
+    "twin_calibration_replay": {
+      "status": "no_data",
+      "reason": "no traffic.hourly_aggregates rows in window (no field observations)",
+      "window_start": "2026-10-25T21:41:28+05:30",
+      "window_end": "2026-10-28T21:41:28+05:30",
+      "n_observations": 0,
+      "speed_mae_kmh": null,
+      "mae_tolerance_kmh": null,
+      "calibrated": false
+    },
+    "city_band_live": "RED",
+    "operator_apply": {
+      "http": 409,
+      "band": "RED",
+      "applied": false,
+      "reason": "shadow_eval_failed_closed",
+      "planned_junctions": [
+        12,
+        14,
+        18,
+        19,
+        20,
+        33
+      ],
+      "shadow_eval": {
+        "status": "unavailable",
+        "detail": "twin_not_calibrated",
+        "baseline_disruption_vh": 58.9061,
+        "candidate_disruption_vh": 58.9061
+      }
+    },
+    "last_plan_auditable": {
+      "band": "RED",
+      "planned_junctions": [
+        12,
+        14,
+        18,
+        19,
+        20,
+        33
+      ],
+      "shadow_eval": {
+        "status": "unavailable",
+        "detail": "twin_not_calibrated",
+        "baseline_disruption_vh": 58.9061,
+        "candidate_disruption_vh": 58.9061
+      },
+      "event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332"
+    },
+    "refusal_reason": "shadow_eval_failed_closed: twin_not_calibrated (replay no_data: 0 field hourly aggregates in the last 72 h (no traffic.hourly_aggregates rows in window (no field observations)); the twin calibrates on REAL field observations only)"
+  },
+  "civic_volunteers": {
+    "dispatched": true,
+    "agency_code": "jan_rakshak",
+    "agency_label": "Civic Volunteers",
+    "unit": "CV-EM-01",
+    "waypoint_junction": 47,
+    "spillover": "Bagbazar Sarbojanin pandal crowd on Bagbazar Street (segment 1060)",
+    "statuses": [
+      "requested",
+      "approved",
+      "en_route",
+      "on_scene"
+    ],
+    "audit": [
+      [
+        null,
+        "requested",
+        "God's-eye evening showcase"
+      ],
+      [
+        "requested",
+        "approved",
+        "Scripted demo officer (showcase script)"
+      ],
+      [
+        "approved",
+        "en_route",
+        "Scripted demo officer (showcase script)"
+      ],
+      [
+        "en_route",
+        "on_scene",
+        "Scripted demo officer (showcase script)"
+      ]
+    ],
+    "projected_unit": {
+      "unit_id": "CV-EM-01",
+      "dispatch_id": "1841949f-9915-408f-8676-3304de3ffeee",
+      "agency": "jan_rakshak",
+      "agency_label": "Civic Volunteers",
+      "label": "Civic Volunteers \u00b7 CV-EM-01",
+      "assigned_event_id": "a25c0086-2d12-5c98-82b9-ba18430e4332",
+      "waypoint_junction": 47,
+      "approved_at": "2026-10-28T16:11:28.295Z",
+      "status": "on_scene",
+      "emulated": true,
+      "source": "emulated_dispatch_projection",
+      "double_booked": false,
+      "staged_at": "spine_start",
+      "position": [
+        88.35987,
+        22.591653
+      ],
+      "progress": 0.00025,
+      "eta_sec": 126.9,
+      "arrived": false,
+      "speed_kmh": 44.03
+    }
+  },
+  "ambulance_green_corridor": {
+    "escalation_decisions": [
+      {
+        "label": "window_opening",
+        "effective_class": "AMBER",
+        "transitioned": false,
+        "previous_class": "AMBER",
+        "escalation": {
+          "escalate": false,
+          "level": "NONE",
+          "reasons": [],
+          "handoff": "none"
+        },
+        "param_source": "baseline"
+      },
+      {
+        "label": "escalation_peak",
+        "effective_class": "RED",
+        "transitioned": true,
+        "previous_class": "AMBER",
+        "escalation": {
+          "escalate": true,
+          "level": "TAKEOVER",
+          "reasons": [
+            "AMBULANCE_DELAY_SEVERE"
+          ],
+          "handoff": "operator"
+        },
+        "param_source": "baseline",
+        "confirm_attempts": 2,
+        "confirm_trail": [
+          {
+            "attempt": 1,
+            "effective_class": "AMBER",
+            "transitioned": false
+          },
+          {
+            "attempt": 2,
+            "effective_class": "RED",
+            "transitioned": true
+          }
+        ]
+      }
+    ],
+    "audit_rows_this_run": 5,
+    "twin_windows": 3,
+    "window_labels": [
+      "ambulance (108) green-corridor window \u2014 Strand Bank Road past Kumartuli",
+      "ambulance (108) green-corridor window \u2014 Bagbazar Street",
+      "ambulance (108) green-corridor window \u2014 Bidhan Sarani to Kolkata Medical College"
+    ]
+  },
+  "band_transitions": {
+    "transitions": [
+      {
+        "n": 4,
+        "previous_class": "AMBER",
+        "effective_class": "RED",
+        "observed_class": "RED",
+        "situation_code": "none:GRIDLOCK:STORM:EXTREME",
+        "transitioned": true,
+        "observed_at": "2026-10-28T16:11:28.09167+00:00"
+      }
+    ],
+    "released_after_completion": true,
+    "city_band_after": "AMBER",
+    "note": "read from adaptive.situation_log (transitioned rows of the flagship event); the situation engine releases a completed event at its next tick, so it no longer holds the city band"
+  },
+  "injection": {
+    "active_movements_feed_reflected_event": true,
+    "active_movements_feed_reflected_cloudburst": true,
+    "cloudburst_event_row": "emergency_evacuation completed",
+    "event_row": {
+      "event_kind": "mass_gathering",
+      "protection_class": "none",
+      "phases": 1
+    },
+    "sweep_event_kind": "crime_incident"
+  },
+  "screenshots": [
+    "showcase_citizen_advisory.png",
+    "showcase_gods_eye_city.png",
+    "showcase_pursuit_trace.png"
+  ],
+  "screenshot_proofs": {
+    "city3d_nonblank": true,
+    "pursuit_citizen_nonblank": true,
+    "method": "SwiftShader software WebGL; live-canvas distinct-colour readback + saved-PNG reload decode (Chrome as decoder), >=8 distinct colours"
+  },
+  "failed_assertions": [],
+  "passed": true,
+  "generated_at_utc": "2026-10-28T16:15:55Z"
+}

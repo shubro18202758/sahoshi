@@ -1,0 +1,186 @@
+{
+ "schema": "sahoshi.speech-eval/1",
+ "note": "Short Kolkata field-report phrases in Bengali, written for this evaluation. Place ids are landmarks.json ids. The audio for the round-trip is synthesized (see RESULTS.md); no person was recorded.",
+ "phrases": [
+  {
+   "id": "p01",
+   "text": "গড়িয়াহাট মোড়ে হাঁটু জল, বাস আটকে আছে।",
+   "place": "gariahat",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p02",
+   "text": "ঠনঠনিয়ায় কোমর জল জমেছে, গাড়ি চলছে না।",
+   "place": "thanthania",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p03",
+   "text": "ধর্মতলায় মিছিল চলছে, রাস্তা এক লেন খোলা।",
+   "place": "esplanade",
+   "kind": "procession"
+  },
+  {
+   "id": "p04",
+   "text": "শিয়ালদহ স্টেশনের সামনে প্রচণ্ড যানজট।",
+   "place": "sealdah",
+   "kind": "jam"
+  },
+  {
+   "id": "p05",
+   "text": "উল্টোডাঙা মোড়ে বড় গাছ পড়ে রাস্তা বন্ধ।",
+   "place": "ultadanga",
+   "kind": "tree_fall"
+  },
+  {
+   "id": "p06",
+   "text": "রুবি মোড়ে দুটো গাড়ির ধাক্কা, একজন আহত।",
+   "place": "ruby",
+   "kind": "accident"
+  },
+  {
+   "id": "p07",
+   "text": "পার্ক স্ট্রিট মোড়ে বিদ্যুতের তার ছিঁড়ে রাস্তায় পড়ে আছে।",
+   "place": "park_street",
+   "kind": "live_wire"
+  },
+  {
+   "id": "p08",
+   "text": "বাগবাজারে একটা দোকানে আগুন লেগেছে, দমকল আসছে।",
+   "place": "bagbazar",
+   "kind": "fire"
+  },
+  {
+   "id": "p09",
+   "text": "হাওড়া ব্রিজে একটা বাস খারাপ হয়ে দাঁড়িয়ে আছে, লম্বা লাইন।",
+   "place": "howrah_bridge",
+   "kind": "jam"
+  },
+  {
+   "id": "p10",
+   "text": "মৌলালির কাছে রাস্তা অবরোধ চলছে।",
+   "place": "moulali",
+   "kind": "blockade"
+  },
+  {
+   "id": "p11",
+   "text": "বাবুঘাটে বিসর্জনের শোভাযাত্রা, গাড়ি ধীরে চলছে।",
+   "place": "babughat",
+   "kind": "procession"
+  },
+  {
+   "id": "p12",
+   "text": "চিংড়িঘাটায় জল জমেছে, বাইপাসে গাড়ির লম্বা লাইন।",
+   "place": "chingrighata",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p13",
+   "text": "শ্যামবাজার পাঁচ মাথার মোড়ে যানজট, সিগন্যাল কাজ করছে না।",
+   "place": "shyambazar",
+   "kind": "jam"
+  },
+  {
+   "id": "p14",
+   "text": "কালীঘাটে গোড়ালি জল, গাড়ি চলছে।",
+   "place": "kalighat",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p15",
+   "text": "টালিগঞ্জ মোড়ে একটা লরি উল্টে গেছে।",
+   "place": "tollygunge",
+   "kind": "accident"
+  },
+  {
+   "id": "p16",
+   "text": "বেহালা চৌরাস্তায় গাছের ডাল ভেঙে পড়েছে, একদিকের রাস্তা বন্ধ।",
+   "place": "behala_chowrasta",
+   "kind": "tree_fall"
+  },
+  {
+   "id": "p17",
+   "text": "তারাতলা মোড়ে জল জমে আছে, বাস আটকে।",
+   "place": "taratala",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p18",
+   "text": "খিদিরপুরে কন্টেনার লরির জন্য বিশাল জ্যাম।",
+   "place": "kidderpore",
+   "kind": "jam"
+  },
+  {
+   "id": "p19",
+   "text": "সেক্টর ফাইভে অফিস ছুটির পর গাড়ি নড়ছে না, প্রচণ্ড যানজট।",
+   "place": "sector_v",
+   "kind": "jam"
+  },
+  {
+   "id": "p20",
+   "text": "ভিআইপি রোডে কেষ্টপুরের কাছে দুর্ঘটনা, একটা বাইক পড়ে গেছে।",
+   "place": "kestopur",
+   "kind": "accident"
+  },
+  {
+   "id": "p21",
+   "text": "মাঝেরহাট ব্রিজের নিচে হাঁটু জল।",
+   "place": "majerhat",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p22",
+   "text": "হাজরা মোড়ে ল্যাম্পপোস্ট থেকে খোলা তার ঝুলছে।",
+   "place": "hazra",
+   "kind": "live_wire"
+  },
+  {
+   "id": "p23",
+   "text": "রাসবিহারী মোড়ে মিছিলের জন্য রাস্তা বন্ধ।",
+   "place": "rashbehari",
+   "kind": "procession"
+  },
+  {
+   "id": "p24",
+   "text": "পার্ক সার্কাস সাত মাথার মোড়ে জল জমেছে।",
+   "place": "park_circus",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p25",
+   "text": "ইডেন গার্ডেন্সে খেলা শেষ, বাইরে প্রচণ্ড যানজট।",
+   "place": "eden_gardens",
+   "kind": "jam"
+  },
+  {
+   "id": "p26",
+   "text": "এক্সাইড মোড়ে একটা ট্যাক্সি আর বাসের সংঘর্ষ।",
+   "place": "exide",
+   "kind": "accident"
+  },
+  {
+   "id": "p27",
+   "text": "নিউ টাউনে বিশ্ব বাংলা সরণিতে গাছ উপড়ে পড়েছে।",
+   "place": "biswa_bangla_sarani",
+   "kind": "tree_fall"
+  },
+  {
+   "id": "p28",
+   "text": "বালিগঞ্জ ফাঁড়িতে কোমর সমান জল, গাড়ি ডুবে গেছে।",
+   "place": "ballygunge",
+   "kind": "waterlogging"
+  },
+  {
+   "id": "p29",
+   "text": "কলেজ স্কোয়্যারে প্যান্ডেলের সামনে যানজট।",
+   "place": "college_square",
+   "kind": "jam"
+  },
+  {
+   "id": "p30",
+   "text": "সায়েন্স সিটির কাছে বাইপাসে জল জমেছে, এক লেন বন্ধ।",
+   "place": "science_city",
+   "kind": "waterlogging"
+  }
+ ]
+}
