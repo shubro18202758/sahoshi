@@ -89,7 +89,9 @@ class TestHealthShape:
             # Hermetic fixture: nothing serves the model ports, so both tiers
             # report unreachable and the overall status is degraded.
             assert data["status"] == "degraded"
-            assert data["strategic_tier"]["model"] == "pplx-decider-v1-27b"
+            from convoy_brain.config import DECIDER_MODEL_ID
+
+            assert data["strategic_tier"]["model"] == DECIDER_MODEL_ID
             assert data["strategic_tier"]["model_host"] == "unreachable"
             # Tier-0 gate wiring: on by default; the env kill switch flips it.
             assert data["strategic_tier"]["tier0_cache"] == "enabled"

@@ -200,7 +200,7 @@ export class ChatSession {
 	}
 }
 
-/** "decider:pplx-decider-v1-27b" → {tier:'decider', model:'pplx-…'}. */
+/** "decider:pplx-decider-v1.2" → {tier:'decider', model:'pplx-…'}. */
 export function parseTier(entry: string): { tier: string; model: string | null } {
 	const i = entry.indexOf(':');
 	return i < 0 ? { tier: entry, model: null } : { tier: entry.slice(0, i), model: entry.slice(i + 1) || null };

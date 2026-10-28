@@ -296,7 +296,7 @@ export interface ChatCitation {
 /** done.data (C-D) — every field degrades to empty on older brains. */
 export interface ChatDone {
 	sessionId: string | null;
-	/** e.g. "decider:pplx-decider-v1-27b", "gemma:<served model>", "heuristic". */
+	/** e.g. "decider:pplx-decider-v1.2", "gemma:<served model>", "heuristic". */
 	tiersUsed: string[];
 	operatorAlerts: string[];
 	degraded: boolean;

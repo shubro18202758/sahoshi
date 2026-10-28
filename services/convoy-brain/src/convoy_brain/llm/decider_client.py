@@ -1,4 +1,4 @@
-"""Strategic-tier client — pplx-decider-v1-27b behind the model-host API.
+"""Strategic-tier client — the decider (pplx-decider-v1.2) behind the model-host API.
 
 Contract C1 surface:
 
@@ -29,7 +29,12 @@ from typing import Any
 import httpx
 import structlog
 
-from convoy_brain.config import DECIDER_HEALTH_TIMEOUT_SEC, DECIDE_TIMEOUT_SEC, DEFAULT_MODEL_HOST_URL
+from convoy_brain.config import (
+    DECIDE_TIMEOUT_SEC,
+    DECIDER_HEALTH_TIMEOUT_SEC,
+    DECIDER_MODEL_ID,
+    DEFAULT_MODEL_HOST_URL,
+)
 from convoy_brain.http_guard import assert_platform_service_url
 
 logger = structlog.get_logger(__name__)
@@ -37,6 +42,15 @@ logger = structlog.get_logger(__name__)
 MAX_QUESTIONS_PER_DECIDE = 6
 MAX_OPTIONS_PER_CHOICE = 249
 VALID_QUESTION_TYPES = frozenset({"choice", "noul", "score"})
+
+#: The model model-host last reported serving (its /decider/health "model"),
+#: None until a health answer named one.
+_served_model: str | None = None
+
+
+def served_model_name() -> str:
+    """The decider's name for labels: what the host serves, else the configured id."""
+    return _served_model or DECIDER_MODEL_ID
 
 
 class DeciderUnavailable(Exception):
@@ -138,6 +152,10 @@ class DeciderClient:
                 raise ValueError("health payload is not an object")
             self._last_health = payload
             self._last_health_at = time.monotonic()
+            model = payload.get("model")
+            if isinstance(model, str) and model.strip():
+                global _served_model
+                _served_model = model.strip()[:80]
             return payload
         except Exception as exc:
             logger.warning("decider_client.health_failed", error=str(exc))

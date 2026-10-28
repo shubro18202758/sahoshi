@@ -1,7 +1,7 @@
 """Convoy Brain configuration — two-tier hierarchy endpoints and constants.
 
 Tier layout (see VVIP architecture):
-    T5 strategic — pplx-decider-v1-27b served by model-host  (default :8083)
+    T5 strategic — pplx-decider-v1.2 served by model-host  (default :8083)
     T4 tactical  — Gemma 4 12B on llama-server               (default :8084)
     embeddings   — pplx-embed-v2-late-0.6b service            (default :8085)
 
@@ -77,9 +77,11 @@ GEMMA_DISPLAY_NAME = "gemma4-12b-sahoshi"
 
 #: Strategic tier model identity (served by model-host on MODEL_HOST_URL):
 #: the label of decider answers (tiers_used, provenance, operator lines).
-#: Env-overridable at process start like the service URLs; set it when
-#: model-host serves another checkpoint (its /decider/health "model").
-DECIDER_MODEL_ID = os.environ.get("DECIDER_MODEL_ID", "").strip() or "pplx-decider-v1-27b"
+#: Env-overridable at process start like the service URLs. It is the fallback
+#: only: once model-host answers /decider/health, the labels carry the model
+#: it actually serves (``llm.decider_client.served_model_name``), so a switch
+#: or a rollback of the checkpoint never leaves a stale name on an answer.
+DECIDER_MODEL_ID = os.environ.get("DECIDER_MODEL_ID", "").strip() or "pplx-decider-v1.2"
 
 # -- Tactical-tier generation budgets (latency contract) -----------------------
 # GB10 generates ~18-21 tok/s on the 12B Q4_K_M tactical model, so every

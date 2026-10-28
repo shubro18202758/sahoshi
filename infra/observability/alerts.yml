@@ -67,7 +67,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "model-host (:8083, pplx-decider-v1-27b) unreachable or unloaded"
+          summary: "model-host (:8083, the decider) unreachable or unloaded"
           description: "Strategic tier down — brain must fall back to Gemma-only tactical mode (C1 degradation) and alert the operator."
 
       - alert: DeciderP95LatencyHigh

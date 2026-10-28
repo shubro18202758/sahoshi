@@ -459,7 +459,9 @@ class TestEventCallback:
         assert kinds == ["thought", "thought", "tool_call", "tool_result", "thought", "thought"]
         assert events[0][1]["tier"] == "decider"
         # the operator-facing tactical name (COPY-10), never the served alias
-        assert result["tiers"] == ["decider:pplx-decider-v1-27b", "gemma:gemma4-12b-sahoshi"]
+        from convoy_brain.llm.decider_client import served_model_name
+
+        assert result["tiers"] == ["decider:" + served_model_name(), "gemma:gemma4-12b-sahoshi"]
 
     async def test_a_failing_sink_never_breaks_the_turn(self, fake_store):
         async def sink(kind, data):

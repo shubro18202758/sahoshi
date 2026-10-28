@@ -2,7 +2,7 @@
 
 Hierarchy of every turn:
 
-    STRATEGIC  pplx-decider-v1-27b picks the next TOOL via a typed choice
+    STRATEGIC  pplx-decider-v1.2 picks the next TOOL via a typed choice
                question (or 'final_answer'), with a confidence score. A pick
                below the confidence floor is acted on only when the tactical
                tier independently agrees (disagreement prefers Gemma and is
@@ -77,7 +77,6 @@ from convoy_brain import grounding
 from convoy_brain.config import (
     CITY_BBOX,
     CONFIDENCE_FLOOR,
-    DECIDER_MODEL_ID,
     GEMMA_DISPLAY_NAME,
     TACTICAL_ARGS_MAX_TOKENS,
     TACTICAL_FINAL_MAX_TOKENS,
@@ -85,7 +84,7 @@ from convoy_brain.config import (
     TOOL_RESULT_TRUNCATE_BYTES,
 )
 from convoy_brain.decider import DeciderBrain
-from convoy_brain.llm.decider_client import DeciderClient
+from convoy_brain.llm.decider_client import DeciderClient, served_model_name
 from convoy_brain.llm.heuristics import (
     agency_words,
     heuristic_default_arguments,
@@ -1578,7 +1577,7 @@ class Orchestrator:
     def _note_tier(state: ConversationState, tier: str) -> None:
         """Record a contributing tier in the contract shape (C-D tiers_used)."""
         label = {
-            "decider": "decider:" + DECIDER_MODEL_ID,
+            "decider": "decider:" + served_model_name(),
             # the operator-facing name (COPY-10): the served alias stays internal
             "gemma": "gemma:" + GEMMA_DISPLAY_NAME,
         }.get(tier, "heuristic")
@@ -1727,7 +1726,7 @@ class Orchestrator:
                     audit["alerts"], audit["aux_low_confidence"] = kept, aux
                     state.last_pick = {"tier": "decider", "confidence": confidence}
                     await events.thought(
-                        f"Strategic tier ({DECIDER_MODEL_ID}) chose {value} "
+                        f"Strategic tier ({served_model_name()}) chose {value} "
                         f"(confidence {conf_text})"
                         + (
                             f"; auxiliary {low} below the {CONFIDENCE_FLOOR:.2f} floor is "
@@ -1743,7 +1742,7 @@ class Orchestrator:
                     if alert.get("type") == "low_confidence_decision":
                         alert["confirmation_ran"] = True
                 await events.thought(
-                    f"Strategic tier ({DECIDER_MODEL_ID}) leans {value} but its pick "
+                    f"Strategic tier ({served_model_name()}) leans {value} but its pick "
                     f"confidence {conf_text} is below the {CONFIDENCE_FLOOR:.2f} floor — "
                     "asking the tactical tier to confirm",
                     "decider",

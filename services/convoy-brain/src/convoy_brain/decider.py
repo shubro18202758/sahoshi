@@ -1,6 +1,6 @@
 """Strategic tier — the decision model as brain/orchestrator.
 
-The decider (pplx-decider-v1-27b behind model-host) owns strategic choice and
+The decider (pplx-decider-v1.2 behind model-host) owns strategic choice and
 TOOL SELECTION via typed choice/noul/score questions. It is NOT a chat model.
 
 Event-driven cadence (red-team F8 correction — never per-GPS-tick):

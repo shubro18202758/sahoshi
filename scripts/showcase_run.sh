@@ -459,7 +459,7 @@ printf '%s' "$lib" | grep -q "\"$RAIN_ID\""      || die_hint "emulator library l
 printf '%s' "$lib" | grep -q "\"$SWEEP_ID\""     || die_hint "emulator library lacks $SWEEP_ID" "docker restart ${EMULATOR_CONTAINER:-<the emulator>}"
 
 printf '%s' "$(health "$DECIDER_URL/decider/health")" | grep -q '"loaded": *true' \
-    || die_hint "decider $DECIDER_URL not loaded" "systemctl --user restart sahoshi-decider.service (pplx-decider-v1-27b)"
+    || die_hint "decider $DECIDER_URL not loaded" "systemctl --user restart sahoshi-decider.service (services/model-host/switch_decider.sh status shows the served checkpoint)"
 [ "$(hcode "$LLAMA_URL/health" 15)" = "200" ] \
     || die_hint "llama-server $LLAMA_URL not answering" "systemctl --user restart sahoshi-llama.service (aditi-ps18-v7h-12b)"
 [ "$(hcode "$EMBED_URL/health" 15)" = "200" ] \

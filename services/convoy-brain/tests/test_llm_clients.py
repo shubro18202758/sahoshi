@@ -202,6 +202,22 @@ class TestDeciderClient:
         assert health["loaded"] is True
         assert client.p95_decide_latency_ms == 1840.0
 
+    async def test_labels_follow_the_model_the_host_serves(self, monkeypatch):
+        from convoy_brain.config import DECIDER_MODEL_ID
+        from convoy_brain.llm import decider_client as dc
+
+        monkeypatch.setattr(dc, "_served_model", None)
+        assert dc.served_model_name() == DECIDER_MODEL_ID  # nothing heard yet: the configured id
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"loaded": True, "model": "pplx-decider-v1-27b"})
+        client = DeciderClient(
+            base_url="http://127.0.0.1:8083",
+            client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        )
+        await client.health()
+        assert dc.served_model_name() == "pplx-decider-v1-27b"  # a rollback relabels the answers
+
     async def test_health_failure_returns_empty(self):
         def handler(request: httpx.Request) -> httpx.Response:
             raise httpx.ConnectError("down")
