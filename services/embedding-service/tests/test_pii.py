@@ -24,6 +24,7 @@ from embedding_service.pii import (
     RawSpan,
     ToponymGuard,
     default_protected_names,
+    load_gazetteer_names,
     load_landmark_names,
     postprocess,
     snap_to_words,
@@ -31,6 +32,7 @@ from embedding_service.pii import (
 
 _SRC = Path(__file__).resolve().parents[1] / "src"
 _LANDMARKS = Path(__file__).resolve().parents[3] / "cities" / "kolkata" / "landmarks.json"
+_GAZETTEER = _LANDMARKS.with_name("gazetteer.json")
 
 
 def _span(text: str, needle: str, label: str = "private_person", score: float = 0.9) -> RawSpan:
@@ -172,6 +174,23 @@ def test_landmarks_file_is_read_with_variants(tmp_path):
     p.write_text("not json")
     assert load_landmark_names(p) == frozenset()
     assert load_landmark_names(tmp_path / "missing.json") == frozenset()
+
+
+def test_gazetteer_places_and_aliases_are_protected(tmp_path):
+    names = load_gazetteer_names(_GAZETTEER)
+    if _GAZETTEER.is_file():
+        # neighbourhoods that are not landmarks: the model has called "Behala" a person
+        assert {"Behala", "বেহালা", "बेहाला"} <= names
+        assert {"Behala", "বেহালা"} <= default_protected_names(_LANDMARKS, _GAZETTEER)
+        text = "Mrinmoy Shee of Behala reported waterlogging."
+        raw = [_span(text, "Mrinmoy Shee"), _span(text, "Behala")]
+        assert _texts(text, postprocess(text, raw, guard=ToponymGuard(names))) == ["Mrinmoy Shee"]
+    p = tmp_path / "gz.json"
+    p.write_text('{"places": [{"en": "Tollygunge", "bn": "টালিগঞ্জ", "aka": ["Tolly"], "aka_bn": [5]}, "x", {}]}')
+    assert load_gazetteer_names(p) == {"Tollygunge", "টালিগঞ্জ", "Tolly"}
+    p.write_text("[]")
+    assert load_gazetteer_names(p) == frozenset()
+    assert load_gazetteer_names(tmp_path / "missing.json") == frozenset()
 
 
 # ── post-processing ──────────────────────────────────────────────────────────────────────────────────────────────

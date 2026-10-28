@@ -27,7 +27,7 @@ from environment variables, normally written once by
 
 | Variable | What |
 |---|---|
-| `DECIDER_SNAPSHOT_PATH` | pplx-decider-v1-27b HF snapshot dir (48.58 GiB, never copied) |
+| `DECIDER_SNAPSHOT_PATH` | the decider's HF snapshot dir (48.6 GiB, never copied); `decider.env` (from `services/model-host/switch_decider.sh`) overrides it — the live box serves pplx-decider-v1.2 |
 | `LLAMA_SERVER_BIN` | llama.cpp `llama-server` binary |
 | `GEMMA_GGUF` | aditi-ps18-v7h Gemma 4 12B Q4_K_M GGUF |
 | `BGE_M3_PATH` | bge-m3 snapshot (the fallback dense model; the deployed dense and late models load from the HF cache at pinned revisions) |

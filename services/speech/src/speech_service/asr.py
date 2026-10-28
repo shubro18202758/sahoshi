@@ -3,8 +3,10 @@
 The production backend is a Whisper-family checkpoint run with
 ``transformers`` on the GPU (see README "Models" for the choice and the
 licence). The backend interface is deliberately small so tests can swap in a
-fake and a later model (IndicConformer, once its gated weights are granted)
-can drop in without touching the API.
+fake and the preferred model, AI4Bharat's IndicConformer (gated on Hugging
+Face), drops in by configuration once access is granted
+(``SPEECH_ASR_BACKEND=indic_conformer``): until then :class:`FallbackASR`
+says why it cannot load and the Whisper checkpoint answers.
 
 The audio array passed in is the only copy of the speech; nothing here keeps
 it, logs it or writes it anywhere.
@@ -12,19 +14,30 @@ it, logs it or writes it anywhere.
 
 from __future__ import annotations
 
+import logging
 import math
 import re
 import threading
 import time
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Callable, Protocol
 
 import numpy as np
 
 from .audio import TARGET_SR
-from .runtime import LazyModel
+from .runtime import LazyModel, ModelNotProvisioned, not_provisioned
 
-__all__ = ["Transcript", "ASRBackend", "WhisperASR", "RoutedASR", "SUPPORTED_LANGS"]
+__all__ = [
+    "Transcript",
+    "ASRBackend",
+    "WhisperASR",
+    "IndicConformerASR",
+    "FallbackASR",
+    "RoutedASR",
+    "SUPPORTED_LANGS",
+]
+
+log = logging.getLogger("speech.asr")
 
 SUPPORTED_LANGS = ("bn", "en", "hi")
 _CHUNK_S = 30.0
@@ -37,7 +50,9 @@ _CONTROL_RE = re.compile(r"<\|[^|>]{1,20}\|>")
 class Transcript:
     text: str
     language: str
-    confidence: float
+    # None when the model reports no token probabilities (IndicConformer's
+    # published inference returns text only); the deck then shows none.
+    confidence: float | None
     model: str
     seconds: float
 
@@ -193,6 +208,158 @@ class WhisperASR:
         return code if code in SUPPORTED_LANGS else "bn"
 
 
+def _inference_mode():
+    try:
+        import torch
+    except ImportError:  # the offline test venv has no torch
+        import contextlib
+
+        return contextlib.nullcontext()
+    return torch.inference_mode()
+
+
+def _batch_of_one(chunk: np.ndarray):
+    """16 kHz mono float32 as the (1, N) tensor the model card passes."""
+    x = np.ascontiguousarray(chunk, dtype=np.float32)[None, :]
+    try:
+        import torch
+    except ImportError:  # offline tests only: production always has torch
+        return x
+    return torch.from_numpy(x)
+
+
+def _as_text(out: Any) -> str:
+    """The remote code returns a string; tolerate a list/tuple of them."""
+    while isinstance(out, (list, tuple)) and out:
+        out = out[0]
+    return out if isinstance(out, str) else ("" if out is None else str(out))
+
+
+class IndicConformerASR:
+    """AI4Bharat IndicConformer-600M-multilingual (MIT; **gated** on Hugging Face).
+
+    Loaded exactly as the model card documents: ``AutoModel.from_pretrained(
+    repo, trust_remote_code=True)`` and ``model(wav, "bn", "rnnt" | "ctc")`` on
+    16 kHz mono audio. The remote code runs ONNX graphs, so ``onnxruntime``
+    must be in the service venv. Pin ``revision`` to the commit whose
+    ``model_onnx.py`` you reviewed: ``trust_remote_code`` executes it.
+
+    Bengali and Hindi only (English is not among its 22 languages); the
+    router keeps English on the multilingual Whisper. No confidence is
+    reported (the published inference returns text only).
+    """
+
+    DEFAULT_MODEL = "ai4bharat/indic-conformer-600m-multilingual"
+    LANGS = ("bn", "hi")
+
+    def __init__(self, model_id: str = DEFAULT_MODEL, *, decoder: str = "rnnt",
+                 revision: str | None = None, min_free_gib: float = 12.0,
+                 idle_unload_s: float = 600, loader: Callable[[], Any] | None = None) -> None:
+        if decoder not in ("rnnt", "ctc"):
+            raise ValueError(f"IndicConformer decoder must be 'rnnt' or 'ctc', not {decoder!r}")
+        self.model_id = model_id
+        self.decoder = decoder
+        self.revision = revision or None
+        self._run_lock = threading.Lock()
+        self._lazy = LazyModel(
+            f"asr:{model_id}", loader or self._load, need_gib=4.0,
+            min_free_gib=min_free_gib, idle_unload_s=idle_unload_s,
+        )
+
+    def _load(self):
+        try:
+            import onnxruntime  # noqa: F401  (the model's remote code runs ONNX graphs)
+            from transformers import AutoModel
+        except ImportError as exc:
+            raise not_provisioned(self.model_id, exc, gated=True) from exc
+        try:
+            return AutoModel.from_pretrained(self.model_id, trust_remote_code=True,
+                                             revision=self.revision)
+        except Exception as exc:
+            mapped = not_provisioned(self.model_id, exc, gated=True)
+            if mapped is not None:
+                raise mapped from exc
+            raise
+
+    def status(self) -> dict:
+        return {"model": self.model_id, "decoder": self.decoder, **self._lazy.status()}
+
+    def maybe_unload_idle(self) -> bool:
+        return self._lazy.maybe_unload_idle()
+
+    def unload(self) -> bool:
+        return self._lazy.unload()
+
+    def transcribe(self, samples: np.ndarray, lang: str | None) -> Transcript:
+        lang = lang or "bn"
+        if lang not in self.LANGS:
+            raise ValueError(f"IndicConformer here serves {self.LANGS}, not {lang!r}")
+        model = self._lazy.get()
+        t0 = time.perf_counter()
+        texts: list[str] = []
+        step = int(_CHUNK_S * TARGET_SR)
+        with self._run_lock, _inference_mode():
+            for start in range(0, max(1, samples.size), step):
+                chunk = samples[start:start + step]
+                if chunk.size < int(0.2 * TARGET_SR):
+                    continue
+                texts.append(_as_text(model(_batch_of_one(chunk), lang, self.decoder)).strip())
+        self._lazy.touch()
+        return Transcript(
+            text=" ".join(t for t in texts if t).strip(),
+            language=lang,
+            confidence=None,
+            model=f"{self.model_id} ({self.decoder})",
+            seconds=round(time.perf_counter() - t0, 3),
+        )
+
+
+class FallbackASR:
+    """The preferred backend first; the fallback when it cannot be provisioned.
+
+    "Cannot be provisioned" is :class:`ModelNotProvisioned`: gated access not
+    granted, weights not downloaded, a runtime package missing. That is
+    logged once with the reason (``gated: request access at …``), shown in
+    ``/health`` and the fallback answers until the service restarts. A
+    memory refusal is *not* a reason to switch: it stays a 503, as before.
+    """
+
+    def __init__(self, preferred: ASRBackend, fallback: ASRBackend) -> None:
+        self.preferred = preferred
+        self.fallback = fallback
+        self.preferred_error: str | None = None
+
+    @property
+    def model_id(self) -> str:
+        return self.fallback.model_id if self.preferred_error else self.preferred.model_id
+
+    def transcribe(self, samples: np.ndarray, lang: str | None) -> Transcript:
+        if self.preferred_error is None:
+            try:
+                return self.preferred.transcribe(samples, lang)
+            except ModelNotProvisioned as exc:
+                self.preferred_error = str(exc)
+                log.warning("ASR %s unavailable, using %s: %s", self.preferred.model_id,
+                            self.fallback.model_id, exc)
+        return self.fallback.transcribe(samples, lang)
+
+    def status(self) -> dict:
+        return {"model": self.model_id,
+                "active": "fallback" if self.preferred_error else "preferred",
+                "preferred": self.preferred.status(), "preferred_error": self.preferred_error,
+                "fallback": self.fallback.status()}
+
+    def maybe_unload_idle(self) -> bool:
+        a = self.preferred.maybe_unload_idle()
+        b = self.fallback.maybe_unload_idle()
+        return a or b
+
+    def unload(self) -> bool:
+        a = getattr(self.preferred, "unload", lambda: False)()
+        b = getattr(self.fallback, "unload", lambda: False)()
+        return a or b
+
+
 class RoutedASR:
     """Bengali to the Bengali checkpoint; English and Hindi to a multilingual one.
 
@@ -202,10 +369,13 @@ class RoutedASR:
     and routes accordingly. Each model loads only when its language is used.
     """
 
-    def __init__(self, bengali: WhisperASR, multilingual: WhisperASR) -> None:
+    def __init__(self, bengali: ASRBackend, multilingual: WhisperASR) -> None:
         self.bn = bengali
         self.multi = multilingual
-        self.model_id = bengali.model_id
+
+    @property
+    def model_id(self) -> str:
+        return self.bn.model_id
 
     def transcribe(self, samples: np.ndarray, lang: str | None) -> Transcript:
         if lang is None:
@@ -214,7 +384,7 @@ class RoutedASR:
         return backend.transcribe(samples, lang)
 
     def status(self) -> dict:
-        return {"model": self.bn.model_id, "bn": self.bn.status(), "en_hi": self.multi.status()}
+        return {"model": self.model_id, "bn": self.bn.status(), "en_hi": self.multi.status()}
 
     def maybe_unload_idle(self) -> bool:
         a = self.bn.maybe_unload_idle()

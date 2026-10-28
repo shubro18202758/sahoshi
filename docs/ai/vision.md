@@ -14,12 +14,12 @@ port **8196** (loopback) · dev port 9162.
 | Question | Decision | Why |
 |---|---|---|
 | Model | Qwen3-VL-8B-Instruct, Q4_K_M GGUF + F16 projector | Apache-2.0; strong on scene reading at 8B; fits next to the live models (7.6 GiB GPU) |
-| Runtime | host llama.cpp `llama-server` (build 69bf643, libmtmd) | Qwen3-VL is supported in this build (`QWEN3VL` arch, mtmd projector); no Python ML stack in the service; JSON-schema-constrained decoding |
+| Runtime | host llama.cpp `llama-server` (build c3df4b7 of 28 Oct 2026, libmtmd) | Qwen3-VL is supported (`QWEN3VL` arch, mtmd projector); no Python ML stack in the service; JSON-schema-constrained decoding. Same 11/12 as on the previous build 69bf643, warm median 3.0 s, first call 10.7 s against 26.7 s |
 | Output shape | JSON schema with enums for state and depth band; free text only in a ≤25-word rationale | the state can never be outside the list; only one field needs filtering |
 | Depth bands | `none / below_kerb / up_to_wheel_hub / above_wheel_hub / unknown` | judged against vehicles and kerbs, never against a person's body (no "knee-deep") |
 | Person handling | prompt rule + query screen (403 before the model) + sentence-level output filter | the guarantee holds even if the model ignores its prompt |
 | Plates | refused (`no-plate-reading`) | plates go only through the ANPR path, masked until a named officer is on duty |
-| Lifecycle | lazy start on first request, stop after 10 idle minutes, refuse below 8 + 12 GiB available | the GB10 is shared; a memory guard kills llama servers under 6 GiB |
+| Lifecycle | lazy start on first request, stop after 10 idle minutes, refuse below 8 + 8 GiB available | the GB10 is shared; a memory guard kills llama servers under 6 GiB |
 
 ## Integration contract (for the deck and the event pipeline)
 
@@ -97,6 +97,21 @@ Raw answers: [`services/vision/eval/results.json`](../../services/vision/eval/re
   house prompt to describe four of the images "including any people", wrote
   about the people in all four (clothing, gender, posture). After the output
   filter, none of the four texts mentions a person.
+
+### Newer candidate measured on 29 Oct 2026: Qwen3.5-9B
+
+Qwen3.5-9B (Apache-2.0, natively multimodal, `unsloth/Qwen3.5-9B-GGUF` Q4_K_M + F16 projector, 6.6 GB on disk)
+was run through the same twelve images and nine probes on the same llama.cpp build, with reasoning switched off
+(`chat_template_kwargs.enable_thinking = false`). Raw answers:
+[`services/vision/eval/results.qwen3.5-9b.json`](../../services/vision/eval/results.qwen3.5-9b.json).
+
+| Model | Accuracy | Misses | Probes | Warm median / max | First call |
+|---|---|---|---|---|---|
+| **Qwen3-VL-8B-Instruct (kept)** | **11 / 12** | stalled bus → clear | 9 / 9 | 3.0 s / 3.3 s | 10.7 s |
+| Qwen3.5-9B | 10 / 12 | Howrah tree → blocked, Shyambazar Amphan tree → clear | 9 / 9 | 3.8 s / 8.4 s | 11.9 s |
+
+Qwen3.5-9B read both broken-down buses correctly (Qwen3-VL missed one) but missed two of the three fallen
+trees, the commoner Kolkata case after a nor'wester or a cyclone, and it is slower. Qwen3-VL-8B stays.
 
 ## Limits and next steps
 

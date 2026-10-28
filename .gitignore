@@ -43,6 +43,8 @@ yarn-debug.log*
 # Clone-local model experiments (downloaded artifacts + their NOTICEs;
 # the sanctioned home per the models-local policy — never committed)
 models-local/
+# …and the symlink a worktree or a fresh checkout points at the host's copy (a pattern with a slash misses a link)
+/models-local
 
 # Repetition-gate run workdirs — scripts/repetition_gate.sh mkdir -p's
 # WORKROOT="$VVIP_DIR/showcase/repetition" and every run drops a

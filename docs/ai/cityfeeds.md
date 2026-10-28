@@ -10,12 +10,13 @@ Port: 8199 in production (loopback, `infra/systemd/sahoshi-feeds.service`); 9201
 
 | Chip | What it shows | Source | Label |
 |---|---|---|---|
-| Air | The city's indicative National AQI and band (worst of ten sites), the next 48 h | Open-Meteo air-quality API (CAMS) at the WBPCB/CPCB sites, CPCB breakpoints | LIVE feed · MODELLED values · INDICATIVE AQI |
+| Air | The city's indicative National AQI and band (worst of ten sites), the next 48 h; the stations' own readings beside it when a key is set | Open-Meteo air-quality API (CAMS) at the WBPCB/CPCB sites, CPCB breakpoints; CPCB via data.gov.in, WAQI or OpenAQ (`DATA_GOV_IN_API_KEY`, `WAQI_TOKEN`, `OPENAQ_API_KEY`) | LIVE feed · MODELLED values · INDICATIVE AQI; OBSERVED when keyed |
 | Heat | Heat index now and its band; the 48-h peak; IMD heatwave days | Open-Meteo forecast at Alipore and Dum Dum; NWS heat index; IMD plains criteria | LIVE feed · MODELLED |
 | Cyclone | Nearest active Bay of Bengal storm, distance, bearing and GDACS alert | GDACS event list and geometry | LIVE · distances MODELLED |
 | River | CWC stations above their warning level; DVC release mentions in the news | CWC flood-forecasting API; Kolkata RSS | LIVE · news AGGREGATE |
 | Quake | USGS events within 500 km in 30 days; the latest | USGS FDSN event service | LIVE |
-| Tide | The next high water | the hydro service's tide model (the port's table could not be read) | MODELLED |
+| Tide | The next high water | the hydro service's tide model; the port's Tidal Notices page is checked every 6 h and reported as it answers (404 on 29 Oct) | MODELLED |
+| Fires | Satellite thermal anomalies in the metro box, 24 h, with the nearest landmark | NASA FIRMS public South Asia files (VIIRS ×3, MODIS); the area API with `FIRMS_MAP_KEY` | LIVE · "not a confirmed fire" |
 
 ## Every feed, checked from this box (28 Oct 2026)
 
@@ -125,17 +126,16 @@ Port: 8199 in production (loopback, `infra/systemd/sahoshi-feeds.service`); 9201
 
 ### Tide table (`tide_table.py`)
 
-- **Dropped from this box:** Syama Prasad Mookerjee Port publishes the Hooghly tide tables (with the Survey of India, from the port's gauges), but they could not be read:
-  - `https://smp.smportkolkata.in/` presents a certificate this box cannot verify (curl exit 60). Certificate checks are never switched off.
-  - The plain-http address answers 503 from a proxy.
-  - The old `kolkataporttrust.gov.in` does not answer.
-- **What the endpoint returns:** `GET /feeds/tide-table` says **PUBLISHED: UNAVAILABLE** with that reason. It shows the hydro service's **MODELLED** high and low waters (`GET :8197/hydro/tide`) instead, for example a high water of 5.98 m at 03:22 IST on 29 Oct.
+- **Read live, over one pinned exception (29 Oct 2026):** Syama Prasad Mookerjee Port publishes the Hooghly tide tables (with the Survey of India, from the port's gauges).
+  - The site's certificate (GoDaddy G2, CN `smp.smportkolkata.in`) expired on 17 Oct 2026. For that one host only (`cityfeeds/tls.py`) the chain and host name are still verified, the dates are not, and the connection is accepted only if the leaf is the pinned certificate (SHA-256 `ad4e34f4…cb5e3016`) or a renewed one inside its own dates. Every other host keeps full verification.
+  - The port then answers **HTTP 404 "No Such URL."** for `/smpk/en/tidal-notices/` and every content path; the archived page (May 2025) filled its table by script, so it was never machine-readable.
+- **What the endpoint returns:** `GET /feeds/tide-table` says **PUBLISHED: UNAVAILABLE** with the port's own answer and when it was checked (re-checked every 6 h; it would say LINKED if the notices come back). It shows the hydro service's **MODELLED** high and low waters (`GET :8197/hydro/tide`) instead, for example a high water of 5.98 m at 03:22 IST on 29 Oct.
 - **Comparison:** `compare()` is written and tested. It pairs each published extreme with the nearest modelled one of the same kind, in minutes and metres, ready for the day a table can be read.
 - **No patch to hydro:** with no published table, there is nothing for hydro to prefer, so no patch is written.
 
 ### Civic notices (`notices.py`)
 
-- **Kolkata Police and Kolkata Traffic Police (dropped):** both sites redirect http to https, and the https connection does not complete from this box. Neither robots.txt nor the advisories can be read.
+- **Kolkata Traffic Police (read live, 29 Oct 2026):** the site lacks secure renegotiation (RFC 5746), which OpenSSL 3 refuses by default. For that host only, legacy renegotiation is allowed; its GeoTrust certificate verifies. robots.txt is 404 (no rules). Advisory-like link titles (30+ characters) are kept, e.g. a traffic diversion at Picnic Garden Road (Tiljala Traffic Guard).
 - **KMC (www.kmcgov.in):** `/robots.txt` answers 404, so there are no crawl rules. The portal home is read every 6 hours, and its downloads are kept when they are about **places and roads**: road, parking, drain, desilting, monsoon, construction, AQI and so on.
   - **Never anything about a person:** hearings, ex-gratia payments, deaths, disabilities, recruitment, councillors and the like are excluded by a second word list.
   - **On 28 Oct 2026** six notices were kept, among them the 7 Jul 2026 construction notice, the road-renaming list, the drainage activity chart and the desilting chart.
@@ -193,9 +193,9 @@ tide     | 5.98 m          | published_unavailable | MODELLED               next
 
 ## Limits
 
-- The air values are a global model's on a coarse grid. The pilot's first need is CPCB's own CAAQMS readings (data.gov.in "Real time Air Quality Index", which needs a key) or WBPCB's.
+- The air values are a global model's on a coarse grid. CPCB's own CAAQMS readings (data.gov.in), WAQI and OpenAQ are wired and show as OBSERVED the moment one free key is set; until then only the modelled values show.
 - The site positions are locality-level.
 - The heatwave test uses a monthly normal, not IMD's daily normal.
 - CWC levels are hourly and some stations report every 3 h. No release volume is machine-readable.
-- The tide table and the traffic-police advisories cannot be read from this box.
+- The port's tide table page answers 404; the hydro tide stays MODELLED. The traffic-police advisories are titles and links, not structured closures.
 - The KMC notices are a downloads list, not a dated feed.

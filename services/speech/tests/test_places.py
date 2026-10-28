@@ -118,3 +118,28 @@ def test_broken_gazetteer_is_ignored(tmp_path: Path) -> None:
     d = _write_city(tmp_path / "c", [])
     (d / "gazetteer.json").write_text("{not json", encoding="utf-8")
     assert len(load_gazetteer(d)) == 1
+
+
+def test_a_split_name_is_not_taken_for_its_first_half(gaz: Gazetteer) -> None:
+    """The ASR wrote "গড়িয়াহাট" as "গড়িয়া হাট"; with Garia in the gazetteer
+    the first half alone matched Garia exactly. The longer name wins, and
+    Garia said on its own is still Garia."""
+    from speech_service.places import Place
+
+    garia = Place("garia", "Garia", "গড়িয়া", 22.463, 88.39, source="gazetteer")
+    g = Gazetteer([*gaz.places, garia])
+    m, cands = g.match("গড়িয়া হাট মোড়ে হাঁটু জল বাস আটকে আছে")
+    assert m is not None and m.place.id == "gariahat"
+    assert "garia" in [c.place.id for c in cands]
+    m2, _ = g.match("গড়িয়া স্টেশনের কাছে জল জমেছে")
+    assert m2 is not None and m2.place.id == "garia"
+
+
+def test_a_stray_word_does_not_promote_a_longer_name(gaz: Gazetteer) -> None:
+    from speech_service.places import Place
+
+    ps = Place("ps_sector_v", "Sector V Police Station", "সেক্টর ফাইভ থানা", 22.577, 88.43,
+               kind="police_station", source="gazetteer")
+    g = Gazetteer([*gaz.places, ps])
+    m, _ = g.match("সেক্টর ফাইভ এ অফিস ছুটির পর গাড়ি নড়ছে না প্রচণ্ড যানজট")
+    assert m is not None and m.place.id == "sector_v"

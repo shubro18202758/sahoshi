@@ -10,8 +10,12 @@
                                 pre-positioning PROPOSAL
     GET /feeds/river            CWC observed levels at the DVC / lower-Damodar / Hooghly stations; DVC news mentions
     GET /feeds/quakes           GeoJSON: USGS events within 500 km, last 365 days
-    GET /feeds/tide-table       the port's published table (unavailable, with the reason) and the hydro model's
-    GET /feeds/notices          KMC notices about places and roads
+    GET /feeds/tide-table       the port's published tide notices (read live over the pinned connection; what the
+                                port answered, honestly) and the hydro model's high and low waters
+    GET /feeds/notices          KMC notices about places and roads; the Kolkata Traffic Police's current advisories
+    GET /feeds/fires            GeoJSON: NASA FIRMS hotspots in the Kolkata Metropolitan Area (places, not people)
+    GET /feeds/street-image     ?lat=&lon= the nearest public Mapillary photo (CC BY-SA 4.0), or "needs
+                                MAPILLARY_TOKEN"; never calls the vision model
     GET /feeds/proposals        every drafted proposal, and why the others were not drafted
 
 ``?force=1`` refreshes past the cache (still inside the rate limits); the deck's public gate refuses it.
@@ -37,13 +41,18 @@ logger = structlog.get_logger(__name__)
 __all__ = ["create_app", "main"]
 
 LABELS = {
-    "air": "LIVE feed (Open-Meteo); values MODELLED (CAMS); National AQI INDICATIVE",
+    "air": "LIVE feed (Open-Meteo); values MODELLED (CAMS); National AQI INDICATIVE; OBSERVED station values beside "
+           "them when a keyed provider (DATA_GOV_IN_API_KEY, WAQI_TOKEN, OPENAQ_API_KEY) is configured",
     "heat": "LIVE feed (Open-Meteo); values MODELLED; IMD heatwave test MODELLED on the forecast",
     "cyclones": "LIVE (GDACS); distances MODELLED",
     "river": "LIVE (CWC observed levels); DVC news mentions AGGREGATE",
     "quakes": "LIVE (USGS)",
-    "tide_table": "PUBLISHED table UNAVAILABLE; hydro tide MODELLED",
-    "notices": "LIVE (KMC public portal); Kolkata Traffic Police dropped (unreachable)",
+    "tide_table": "PUBLISHED: the port's Tidal Notices page read LIVE (pinned certificate) and reported as it "
+                  "answers; hydro tide MODELLED",
+    "notices": "LIVE (KMC public portal; Kolkata Traffic Police advisories)",
+    "fires": "LIVE (NASA FIRMS public files; the area API with FIRMS_MAP_KEY); satellite thermal anomalies, not "
+             "confirmed fires",
+    "street_image": "Reference photo · not live (Mapillary, CC BY-SA 4.0) with MAPILLARY_TOKEN",
 }
 
 
@@ -69,7 +78,8 @@ def create_app(settings: Settings | None = None, feeds: CityFeeds | None = None)
     @app.get("/health")
     async def health() -> dict[str, Any]:
         return {"status": "ok", "service": "cityfeeds", "version": __version__, "city": "kolkata",
-                "offline": s.offline, "labels": LABELS, "fetcher": cf().f.status()}
+                "offline": s.offline, "labels": LABELS, "fetcher": cf().f.status(),
+                "keyed_sources": cf().keyed_sources()}
 
     @app.get("/feeds/summary")
     async def summary() -> dict:
@@ -102,6 +112,14 @@ def create_app(settings: Settings | None = None, feeds: CityFeeds | None = None)
     @app.get("/feeds/notices")
     async def notices(force: bool = Query(default=False)) -> dict:
         return await cf().notices(force)
+
+    @app.get("/feeds/fires")
+    async def fires(force: bool = Query(default=False)) -> dict:
+        return await cf().fires(force)
+
+    @app.get("/feeds/street-image")
+    async def street_image(lat: float = Query(ge=22.0, le=23.5), lon: float = Query(ge=87.8, le=89.0)) -> dict:
+        return await cf().street_image(lat, lon)
 
     @app.get("/feeds/proposals")
     async def proposals() -> dict:

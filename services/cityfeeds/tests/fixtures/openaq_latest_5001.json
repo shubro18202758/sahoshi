@@ -1,0 +1,4 @@
+{"meta": {"found": 2}, "results": [
+ {"datetime": {"utc": "2026-10-28T19:00:00Z", "local": "2026-10-29T00:30:00+05:30"}, "value": 63.4, "sensorsId": 9001, "locationsId": 5001},
+ {"datetime": {"utc": "2026-10-28T19:00:00Z", "local": "2026-10-29T00:30:00+05:30"}, "value": 101.2, "sensorsId": 9002, "locationsId": 5001}
+]}

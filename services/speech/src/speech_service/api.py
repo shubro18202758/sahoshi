@@ -25,15 +25,34 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
-from .asr import SUPPORTED_LANGS, ASRBackend, RoutedASR, WhisperASR
+from .asr import (
+    SUPPORTED_LANGS,
+    ASRBackend,
+    FallbackASR,
+    IndicConformerASR,
+    RoutedASR,
+    WhisperASR,
+)
 from .audio import AudioError, decode_audio
 from .config import Settings, get_settings
 from .places import Gazetteer, load_gazetteer
 from .report import build_report
 from .runtime import ModelUnavailable, mem_available_gib
-from .tts import SvaraLlamaTTS, SvaraTTS, TTSBackend, TTSCache, speak
+from .tts import (
+    FallbackTTS,
+    IndicParlerTTS,
+    ParlerWorkerTTS,
+    SvaraLlamaTTS,
+    SvaraTTS,
+    TTSBackend,
+    TTSCache,
+    speak,
+)
 
-__all__ = ["create_app", "make_tts", "main"]
+__all__ = ["create_app", "make_asr", "make_tts", "main", "ASR_BACKENDS", "TTS_BACKENDS"]
+
+ASR_BACKENDS = ("whisper", "indic_conformer")
+TTS_BACKENDS = ("auto", "llama", "transformers", "indic_parler")
 
 log = logging.getLogger("speech.api")
 
@@ -90,9 +109,40 @@ def _raise_if_oom(exc: BaseException) -> None:
         raise ModelUnavailable(f"GPU memory exhausted: {str(exc)[:160]}") from exc
 
 
+def make_asr(s: Settings) -> RoutedASR:
+    """Bengali backend per ``Settings.asr_backend``; en/hi (and ``auto``
+    detection) always go to the multilingual Whisper."""
+    if s.asr_backend not in ASR_BACKENDS:
+        raise ValueError(f"SPEECH_ASR_BACKEND must be one of {ASR_BACKENDS}, not {s.asr_backend!r}")
+    whisper = WhisperASR(s.asr_model, device=s.device, beams=s.asr_beams,
+                         min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s)
+    bengali: ASRBackend = whisper
+    if s.asr_backend == "indic_conformer":
+        bengali = FallbackASR(
+            IndicConformerASR(s.asr_indic_conformer_model, decoder=s.asr_indic_conformer_decoder,
+                              revision=s.asr_indic_conformer_revision or None,
+                              min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s),
+            whisper,
+        )
+    return RoutedASR(
+        bengali,
+        WhisperASR(s.asr_multilingual_model, device=s.device, beams=s.asr_beams,
+                   min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s),
+    )
+
+
 def make_tts(s: Settings) -> TTSBackend:
     """Pick the TTS runtime (see ``Settings.tts_backend``)."""
     backend = s.tts_backend
+    if backend not in TTS_BACKENDS:
+        raise ValueError(f"SPEECH_TTS_BACKEND must be one of {TTS_BACKENDS}, not {backend!r}")
+    if backend == "indic_parler":
+        kw = dict(device=s.device, description=s.tts_parler_description, seed=s.tts_seed,
+                  min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s)
+        preferred: TTSBackend = (
+            ParlerWorkerTTS(s.tts_parler_python, s.tts_parler_model, **kw)
+            if s.tts_parler_python else IndicParlerTTS(s.tts_parler_model, **kw))
+        return FallbackTTS(preferred, make_tts(s.model_copy(update={"tts_backend": "auto"})))
     if backend == "auto":
         have = s.tts_gguf.is_file() and (s.llama_server_bin.is_file() or not s.tts_llm_manage)
         backend = "llama" if have else "transformers"
@@ -115,12 +165,7 @@ def create_app(
     cache: TTSCache | None = None,
 ) -> FastAPI:
     s = settings or get_settings()
-    asr = asr or RoutedASR(
-        WhisperASR(s.asr_model, device=s.device, beams=s.asr_beams,
-                   min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s),
-        WhisperASR(s.asr_multilingual_model, device=s.device, beams=s.asr_beams,
-                   min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s),
-    )
+    asr = asr or make_asr(s)
     tts = tts or make_tts(s)
     gaz = gazetteer or load_gazetteer(s.city_dir, s.gazetteer_file, s.place_threshold)
     tts_cache = cache or TTSCache(s.tts_cache_dir)

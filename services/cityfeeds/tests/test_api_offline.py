@@ -73,7 +73,31 @@ def test_quakes(client):
 def test_tide_table_is_honest(client):
     t = client.get("/feeds/tide-table").json()
     assert t["published"]["label"] == "UNAVAILABLE" and t["published"]["highs_lows"] == []
+    assert t["published"]["status"] == 404 and "No Such URL." in t["published"]["result"]  # recorded 29 Oct 2026
     assert t["modelled"]["label"] == "MODELLED" and t["modelled"]["highs_lows"]
+
+
+def test_fires_route_offline(client):
+    f = client.get("/feeds/fires").json()
+    assert f["type"] == "FeatureCollection" and f["feed"]["mode"] == "RECORDED"
+    assert f["route"].startswith("public") and f["count"] == len(f["features"])
+    assert "not a confirmed fire" in f["what"]
+
+
+def test_street_image_route_says_what_it_needs(client, monkeypatch):
+    monkeypatch.delenv("MAPILLARY_TOKEN", raising=False)
+    r = client.get("/feeds/street-image", params={"lat": 22.5646, "lon": 88.3512}).json()
+    assert r["state"] == "needs MAPILLARY_TOKEN" and r["image"] is None
+    assert client.get("/feeds/street-image", params={"lat": 10.0, "lon": 88.3}).status_code == 422  # Kolkata only
+
+
+def test_health_lists_every_keyed_source(client, monkeypatch):
+    for env in ("WAQI_TOKEN", "OPENAQ_API_KEY", "DATA_GOV_IN_API_KEY", "FIRMS_MAP_KEY", "MAPILLARY_TOKEN"):
+        monkeypatch.delenv(env, raising=False)
+    ks = client.get("/health").json()["keyed_sources"]
+    assert set(ks) == {"waqi", "openaq", "cpcb", "firms", "mapillary"}
+    assert all(v["state"] == f"needs {v['env']}" for k, v in ks.items() if k != "firms")
+    assert "no key" in ks["firms"]["state"]  # FIRMS runs on its public files without a key
 
 
 def test_notices_are_about_places_never_people(client):
@@ -81,8 +105,11 @@ def test_notices_are_about_places_never_people(client):
     assert n["items"]
     bad = re.compile(r"hearing|death|harassment|mutation|councillor|ex-gratia", re.I)
     for it in n["items"]:
-        assert not bad.search(it["title"]) and it["link"].startswith("https://www.kmcgov.in/")
-    assert any("dropped" in s["status"] for s in n["sources"])
+        assert not bad.search(it["title"])
+        assert it["link"].startswith(("https://www.kmcgov.in/", "https://kolkatatrafficpolice.gov.in/"))
+    ktp = [it for it in n["items"] if it["publisher"] == "Kolkata Traffic Police"]
+    assert len(ktp) == 2 and all("Diversion" in it["title"] for it in ktp)  # the recorded page's two advisories
+    assert next(s for s in n["sources"] if s["publisher"] == "Kolkata Traffic Police")["status"].startswith("read")
 
 
 def test_proposals_route_explains_what_it_did_not_draft(client):

@@ -42,10 +42,20 @@ class Settings(BaseSettings):
     deck_origins: str = ""
 
     # --- ASR -----------------------------------------------------------------
+    # "whisper": the Whisper-family checkpoint ``asr_model`` answers Bengali.
+    # "indic_conformer": AI4Bharat IndicConformer (gated on Hugging Face; see
+    # docs/ai/speech.md "When access is granted") answers Bengali, and
+    # ``asr_model`` takes over automatically while it cannot load.
+    asr_backend: str = "whisper"
     # Whisper-family checkpoint (transformers): a whisper-medium fine-tuned on
     # Bengali (Apache-2.0). Chosen by the evaluation in eval/; see README
     # "Models" for the comparison and why not IndicConformer.
     asr_model: str = "bengaliAI/tugstugi_bengaliai-asr_whisper-medium"
+    asr_indic_conformer_model: str = "ai4bharat/indic-conformer-600m-multilingual"
+    asr_indic_conformer_decoder: str = "rnnt"  # or "ctc"
+    # The model runs its own code (trust_remote_code): pin the commit whose
+    # model_onnx.py was reviewed. Empty = the repo's main branch.
+    asr_indic_conformer_revision: str = ""
     # English and Hindi (and language detection for lang=auto) go to a general
     # multilingual Whisper: the Bengali fine-tune above transcribes them in
     # Bengali letters. MIT; fast; poor at Bengali, so it never gets bn audio.
@@ -56,8 +66,19 @@ class Settings(BaseSettings):
     # --- TTS -----------------------------------------------------------------
     # "auto": the llama.cpp GGUF backend when the GGUF and llama-server exist
     # (about 3x faster on the GB10), else transformers. Or force one of
-    # "llama" / "transformers".
+    # "llama" / "transformers". "indic_parler": AI4Bharat Indic Parler-TTS
+    # (gated), with Svara ("auto") taking over while it cannot load.
     tts_backend: str = "auto"
+    tts_parler_model: str = "ai4bharat/indic-parler-tts"
+    # parler-tts pins transformers 4.46.1, so it runs in its own venv: the
+    # python of that venv (empty = load it in this process instead).
+    tts_parler_python: str = ""
+    # Parler caption; {speaker} becomes the language's recommended voice.
+    tts_parler_description: str = (
+        "{speaker} speaks in a calm, clear and unhurried voice at a steady, moderate pace, "
+        "reading a public traffic advisory. The recording is of very high quality, with the "
+        "speaker's voice sounding clear and very close up, and no background noise."
+    )
     tts_gguf: Path = Path.home() / ".cache" / "sahoshi" / "svara-gguf" / "svara-tts-v1-q8_0.gguf"
     llama_server_bin: Path = Path.home() / "llama.cpp" / "build" / "bin" / "llama-server"
     tts_llm_port: int = 8202

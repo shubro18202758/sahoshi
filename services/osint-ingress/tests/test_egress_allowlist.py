@@ -40,6 +40,7 @@ def test_allow_list_is_exactly_the_brief():
         "data.commoncrawl.org",
         "cap-sources.s3.amazonaws.com",
         "www.kmcgov.in",
+        "kolkatatrafficpolice.gov.in",
         "timesofindia.indiatimes.com",
         "www.millenniumpost.in",
         "www.sangbadpratidin.in",
@@ -55,10 +56,11 @@ def test_every_feed_and_page_host_is_allow_listed_and_the_unverified_ones_are_no
     from osint_ingress.connectors.official import IMD_RSS_URL, RSS_URL, KmcPage, PolicePage, WbsdmaPage
     from osint_ingress.connectors.reddit import FEED_URL
 
-    urls = [f.url for f in FEEDS] + [u for _f, u in GNEWS] + [IMD_RSS_URL, RSS_URL, KmcPage.page_url, FEED_URL]
+    urls = [f.url for f in FEEDS] + [u for _f, u in GNEWS] + [IMD_RSS_URL, RSS_URL, KmcPage.page_url, FEED_URL,
+                                                              PolicePage.page_url]
     assert {urlsplit(u).hostname for u in urls} <= ALLOWED_HOSTS
-    # hosts that did not answer on 2026-10-28, and outlets whose feeds refuse: never on the list
-    for host in (WbsdmaPage.host, PolicePage.host, "kolkatapolice.gov.in", "www.telegraphindia.com",
+    # hosts that cannot be verified, and outlets whose feeds refuse: never on the list
+    for host in (WbsdmaPage.host, "kolkatapolice.gov.in", "www.telegraphindia.com",
                  "www.anandabazar.com", "eisamay.com", "www.thestatesman.com", "zeenews.india.com"):
         assert host not in ALLOWED_HOSTS, host
 
@@ -260,7 +262,8 @@ async def test_an_unreachable_robots_verdict_is_retried_after_30_minutes_not_a_d
     })
     robots = RobotsCache(clock=lambda: clock[0])  # the defaults: 24 h for answers, 30 min for failures
     async with _client(rec) as client:
-        assert await robots.allowed(client, "https://www.sangbadpratidin.in/") == (False, "robots.txt unreachable")
+        assert await robots.allowed(client, "https://www.sangbadpratidin.in/") == (
+            False, "robots.txt unreachable (connection failed)")
         ok, reason = await robots.allowed(client, "https://www.kmcgov.in/")
         assert not ok and reason == "robots.txt unreachable (HTTP 503)"
         n = len(rec.requests)

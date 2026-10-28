@@ -31,10 +31,19 @@ Official pages (``kmc_scrape``, ``wbsdma``, ``kolkata_police_scrape``; hourly, b
 raised as :class:`~.base.ConnectorDisabled`, so the cached page is NOT served in its place; an unreachable
 robots.txt is a failure like any other), and a failure degrades to the cached page. Each notice-like same-site
 link becomes one signal; paperwork links (tenders, forms, payments) are not notices. KMC's portal answers (no
-robots.txt: a 404, so no restriction). The WBSDMA and police connectors are **disabled in code**: on 2026-10-28 the
-West Bengal Disaster Management department's host (``wbdmd.gov.in``) and the Kolkata Police and Kolkata Traffic
-Police hosts refused the connection, so nothing they serve was verified; they are not on the egress allow-list and
-nothing may be labelled ``OFFICIAL-VERIFIED`` from them until a host is verified and listed.
+robots.txt: a 404, so no restriction; its server offers RSA key exchange only, see ``safe_http.TLS_COMPAT``).
+
+Kolkata Traffic Police (``kolkata_police_scrape``, enabled 2026-10-29): the home page of
+``kolkatatrafficpolice.gov.in`` lists the department's current traffic advisories (PDF links: diversions,
+closures). Its server lacks RFC 5746 secure renegotiation, which OpenSSL 3 refuses by default; that was the
+"refused connection" of 2026-10-28. With the narrow ``TLS_COMPAT`` allowance its GeoTrust certificate and host
+name verify as usual, and robots.txt answers 404 (no restriction). Only links whose text reads as an advisory
+(advisory, diversion, closure, restriction, notification, circulation) are kept: the page's navigation (traffic-sign
+charts, wardens, awards) is not a notice. Advisories commented out of the page's HTML are never read.
+
+WBSDMA stays **disabled in code**: the West Bengal Disaster Management department's host (``wbdmd.gov.in``)
+answers plain HTTP on port 443 (no TLS) and 503 over http (checked 2026-10-29), so nothing it serves can be
+verified; it is not on the egress allow-list and nothing may be labelled ``OFFICIAL-VERIFIED`` from it.
 """
 
 from __future__ import annotations
@@ -65,7 +74,7 @@ from osint_ingress.connectors.base import (
     strip_html,
     url_sha256,
 )
-from osint_ingress.safe_http import ROBOTS_DISALLOWS, EgressRefused, FetchError, RobotsCache, fetch
+from osint_ingress.safe_http import ROBOTS_DISALLOWS, EgressRefused, FetchError, RobotsCache, fetch, network_reason
 
 __all__ = [
     "CAP_URL",
@@ -435,6 +444,12 @@ class OfficialPage(Connector):
     host: ClassVar[str]
     #: the area this office covers: ``kolkata`` (the district) or ``west_bengal`` (the state)
     area: ClassVar[str]
+    #: when set, a link is kept only if its visible text matches (a page whose navigation would otherwise pass)
+    notice_text: ClassVar[re.Pattern[str] | None] = None
+    #: when set, a link whose text matches is dropped (notices about persons, staff or parties, never a place)
+    exclude_text: ClassVar[re.Pattern[str] | None] = None
+    #: the shortest link text that can be a notice (a menu entry is shorter than a notice's title)
+    min_text: ClassVar[int] = 12
 
     def __init__(self, robots: RobotsCache | None = None) -> None:
         super().__init__()
@@ -452,7 +467,7 @@ class OfficialPage(Connector):
         try:
             res = await fetch(client, self.page_url, max_bytes=self.max_bytes)
         except httpx.ConnectError as exc:
-            raise ConnectorError("connection failed (TLS or network)") from exc
+            raise ConnectorError(network_reason(exc)) from exc
         if not res.ok:
             raise ConnectorError(f"HTTP {res.status}")
         ctype = res.headers.get("content-type", "text/html").lower()
@@ -476,12 +491,18 @@ class OfficialPage(Connector):
         district = self.area == "kolkata"
         drafts: list[Draft] = []
         for href, text in anchors.items:
-            if not 12 <= len(text) <= 300 or not href or href.startswith(("#", "javascript:", "mailto:", "tel:")):
+            if not self.min_text <= len(text) <= 300 or not href or href.startswith(("#", "javascript:", "mailto:", "tel:")):
                 continue
             url = canonical_url(urllib.parse.urljoin(self.page_url, href))
             if not url or not url.startswith(f"https://{self.host}/") or _SKIP_EXT.search(url.split("?")[0]):
                 continue
             if not (_NOTICE_PATH.search(urllib.parse.urlsplit(url).path) or _NOTICE_WORDS.search(text)):
+                continue
+            if self.notice_text is not None and not self.notice_text.search(text):
+                self.last_dropped["not_an_advisory" if self.name == "kolkata_police_scrape" else "not_about_a_place"] += 1
+                continue
+            if self.exclude_text is not None and self.exclude_text.search(text):
+                self.last_dropped["about_persons"] += 1
                 continue
             if _NOT_A_NOTICE.search(text):
                 self.last_dropped["paperwork_link"] += 1
@@ -505,13 +526,33 @@ class OfficialPage(Connector):
         return build_signals(self.name, drafts, entry, protect, dropped=self.last_dropped)
 
 
+#: a KMC notice about a PLACE: roads, drains, water, works, markets, air, fire, festivals at places (the cityfeeds
+#: notices whitelist, widened by the portal's own seasonal notices: puja immersions, vending zones, dengue)
+_KMC_PLACE = re.compile(
+    r"\b(roads?|parking|traffic|drain\w*|desilt\w*|waterlog\w*|monsoon|rain\w*|flood\w*|water supply|"
+    r"construction|bridge|flyover|aqi|air quality|trees?|park|ghat|market|pond|canal|pumping|sewer\w*|streets?|"
+    r"lane|puja|immersion\w*|vending|fire|dengue|cyclone|heat\s?wave)\b",
+    re.IGNORECASE,
+)
+#: notices about persons, staff, hearings or parties, never a place (the cityfeeds PERSON_WORDS, widened)
+_KMC_PERSONS = re.compile(
+    r"\b(hearing|ex-gratia|deaths?|disabilit\w*|harassment|mutation|appointment|recruit\w*|candidate|"
+    r"vaccination|tender|mayor|councillor|personal|personnel|political|compensation|judgement|appeal)\b",
+    re.IGNORECASE,
+)
+
+
 class KmcPage(OfficialPage):
-    """Kolkata Municipal Corporation: the portal's home page (the site root only forwards to it by script)."""
+    """Kolkata Municipal Corporation: the portal's home page (the site root only forwards to it by script). Only
+    notices about places and roads are kept (``_KMC_PLACE``), never one about persons, staff or parties
+    (``_KMC_PERSONS``): the portal's menu, HR circulars and hearing lists are not situations at a place."""
 
     name = "kmc_scrape"
     page_url = "https://www.kmcgov.in/KMCPortal/jsp/KMCPortalHome1.jsp"
     host = "www.kmcgov.in"
     area = "kolkata"
+    notice_text = _KMC_PLACE
+    exclude_text = _KMC_PERSONS
 
 
 class WbsdmaPage(OfficialPage):
@@ -523,19 +564,26 @@ class WbsdmaPage(OfficialPage):
     host = "wbdmd.gov.in"
     area = "west_bengal"
     disabled_reason = (
-        "disabled: host unverified (wbdmd.gov.in refused the connection on 2026-10-28; verify the department's "
-        "host and allow-list it before enabling)"
+        "disabled: host unverified (wbdmd.gov.in answers plain HTTP on port 443, no TLS, and 503 over http, "
+        "checked 2026-10-29; verify the department's https host and allow-list it before enabling)"
     )
 
 
+#: an advisory, in the department's own words (the Kolkata Traffic Police home page's notice list)
+_ADVISORY = re.compile(
+    r"\b(advisor\w*|diversion|divert\w*|closure|closed|restriction\w*|notification|circulation|"
+    r"traffic arrangement\w*|regulat\w+)\b",
+    re.IGNORECASE,
+)
+
+
 class PolicePage(OfficialPage):
-    """Kolkata Traffic Police notices: disabled until an official host answers and is verified (module docstring)."""
+    """Kolkata Traffic Police: the current traffic advisories on the department's home page (module docstring)."""
 
     name = "kolkata_police_scrape"
     page_url = "https://kolkatatrafficpolice.gov.in/"
     host = "kolkatatrafficpolice.gov.in"
     area = "kolkata"
-    disabled_reason = (
-        "disabled: host unverified (kolkatatrafficpolice.gov.in and kolkatapolice.gov.in refused the connection "
-        "on 2026-10-28; verify the official police host and allow-list it before enabling)"
-    )
+    notice_text = _ADVISORY
+    #: an advisory's title is a sentence; the menu's "Traffic Restrictions" is not
+    min_text = 30

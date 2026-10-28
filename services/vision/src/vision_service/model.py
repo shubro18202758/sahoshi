@@ -164,29 +164,67 @@ class LlamaServerManager:
                                    f"{self.s.min_free_gib:.0f} GiB floor")
                 raise ModelUnavailable(self.last_error)
             t0 = time.perf_counter()
-            log.info("starting llama-server on :%s", self.s.llm_port)
+            attempts = max(1, self.s.llm_start_attempts)
+            for attempt in range(1, attempts + 1):
+                if await self._start_once():
+                    self.start_seconds = round(time.perf_counter() - t0, 1)
+                    self.started_at = time.time()
+                    self.last_error = None
+                    return self.url
+                if self._proc is not None:  # alive but never healthy: give up, do not stack a second server
+                    break
+                if attempt < attempts:
+                    log.warning("llama-server start %d/%d failed (%s); retrying", attempt, attempts, self.last_error)
+                    await asyncio.sleep(3.0)
+                    free = _mem_available_gib()
+                    if free is not None and free - self.s.need_gib < self.s.min_free_gib:
+                        break
+            await self.stop()
+            raise ModelUnavailable(self.last_error or "llama-server did not start")
+
+    def _log_tail(self, limit: int = 300) -> str:
+        try:
+            with open(self.s.llm_log_path, "rb") as fh:
+                fh.seek(0, os.SEEK_END)
+                fh.seek(max(0, fh.tell() - 4096))
+                lines = [ln.strip() for ln in fh.read().decode("utf-8", "replace").splitlines() if ln.strip()]
+        except OSError:
+            return ""
+        return " | ".join(lines[-3:])[-limit:]
+
+    async def _start_once(self) -> bool:
+        """One llama-server start; True once /health answers 200. On failure ``last_error`` says why and
+        ``self._proc`` is None when the process died (a retry may help) or still set when it hung."""
+        log.info("starting llama-server on :%s", self.s.llm_port)
+        try:
+            Path(self.s.llm_log_path).parent.mkdir(parents=True, exist_ok=True)
+            out = open(self.s.llm_log_path, "wb")  # noqa: SIM115 - handed to the child, closed below
+        except OSError:
+            out = None
+        try:
             self._proc = subprocess.Popen(  # noqa: S603 - fixed argv from config
-                self._cmd(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                self._cmd(), stdout=out or subprocess.DEVNULL, stderr=subprocess.STDOUT if out else subprocess.DEVNULL,
                 start_new_session=True,
             )
-            deadline = time.monotonic() + self.s.llm_start_timeout_s
-            async with httpx.AsyncClient(timeout=5.0) as c:
-                while time.monotonic() < deadline:
-                    if self._proc.poll() is not None:
-                        self.last_error = f"llama-server exited with {self._proc.returncode}"
-                        self._proc = None
-                        raise ModelUnavailable(self.last_error)
-                    with contextlib.suppress(httpx.HTTPError):
-                        r = await c.get(self.url + "/health")
-                        if r.status_code == 200:
-                            self.start_seconds = round(time.perf_counter() - t0, 1)
-                            self.started_at = time.time()
-                            self.last_error = None
-                            return self.url
-                    await asyncio.sleep(1.0)
-            await self.stop()
-            self.last_error = "llama-server did not become healthy in time"
-            raise ModelUnavailable(self.last_error)
+        finally:
+            if out is not None:
+                out.close()
+        deadline = time.monotonic() + self.s.llm_start_timeout_s
+        async with httpx.AsyncClient(timeout=5.0) as c:
+            while time.monotonic() < deadline:
+                if self._proc.poll() is not None:
+                    code = self._proc.returncode
+                    self._proc = None
+                    tail = self._log_tail()
+                    self.last_error = f"llama-server exited with {code}" + (f": {tail}" if tail else "")
+                    return False
+                with contextlib.suppress(httpx.HTTPError):
+                    r = await c.get(self.url + "/health")
+                    if r.status_code == 200:
+                        return True
+                await asyncio.sleep(1.0)
+        self.last_error = "llama-server did not become healthy in time"
+        return False
 
     async def stop(self) -> bool:
         proc, self._proc = self._proc, None
@@ -236,6 +274,8 @@ class LlamaVisionModel:
             ],
             "temperature": 0.0,
             "max_tokens": 300,
+            # a one-shot classifier: no reasoning preamble (ignored by templates without the switch)
+            "chat_template_kwargs": {"enable_thinking": False},
             "response_format": {"type": "json_schema",
                                 "json_schema": {"name": "road_state", "schema": OUTPUT_SCHEMA}},
         }

@@ -7,5 +7,7 @@ node_modules/
 # (infra/docker/Dockerfile.command-deck) or copied from
 # node_modules/cesium/Build/Cesium for local dev; never committed.
 static/cesium/
+# the same path as a symlink to a local copy (a pattern ending in / does not match a link)
+static/cesium
 # Canvas smoke artifacts (screenshots from tests/gods-eye-smoke.mjs).
 tests/artifacts/

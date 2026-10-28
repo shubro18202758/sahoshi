@@ -276,14 +276,14 @@ def build() -> None:
 
     # 8 · AI stack
     s = slide()
-    kicker_title(s, "OPEN, ON-PREMISES AI", "2025–26 open-source models, all on one computer in the control room")
+    kicker_title(s, "OPEN, ON-PREMISES AI", "2025–26 open models on one control-room computer")
     rows = [
         ("Forecast", "Chronos-2 (Apache-2.0)", "Zero-shot corridor forecasts; error 55% below the seasonal baseline in backtest (SIMULATED history)"),
         ("Waterlogging", "Rain × tide × DEM × pumps", "Replay of 22–23 Sep 2025 on IMD-observed rain: 13 of 13 reported places flagged"),
         ("Signal twin", "Cell-transmission model + Webster / max-pressure", "Shockwave speed within 0.2% of theory; a 30-min city run in 0.12 s"),
-        ("Speech", "Bengali Whisper (Apache-2.0), Svara-TTS", "11.5% word error, place matched 53/60 (synthetic round trip)"),
+        ("Speech", "Bengali Whisper (Apache-2.0), Svara-TTS", "11.2% word error, place matched 55/60 (synthetic round trip)"),
         ("Vision", "Qwen3-VL-8B (Apache-2.0)", "11 of 12 road states right; 9 of 9 refusal probes refused"),
-        ("Assistant", "Local Gemma-class LLM + retrieval", "Answers grounded in the live picture; numbers checked against tool results"),
+        ("Decision", "pplx-decider-v1.2 (27B) + Gemma 4", "Typed answers in 1.0 s; 22 of 26 labelled Kolkata decisions; an officer approves every action"),
     ]
     y = Inches(1.95)
     for a, b, c in rows:

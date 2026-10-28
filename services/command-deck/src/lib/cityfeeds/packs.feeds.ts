@@ -124,6 +124,12 @@ const en = {
 	cf_f_news: (n: unknown) => `${s(n)} news mention(s) of a DVC release in 72 hours`,
 	cf_f_quake: (mag: unknown, place: unknown, km: unknown) => `M${s(mag)}, ${s(place)}, ${s(km)} km away`,
 	cf_f_quake_count: (n: unknown) => `${s(n)} event(s) in the last year`,
+	cf_f_observed: (band: unknown, aqi: unknown, site: unknown) => `Observed at the CPCB stations: ${s(band).toLowerCase()} (AQI ${s(aqi)}), worst at ${s(site)}`,
+	cf_f_observed_sites: (n: unknown) => `Observed station readings at ${s(n)} site(s)`,
+	cf_f_observed_none: 'Station measurements are not connected yet: the values above are modelled',
+	cf_f_tide_port: (status: unknown) => `Port tide table: not readable (the port’s site answers with code ${s(status)})`,
+	cf_f_tide_linked: (n: unknown) => `Port tide notices: ${s(n)} listed (linked, not parsed)`,
+	cf_f_tide_noanswer: 'Port tide table: the port’s site did not answer',
 
 	// ── the citizen page: Air today ──
 	cf_pub_title: 'Air today',

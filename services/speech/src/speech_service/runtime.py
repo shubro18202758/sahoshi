@@ -16,13 +16,66 @@ import threading
 import time
 from typing import Any, Callable
 
-__all__ = ["ModelUnavailable", "LazyModel", "mem_available_gib"]
+__all__ = [
+    "ModelUnavailable",
+    "ModelNotProvisioned",
+    "LazyModel",
+    "mem_available_gib",
+    "hf_page",
+    "not_provisioned",
+]
 
 log = logging.getLogger("speech.runtime")
 
 
 class ModelUnavailable(RuntimeError):
     """The model cannot be loaded right now (memory, missing weights)."""
+
+
+class ModelNotProvisioned(ModelUnavailable):
+    """The model cannot load until an operator acts: its gated weights were
+    not granted or not downloaded, or a runtime package is missing. Unlike a
+    memory refusal this does not clear by waiting, so a fallback backend may
+    take over (see ``asr.FallbackASR`` / ``tts.FallbackTTS``)."""
+
+
+def hf_page(repo: str) -> str:
+    return f"https://huggingface.co/{repo}"
+
+
+# Substrings of the errors transformers / huggingface_hub raise (older
+# transformers wrap them in a plain OSError) when a repo is gated and not
+# granted, or absent from the local cache in offline mode.
+_GATED_HINTS = ("gated", "401 client error", "403 client error", "restricted",
+                "awaiting a review", "not in the authorized list")
+_NOT_CACHED_HINTS = (
+    "offline", "couldn't connect", "cannot find the requested files", "not a local folder",
+    "does not appear to have a file", "local_files_only", "no such file",
+)
+
+
+def not_provisioned(repo: str, exc: BaseException, *, gated: bool) -> ModelNotProvisioned | None:
+    """Turn a load error into a clear :class:`ModelNotProvisioned`, or return
+    ``None`` when it is something else (a CUDA error, a bug) that should stay
+    loud. Never echoes a token: only the exception's type and message."""
+    name = type(exc).__name__
+    msg = str(exc)
+    low = msg.lower()
+    gate = f"gated: request access at {hf_page(repo)}" if gated else f"see {hf_page(repo)}"
+    if isinstance(exc, ImportError):
+        return ModelNotProvisioned(f"{repo}: a runtime package is missing ({msg[:160]}); {gate}")
+    if name in ("GatedRepoError", "RepositoryNotFoundError") or (
+            name == "HfHubHTTPError" and ("401" in msg or "403" in msg)) or (
+            isinstance(exc, (OSError, ValueError)) and any(h in low for h in _GATED_HINTS)):
+        return ModelNotProvisioned(
+            f"{gate} with the deployment's Hugging Face account; the account has not been "
+            f"granted access yet ({name})")
+    if name in ("LocalEntryNotFoundError", "OfflineModeIsEnabled", "EntryNotFoundError") or (
+            isinstance(exc, (OSError, ValueError)) and any(h in low for h in _NOT_CACHED_HINTS)):
+        return ModelNotProvisioned(
+            f"{repo}: weights are not in the local Hugging Face cache ({name}); {gate}, "
+            f"then download them with scripts/fetch_gated_models.sh")
+    return None
 
 
 def mem_available_gib() -> float | None:
@@ -78,7 +131,8 @@ class LazyModel:
                 t0 = time.perf_counter()
                 try:
                     self._obj = self._loader()
-                except ModelUnavailable:
+                except ModelUnavailable as exc:
+                    self.last_error = str(exc)[:400]
                     raise
                 except Exception as exc:  # weights missing, CUDA error, …
                     self.last_error = f"{type(exc).__name__}: {exc}"[:400]

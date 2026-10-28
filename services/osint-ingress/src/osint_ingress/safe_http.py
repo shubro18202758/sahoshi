@@ -10,7 +10,9 @@ egress control):
    only to an allow-listed host, and refuses anything else before connecting.
 2. **The one client** — :func:`make_source_client` builds the single ``httpx.AsyncClient`` the connectors share,
    with ``trust_env=False`` (no proxy, netrc or certificate override from the environment) and a user-agent that
-   names the project and no person.
+   names the project and no person. Two government servers need a TLS compatibility allowance
+   (:data:`TLS_COMPAT`, per exact host): the certificate chain and the host name are verified for them exactly
+   as for every other host; only the cipher list or the renegotiation rule named there is widened.
 3. **The oracle** — :func:`check_oracle_url` accepts only a loopback base URL (``127.0.0.1``, ``localhost`` or
    ``::1``; the emulator's internal-endpoint rule), and :class:`LoopbackTransport` enforces it per request.
 4. **Bodies** — :func:`fetch` reads raw bytes up to a per-call cap and decodes ``gzip``/``deflate`` itself with a
@@ -18,8 +20,10 @@ egress control):
 5. **robots.txt** — :class:`RobotsCache` (stdlib ``urllib.robotparser``, fetched through the same client, cached
    24 h) decides for the official page scrapers; a disallowed path (or a robots.txt answered 401/403) disables
    that connector (:data:`ROBOTS_DISALLOWS`, "robots.txt disallows"; its cached page is not served either).
-   Unreachable robots (5xx, network) means complete disallow (RFC 9309 §2.3.1.4): nothing is crawled, and it is
-   reported as a failure ("robots.txt unreachable"), so the page fetched earlier, while allowed, may be served.
+   A 404 or other 4xx is "unavailable": no restriction (RFC 9309 §2.3.1.3). Unreachable robots (5xx, network)
+   means complete disallow (RFC 9309 §2.3.1.4): nothing is crawled, and it is reported as a failure with its cause
+   ("robots.txt unreachable (TLS handshake failed)", "(timed out)", "(HTTP 503)", ...), so the page fetched
+   earlier, while allowed, may be served.
    That verdict is cached only 30 minutes, then robots.txt is fetched again.
 
 Nothing here logs a URL path or a body: errors name the host at most.
@@ -27,12 +31,14 @@ Nothing here logs a URL path or a body: errors name the host at most.
 
 from __future__ import annotations
 
+import ssl
 import time
 import urllib.robotparser
 import zlib
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
+import certifi
 import httpx
 
 __all__ = [
@@ -40,6 +46,7 @@ __all__ = [
     "LOOPBACK_HOSTS",
     "ROBOTS_DISALLOWS",
     "ROBOTS_TOKEN",
+    "TLS_COMPAT",
     "AllowListTransport",
     "EgressRefused",
     "FetchError",
@@ -48,17 +55,21 @@ __all__ = [
     "RobotsCache",
     "check_egress_url",
     "check_oracle_url",
+    "compat_ssl_context",
     "fetch",
     "make_oracle_client",
     "make_source_client",
+    "network_reason",
 ]
 
 #: Exact source hosts (OS-2 brief; the Kolkata sources table in this service's README). No wildcard, no suffix
-#: match. Each was checked on 2026-10-28 with the service's own user agent: it answered and its robots.txt allows the
-#: path (``www.kmcgov.in`` serves no robots.txt: a 404, so no restriction, RFC 9309 §2.3.1.3). Deliberately absent:
-#: the West Bengal Disaster Management department (``wbdmd.gov.in``) and Kolkata Police / Kolkata Traffic Police
-#: (``kolkatapolice.gov.in``, ``kolkatatrafficpolice.gov.in``): their hosts refused the connection, so nothing they
-#: serve was verified, and the ``wbsdma`` and ``kolkata_police_scrape`` connectors stay disabled until it is. Outlets
+#: match. Each was checked with the service's own user agent: it answered and its robots.txt allows the path
+#: (``www.kmcgov.in`` and ``kolkatatrafficpolice.gov.in`` serve no robots.txt: a 404, so no restriction, RFC 9309
+#: §2.3.1.3). ``kolkatatrafficpolice.gov.in`` was added on 2026-10-29: its "refused connection" was OpenSSL 3
+#: declining a server without secure renegotiation (see :data:`TLS_COMPAT`); its GeoTrust certificate verifies.
+#: Deliberately absent: the West Bengal Disaster Management department (``wbdmd.gov.in``: port 443 answers plain
+#: HTTP, not TLS, and http answers 503; checked 2026-10-29), so the ``wbsdma`` connector stays disabled; the Kolkata
+#: Police main site (``kolkatapolice.gov.in``: recruitment and security notices, no traffic advisories). Outlets
 #: whose feeds refuse or no longer exist (The Telegraph, Anandabazar, Ei Samay, The Statesman, Zee 24 Ghanta) are
 #: not listed either.
 ALLOWED_HOSTS: frozenset[str] = frozenset(
@@ -72,6 +83,7 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         "index.commoncrawl.org",
         "data.commoncrawl.org",
         "www.kmcgov.in",  # Kolkata Municipal Corporation portal
+        "kolkatatrafficpolice.gov.in",  # Kolkata Traffic Police: the public advisories on the home page
         # news_rss: the outlets' own RSS feeds (Kolkata and West Bengal sections)
         "timesofindia.indiatimes.com",
         "www.millenniumpost.in",
@@ -79,6 +91,27 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         "bengali.abplive.com",
     }
 )
+
+#: Per-host TLS compatibility allowances (checked from this box with ``openssl s_client`` on 2026-10-29). For these
+#: hosts the certificate chain and the host name are verified exactly as for every other host (system-independent
+#: CA bundle, ``CERT_REQUIRED``, ``check_hostname``, TLS 1.2 minimum); only the named allowance is added:
+#:
+#: * ``rsa_kx`` — the server offers only RSA key-exchange suites (``TLS_RSA_WITH_AES_256_GCM_SHA384``). CPython built
+#:   with its own default cipher list (the service image's ``python:3.12``) offers forward-secret suites only, so
+#:   the handshake fails ("handshake failure") although curl and a distribution Python connect. This was the live
+#:   ``kmc_scrape`` failure, reported as "robots.txt unreachable". Adds ``RSA+AESGCM`` (AES-GCM only).
+#: * ``legacy_renegotiation`` — the server does not support RFC 5746 secure renegotiation, and OpenSSL 3 refuses
+#:   such servers by default ("unsafe legacy renegotiation disabled"). ``ssl.OP_LEGACY_SERVER_CONNECT`` for these
+#:   hosts only. This client never renegotiates, sends no credential or cookie, and only reads public pages.
+#:
+#: Neither allowance switches any certificate check off, and no other host gets them.
+TLS_COMPAT: Mapping[str, frozenset[str]] = {
+    "www.kmcgov.in": frozenset({"rsa_kx"}),
+    "kolkatatrafficpolice.gov.in": frozenset({"rsa_kx", "legacy_renegotiation"}),
+}
+
+#: forward-secret suites first, then RSA key exchange with AES-GCM only (never CBC, RC4, 3DES, MD5 or NULL)
+_COMPAT_CIPHERS = "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:RSA+AESGCM:!aNULL:!eNULL:!MD5:!DSS"
 
 #: The oracle runs on the same box: loopback only (the emulator's internal-endpoint rule).
 LOOPBACK_HOSTS: frozenset[str] = frozenset({"127.0.0.1", "localhost", "::1"})
@@ -175,21 +208,59 @@ class LoopbackTransport(httpx.AsyncBaseTransport):
         await self._inner.aclose()
 
 
+def compat_ssl_context(allowances: frozenset[str]) -> ssl.SSLContext:
+    """A fully verifying client context (certifi CA bundle, ``CERT_REQUIRED``, host name checked, TLS ≥ 1.2) plus
+    the :data:`TLS_COMPAT` allowances named. An unknown allowance is refused (``ValueError``)."""
+    unknown = set(allowances) - {"rsa_kx", "legacy_renegotiation"}
+    if unknown:
+        raise ValueError(f"unknown TLS allowance: {sorted(unknown)}")
+    ctx = ssl.create_default_context(cafile=certifi.where())
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    if "rsa_kx" in allowances:
+        ctx.set_ciphers(_COMPAT_CIPHERS)
+    if "legacy_renegotiation" in allowances:
+        ctx.options |= ssl.OP_LEGACY_SERVER_CONNECT
+    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
+    return ctx
+
+
+class _PerHostTransport(httpx.AsyncBaseTransport):
+    """Routes a request to the transport kept for its exact host (a :data:`TLS_COMPAT` host), else the default."""
+
+    def __init__(self, default: httpx.AsyncBaseTransport, by_host: Mapping[str, httpx.AsyncBaseTransport]) -> None:
+        self._default = default
+        self._by_host = dict(by_host)
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        return await self._by_host.get(_host_of(request.url), self._default).handle_async_request(request)
+
+    async def aclose(self) -> None:
+        for t in {id(t): t for t in (self._default, *self._by_host.values())}.values():
+            await t.aclose()
+
+
 def make_source_client(
     *,
     user_agent: str,
     timeout: float = 25.0,
     transport: httpx.AsyncBaseTransport | None = None,
 ) -> httpx.AsyncClient:
-    """The one egress client: allow-listed hosts only, ``trust_env=False``, no automatic redirects."""
-    inner = transport or httpx.AsyncHTTPTransport(retries=0, trust_env=False)
+    """The one egress client: allow-listed hosts only, ``trust_env=False``, no automatic redirects. Without a
+    ``transport`` (tests pass a mock), each :data:`TLS_COMPAT` host gets its own transport with its allowance."""
+    if transport is None:
+        limits = httpx.Limits(max_connections=4, max_keepalive_connections=2)
+        default = httpx.AsyncHTTPTransport(retries=0, trust_env=False, limits=limits)
+        by_host = {
+            host: httpx.AsyncHTTPTransport(verify=compat_ssl_context(allow), retries=0, trust_env=False, limits=limits)
+            for host, allow in TLS_COMPAT.items()
+        }
+        transport = _PerHostTransport(default, by_host)
     return httpx.AsyncClient(
-        transport=AllowListTransport(inner),
+        transport=AllowListTransport(transport),
         trust_env=False,
         follow_redirects=False,
         headers={"User-Agent": user_agent, "Accept-Encoding": "gzip"},
         timeout=httpx.Timeout(timeout, connect=min(10.0, timeout)),
-        limits=httpx.Limits(max_connections=4, max_keepalive_connections=2),
     )
 
 
@@ -271,15 +342,18 @@ async def fetch(
     max_bytes: int,
     headers: Mapping[str, str] | None = None,
     max_redirects: int = 5,
+    timeout: float | None = None,
 ) -> FetchResult:
     """GET ``url`` through the egress policy. Redirects only to allow-listed hosts; the body is capped.
 
     Raises :class:`EgressRefused` (policy), :class:`FetchError` (size, encoding, redirects) or an ``httpx``
-    transport error. Any status is returned; the caller decides what a 4xx/5xx means.
+    transport error. Any status is returned; the caller decides what a 4xx/5xx means. ``timeout`` overrides the
+    client's read timeout for this call (a slow API such as GDELT DOC).
     """
     current = check_egress_url(url)
     for _hop in range(max_redirects + 1):
-        request = client.build_request("GET", current, headers=dict(headers or {}))
+        extra = {"timeout": httpx.Timeout(timeout, connect=min(10.0, timeout))} if timeout else {}
+        request = client.build_request("GET", current, headers=dict(headers or {}), **extra)
         resp = await client.send(request, stream=True)
         try:
             if resp.status_code in _REDIRECTS:
@@ -298,11 +372,30 @@ async def fetch(
                     ) from exc
                 continue
             body = await _read_capped(resp, max_bytes)
-            keep = {k: v for k, v in resp.headers.items() if k.lower() in ("content-type", "last-modified", "etag")}
+            keep = {k: v for k, v in resp.headers.items()
+                    if k.lower() in ("content-type", "last-modified", "etag", "retry-after")}
             return FetchResult(status=resp.status_code, content=body, url=str(current), headers=keep)
         finally:
             await resp.aclose()
     raise FetchError(f"more than {max_redirects} redirects")
+
+
+def network_reason(exc: BaseException) -> str:
+    """A short, content-free cause for a failed request ("TLS handshake failed", "timed out", ...): no URL, no body."""
+    if isinstance(exc, httpx.TimeoutException):
+        return "timed out"
+    if isinstance(exc, httpx.ConnectError):
+        msg = str(exc).lower()
+        if "certificate" in msg:
+            return "TLS certificate not verified"
+        if any(k in msg for k in ("ssl", "tls", "handshake", "renegotiation", "wrong version")):
+            return "TLS handshake failed"
+        if any(k in msg for k in ("name or service", "nodename", "name resolution", "getaddrinfo", "resolve")):
+            return "DNS lookup failed"
+        return "connection failed"
+    if isinstance(exc, FetchError):
+        return str(exc)[:80]
+    return f"network error ({type(exc).__name__})"
 
 
 @dataclass
@@ -340,8 +433,8 @@ class RobotsCache:
             res = await fetch(client, origin + "/robots.txt", max_bytes=512 * 1024)
         except EgressRefused:
             raise
-        except (FetchError, httpx.HTTPError):
-            return _Robots(retry_at, None, False, "robots.txt unreachable")
+        except (FetchError, httpx.HTTPError) as exc:
+            return _Robots(retry_at, None, False, f"robots.txt unreachable ({network_reason(exc)})")
         if res.status in (401, 403):
             return _Robots(expires, None, False, f"{ROBOTS_DISALLOWS} (HTTP {res.status})")
         if 400 <= res.status < 500:

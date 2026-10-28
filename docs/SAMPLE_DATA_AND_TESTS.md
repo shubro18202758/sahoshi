@@ -202,28 +202,29 @@ Stop each process when you are done.
 
 ## 2.2 Measured totals
 
-Measured on 28 Oct 2026 with every suite run once, offline, in parallel (about 40 s wall-clock).
+Measured on 29 Oct 2026 with every suite run once, offline, in parallel (about 45 s wall-clock).
 
 | Suite | Passed | Skipped | Notes |
 |---|---:|---:|---|
-| traffic-oracle | 2,075 | 104 | Skips need a database sandbox |
+| traffic-oracle | 2,106 | 104 | Skips need a database sandbox |
 | convoy-brain | 752 | 1 | |
-| corridor-store | 141 | 30 | Skips need a database sandbox |
-| event-emulator | 318 | 13 | |
-| embedding-service | 113 | 0 | |
+| corridor-store | 147 | 30 | Skips need a database sandbox |
+| event-emulator | 367 | 13 | |
+| embedding-service | 191 | 4 | |
 | forecast | 37 | 0 | 2 real-model tests deselected (`-m model`) |
 | hydro | 23 | 0 | Open-Meteo mocked |
-| speech | 124 | 3 | 3 real-model tests skipped |
-| vision | 73 | 3 | 3 real-model tests skipped |
+| speech | 150 | 4 | real-model tests skipped |
+| vision | 75 | 3 | 3 real-model tests skipped |
 | twin | 48 | 0 | |
-| osint-common | 439 | 1 | 4 fixtures still being moved to the Kolkata gazetteer |
-| osint-ingress | 380 | 2 | |
-| osint-geo | 359 | 0 | 31 fixtures still being moved to the Kolkata gazetteer |
-| osint-analysis | 356 | 4 | |
-| deck proxy guard (pytest) | 5 | 0 | |
-| **Python total** | **5,921** | **159** | |
+| cityfeeds | 73 | 0 | every outside source mocked or replayed from a recording |
+| osint-common | 449 | 0 | |
+| osint-ingress | 498 | 1 | |
+| osint-geo | 586 | 0 | |
+| osint-analysis | 478 | 0 | |
+| deck proxy guard (pytest) | 7 | 0 | |
+| **Python total** | **5,987** | **160** | |
 | signal-ingress (cargo) | 121 | 0 | four test binaries: 50 + 45 + 7 + 19 |
-| deck unit suites | 41 of 42 files | — | `perf2` (a language-pack size golden) was being re-baselined |
+| deck unit suites | 45 of 45 files | — | |
 | deck lints | design tokens, copy (4,263 English strings), Bengali script | — | all pass |
 | `svelte-check` | 0 errors | — | |
 | OSINT offline smoke | PASS | — | 28 signals, 24 geo-tagged, 3 situations surfaced |

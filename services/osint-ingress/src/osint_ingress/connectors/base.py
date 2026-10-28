@@ -70,6 +70,7 @@ __all__ = [
     "Connector",
     "ConnectorDisabled",
     "ConnectorError",
+    "ConnectorThrottled",
     "Draft",
     "bare_domain",
     "build_signals",
@@ -129,6 +130,17 @@ _REDDIT_THREAD = re.compile(r"^(/r/[A-Za-z0-9_]{1,64}/comments/[a-z0-9]{1,16}/)"
 
 class ConnectorError(Exception):
     """A connector failure with a short, content-free reason ("HTTP 429 (throttled)", "XML refused: DTD")."""
+
+
+class ConnectorThrottled(ConnectorError):
+    """The source asked us to slow down (HTTP 429, its throttle banner, or a timeout on an API known to time out
+    when it is overloaded). The runner backs the connector off (:class:`~osint_ingress.runner.Backoff`): no request
+    until ``retry_after_sec`` (the server's ``Retry-After``) or the jittered exponential delay, whichever is
+    later, and meanwhile it serves the connector's last live answer with its real age."""
+
+    def __init__(self, reason: str, retry_after_sec: float | None = None) -> None:
+        super().__init__(reason)
+        self.retry_after_sec = retry_after_sec
 
 
 class ConnectorDisabled(ConnectorError):

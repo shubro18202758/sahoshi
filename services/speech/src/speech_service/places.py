@@ -416,6 +416,33 @@ class Gazetteer:
             sk = 0.86 if a == b else sk * 0.6
         return max(direct, sk)
 
+    def _prefer_whole_name(self, ranked: list[PlaceMatch]) -> list[PlaceMatch]:
+        """A name the ASR split in two ("গড়িয়া হাট") can match a shorter
+        place exactly on its first half (Garia) and the place that was said
+        (Gariahat) only through the looser split-word score. When an
+        above-threshold candidate covers more of the same words, those words
+        spell its whole name once the split is closed (same consonant
+        skeleton), and the top name is the beginning of it, the longer name
+        wins. ("সেক্টর ফাইভ এ" stays Sector V: "এ" does not spell "থানা".)"""
+        if len(ranked) < 2 or ranked[0].score < self.threshold:
+            return ranked
+        a = ranked[0]
+
+        def joined(t: str) -> str:
+            return skeleton(t).replace(" ", "")
+
+        a_sk = joined(a.matched_name)
+        for b in ranked[1:]:
+            if b.score < self.threshold:
+                break
+            b_sk = joined(b.matched_name)
+            if (len(_words(b.matched_text)) > len(_words(a.matched_text))
+                    and a.matched_text in b.matched_text
+                    and len(a_sk) >= 2 and len(b_sk) > len(a_sk) and b_sk.startswith(a_sk)
+                    and joined(b.matched_text) == b_sk):
+                return [b, *[m for m in ranked if m is not b]]
+        return ranked
+
     def match(self, text: str, top: int = 3) -> tuple[PlaceMatch | None, list[PlaceMatch]]:
         words = _words(text)
         if not words or not self._variants:
@@ -444,6 +471,7 @@ class Gazetteer:
                     best[v.place_idx] = PlaceMatch(self.places[v.place_idx], s, f, v.name)
         ranked = sorted(best.values(), key=lambda m: (-m.score, -len(m.matched_text),
                                                       m.place.source != "landmarks"))
+        ranked = self._prefer_whole_name(ranked)
         cands = [m for m in ranked[:top] if m.score >= 0.5]
         top1 = ranked[0] if ranked and ranked[0].score >= self.threshold else None
         return top1, cands

@@ -34,7 +34,7 @@ How they are taken:
 | `decide-waterlogging.jpg` | Decide, waterlogging proposals | `/decide` (Exercise: 23 Sep 2025) | A reroute around water at Gariahat crossing (risk 3, > 30 cm, deep water in 45 min), tagged Exercise · Modelled · Hindsight; the ambulance-window and live-wire cards in the queue |
 | `object-segment.jpg` | A road's object page | `/o/segment:1033` | Rash Behari Avenue: limit, lanes, the two-hour V/C forecast band (Chronos-2, simulated traffic), key facts |
 | `voice-report.jpg` | Field report by voice | top bar → Report | A Bengali report spoken into the microphone (synthetic voice), its transcript, the matched place (Thanthania), kind, severity, the words that decided it, "unverified" |
-| `road-state.jpg` | Camera road state | `/o/camera:EM-J12` | **Not taken yet.** The vision model refused to start on the shared box (18.3 GiB available; it needs ~8 GiB plus a 12 GiB floor), and the page said so; a shot of that refusal is not kept. Retake with `node scripts/showcase/console_shots.mjs --only road-state` when memory allows |
+| `road-state.jpg` | Camera road state | `/o/camera:EM-J12` | Live console, 29 Oct 2026: the camera's live reads (3 in 15 min), the Commons sample still (faces pixelated, credited) read by Qwen3-VL-8B on this server in 2.4 s: Waterlogged, water up to the wheel hubs, confidence 0.98 (uncalibrated), "Unverified camera reading", Send to the board for an officer to confirm; 1440 × 1320 so the policy line shows |
 | `plan.jpg` | Plan a movement | `/plan` | Nabanna → Kolkata Airport, the protection classes, departure. Finding routes registers a movement, so the shot stops here; the flagship plans the same movement through the API (`showcase/vip_plan.json`) |
 | `assistant.jpg` | Assistant | `/assistant` | "Where was the stolen vehicle last read?" and a grounded, read-only answer (masked mark, demo FIR, simulated-feed note) with the decision card |
 | `advisories.jpg` | Advisories | `/comms` | A draft in English, हिंदी and বাংলা, each marked SIMULATED FEED · EMULATED, "Drafted — not delivered" |
@@ -45,4 +45,3 @@ How they are taken:
 | `driver.jpg` | Ambulance (108) crew | `/driver` | The one-tap green-corridor request at rest, its steps, the "scripted fallback" label |
 | `imagery.jpg` | Imagery | `/v3-gallery` | Kolkata reference photos, each labelled "Reference photo · not live" with its credit |
 
-`road-state.jpg` was taken on a development console built from the same code, against the real vision model on this machine (camera EM-J12, a credited Commons sample still with faces pixelated), because the live box was short of GPU memory for the vision model at the time of the live shoot.

@@ -31,6 +31,21 @@ Optional 9B aux embedder (pplx-embed-v2-late-9b, 16.79 GB) stays OFF by
 default (`sahoshi_models.yaml → embeddings.aux_9b.enabled: false`); enabling it
 still fits at ≈23 GiB spare.
 
+## Live measurement, 29 Oct 2026 (after the v1.2 switch and the llama.cpp c3df4b7 update)
+
+| Host | Model | GPU memory | Residency |
+|---|---|---|---|
+| model-host :8083 | pplx-decider-v1.2 BF16 (protocol v3 joint) | `cuda_reserved_gib` **48.71** (was 50.43 for v1-27b) | always |
+| llama-server :8084 | Gemma 4 12B Q4_K_M, llama.cpp c3df4b7 | 8.6 GiB | always |
+| embedding-service :8205 | context-v1-4b + v2-late-0.6b + PII-Tracer | 12.0 GiB reserved, 11.0 allocated | always |
+| vision llama-server :8201 | Qwen3-VL-8B Q4_K_M + F16 projector | ≈ 7.6 GiB | lazy; starts only with ≥ 8 GiB left after it (the box's memory guard acts at 6 GiB), stops after 10 idle minutes |
+| speech :8194 (+ TTS llama-server :8202) | Whisper-medium (Bengali) fp16; Svara-TTS Q8_0 GGUF | ≈ 2 GiB; ≈ 5 GiB | lazy |
+| forecast :8195 | Chronos-2 | 0.5 GiB, 1.6 GiB peak | lazy |
+
+MemAvailable with the three always-resident hosts loaded and everything lazy unloaded: 33–36 GiB. The vision model
+had been refused at a 12 GiB floor (18.3 GiB available when the decider was v1-27b and other work was running);
+at the 8 GiB floor it starts and leaves ≥ 8 GiB.
+
 ## Not counted in the planned set
 
 - **ollama :11434** runs externally (not ours, never restarted by us) and

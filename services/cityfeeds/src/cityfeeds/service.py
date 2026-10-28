@@ -6,16 +6,20 @@ import asyncio
 from datetime import UTC, datetime
 from typing import Any
 
+from cityfeeds import air_observed as obs
 from cityfeeds.air import air_view, fetch_air
 from cityfeeds.config import Settings
 from cityfeeds.cyclones import cyclones_view, fetch_cyclones
 from cityfeeds.fetch import Fetched, Fetcher, load_fixture
+from cityfeeds.fires import fetch_fires_area, fetch_fires_public, fires_view
 from cityfeeds.heat import fetch_heat, heat_view
+from cityfeeds.keys import KEYED, key, keyed_state, redact
 from cityfeeds.notices import fetch_notices, notices_view
+from cityfeeds.street_image import StreetImages
 from cityfeeds.proposals import air_advisory, cyclone_preposition, heat_shift
 from cityfeeds.quakes import fetch_quakes, quakes_view
 from cityfeeds.river import fetch_news, fetch_river, river_view
-from cityfeeds.tide_table import fetch_hydro_tide, tide_table_view
+from cityfeeds.tide_table import fetch_hydro_tide, fetch_port_notices, tide_table_view
 
 __all__ = ["CityFeeds"]
 
@@ -30,6 +34,9 @@ class CityFeeds:
         self.f = fetcher or Fetcher(offline=s.offline, timeout=s.http_timeout_sec, cache_scale=s.cache_scale)
         self._clock = clock or (lambda: datetime.now(UTC))
         self._cwc_static: dict[str, Any] = {}
+        self._street = StreetImages()
+        self._street_error: str | None = None
+        self._street_ok = False
 
     def now(self) -> datetime:
         return self._clock()
@@ -69,17 +76,99 @@ class CityFeeds:
         return await self.f.get("hydro_tide", lambda c: fetch_hydro_tide(c, self.s.hydro_url),
                                 lambda: load_fixture("hydro_tide.json"), force)
 
+    async def _port(self, force=False) -> Fetched:
+        return await self.f.get("port_tide", lambda c: fetch_port_notices(c, self.s.port_tide_url),
+                                lambda: load_fixture("port_tidal_notices.json"), force)
+
+    async def _ktp(self, force=False) -> Fetched:
+        return await self.f.get("ktp", lambda c: fetch_notices(c, self.s.ktp_url),
+                                lambda: load_fixture("ktp_home.html"), force)
+
+    async def _fires(self, force=False) -> Fetched:
+        mk = key("firms")
+        fetch = (lambda c: fetch_fires_area(c, mk)) if mk else fetch_fires_public
+        return await self.f.get("fires", fetch, lambda: load_fixture("firms_kma.json"), force)
+
+    #: keyed air providers: (feed id, keyed source id, fetch, parse)
+    _AIR_OBSERVED = (("air_cpcb", "cpcb", obs.fetch_cpcb, obs.parse_cpcb),
+                     ("air_waqi", "waqi", obs.fetch_waqi, obs.parse_waqi),
+                     ("air_openaq", "openaq", obs.fetch_openaq, obs.parse_openaq))
+
+    async def _observed(self, force=False) -> dict[str, Any]:
+        """Each keyed air provider: no key → no call ("needs <ENV>"); offline → no call (no recording exists)."""
+        per: dict[str, dict[str, Any]] = {}
+        providers: dict[str, Any] = {}
+        calls = []
+        for feed, src, fetch, parse in self._AIR_OBSERVED:
+            k = key(src)
+            if k is None or self.s.offline:
+                providers[src] = {"state": keyed_state(src) if k is None else "offline: no call",
+                                  "env": KEYED[src].env, "signup": KEYED[src].signup}
+            else:
+                calls.append((src, parse, self.f.get(feed, lambda c, _f=fetch, _k=k: _f(c, _k), lambda: None, force)))
+        got = await asyncio.gather(*(c for _s, _p, c in calls))  # the keyed providers in parallel
+        for (src, parse, _c), f in zip(calls, got):
+            sites = parse(f.data) if f.ok else {}
+            per[src] = sites
+            providers[src] = {"state": keyed_state(src, error=f.error if not f.ok else None, live=f.ok),
+                              "env": KEYED[src].env, "signup": KEYED[src].signup, "sites_matched": len(sites),
+                              "fetched_at": _as_of(f), "stale": f.stale,
+                              "error": redact(f.error) if f.error else None}
+        return {"providers": dict(sorted(providers.items())), "sites": obs.match_stations(per)}
+
+    def keyed_sources(self) -> dict[str, Any]:
+        """Every keyed source and its state: ``live`` / ``needs <ENV>`` / ``error: <reason>`` (never the key)."""
+        st = self.f.status()["feeds"]
+        out: dict[str, Any] = {}
+        for sid, ks in KEYED.items():
+            feed = {"cpcb": "air_cpcb", "waqi": "air_waqi", "openaq": "air_openaq", "firms": "fires"}.get(sid)
+            if sid == "mapillary":
+                state = keyed_state(sid, error=self._street_error, live=self._street_ok)
+            elif sid == "firms" and key(sid) is None:  # the public files need no key: say so, never "needs"
+                fs = st.get("fires") or {}
+                if fs.get("cache_age_sec") is not None:
+                    state = "live (public files, no key; FIRMS_MAP_KEY optional)"
+                elif fs.get("last_error"):
+                    state = f"error: {redact(fs['last_error'])}"
+                else:
+                    state = "not read yet (public files, no key; FIRMS_MAP_KEY optional)"
+            elif feed and key(sid) is not None:
+                fs = st.get(feed) or {}
+                state = keyed_state(sid, error=fs.get("last_error"), live=fs.get("cache_age_sec") is not None)
+            else:
+                state = keyed_state(sid)
+            out[sid] = {"state": state, "env": ks.env, "what": ks.what, "signup": ks.signup,
+                        "without_key": ks.without_key}
+        return out
+
     # ── views ──
     def _labels(self, f: Fetched, *extra: str) -> list[str]:
         base = ["RECORDED"] if f.mode == "RECORDED" else ["LIVE"] if f.ok else ["UNAVAILABLE"]
         return base + list(extra)
 
     async def air(self, force=False) -> dict[str, Any]:
-        f = await self._air(force)
+        f, o = await asyncio.gather(self._air(force), self._observed(force))
         now = self.now()
         v = air_view(f.data, now) if f.ok else {"label": "UNAVAILABLE", "stations": [], "city": None, "next_48h_worst": None}
         v["feed"] = f.meta()
         v["proposal"] = air_advisory(v, now, self._labels(f, "MODELLED", "INDICATIVE")) if f.ok else {"none": "air feed unavailable"}
+        # OBSERVED beside MODELLED (additive): per site, each keyed provider's own measurement; none without a key
+        for st in v.get("stations") or []:
+            st["observed"] = o["sites"].get(st["id"])
+        cpcb = {sid: x["cpcb"] for sid, x in o["sites"].items() if x.get("cpcb", {}).get("naqi")}
+        worst = max(cpcb.items(), key=lambda kv: kv[1]["naqi"]["aqi"], default=None)
+        v["observed"] = {
+            "label": "OBSERVED" if o["sites"] else "NONE",
+            "what": "the stations' own measurements from the keyed services (CPCB via data.gov.in, WAQI, OpenAQ); "
+                    "without a key a provider makes no call and the values above stay MODELLED",
+            "providers": o["providers"],
+            "sites_observed": len(o["sites"]),
+            "city_naqi": ({"aqi": worst[1]["naqi"]["aqi"], "band": worst[1]["naqi"]["band"], "site": worst[0],
+                           "prominent": worst[1]["naqi"]["prominent"], "at": worst[1]["at"], "label": "OBSERVED",
+                           "sub_label": "INDICATIVE",
+                           "source": "CPCB CAAQMS station averages via data.gov.in; National AQI bands on PM2.5/PM10"}
+                          if worst else None),
+        }
         return v
 
     async def heat(self, force=False) -> dict[str, Any]:
@@ -117,16 +206,42 @@ class CityFeeds:
         return v
 
     async def tide_table(self, force=False) -> dict[str, Any]:
-        f = await self._tide(force)
-        v = tide_table_view(f.data if f.ok else None, f.error)
+        f, p = await asyncio.gather(self._tide(force), self._port(force))
+        v = tide_table_view(f.data if f.ok else None, f.error, p.data if p.ok else None, p.error, p.mode, _as_of(p))
         v["feed"] = f.meta()
+        v["port_feed"] = p.meta()
         return v
 
     async def notices(self, force=False) -> dict[str, Any]:
-        f = await self._notices(force)
-        v = notices_view(f.data if f.ok else None, self.s.kmc_portal_url)
+        f, k = await asyncio.gather(self._notices(force), self._ktp(force))
+        v = notices_view(f.data if f.ok else None, self.s.kmc_portal_url, ktp_page=k.data if k.ok else None,
+                         ktp_error=k.error)
         v["feed"] = f.meta()
+        v["ktp_feed"] = k.meta()
         return v
+
+    async def fires(self, force=False) -> dict[str, Any]:
+        f = await self._fires(force)
+        v = fires_view(f.data if f.ok else None, self.now())
+        v["feed"] = f.meta()
+        v["key"] = self.keyed_sources()["firms"]
+        return v
+
+    async def street_image(self, lat: float, lon: float) -> dict[str, Any]:
+        """The nearest public Mapillary photo to a point, or why there is none. Never calls the vision model."""
+        base = {"lat": lat, "lon": lon, "source": "Mapillary (CC BY-SA 4.0)", "label": "Reference photo · not live"}
+        tok = key("mapillary")
+        if tok is None:
+            return {**base, "state": keyed_state("mapillary"), "image": None, "signup": KEYED["mapillary"].signup}
+        if self.s.offline:
+            return {**base, "state": "offline: no call", "image": None}
+        try:
+            got = await self._street.near(self.f.client, tok, lat, lon)
+        except Exception as exc:  # noqa: BLE001 — reported, never raised to the deck
+            self._street_error = redact(f"{type(exc).__name__}: {exc}")[:160]
+            return {**base, "state": keyed_state("mapillary", error=self._street_error), "image": None}
+        self._street_error, self._street_ok = None, True
+        return {**base, "state": "live", "image": got["image"], "cached": got["cached"], "searched_m": 60}
 
     async def proposals(self) -> dict[str, Any]:
         a, h, c = await asyncio.gather(self.air(), self.heat(), self.cyclones())
@@ -190,13 +305,21 @@ class CityFeeds:
             "detail": {"latest": q.get("latest"), "count_365d": q.get("count_365d")},
         }
         nxt = next((e for e in t["modelled"]["highs_lows"] if e["kind"] == "high" and e["at"] >= self.now().isoformat()), None)
+        pub = t["published"]
         chips["tide"] = {
-            "value": nxt["level_m"] if nxt else None, "unit": "m", "band": "published_unavailable",
-            "label": "MODELLED" if nxt else "UNAVAILABLE", "source": "hydro tide model (Garden Reach); port table not readable",
+            "value": nxt["level_m"] if nxt else None, "unit": "m",
+            "band": "published_linked" if pub["label"] == "LINKED" else "published_unavailable",
+            "label": "MODELLED" if nxt else "UNAVAILABLE",
+            "source": "hydro tide model (Garden Reach); port table " + (
+                "linked, not parsed" if pub["label"] == "LINKED" else f"not readable ({pub.get('result', '')[:90]})"),
             "as_of": t["feed"]["fetched_at"], "mode": t["feed"]["mode"], "stale": t["feed"]["stale"],
-            "detail": {"next_high_at": nxt["at"] if nxt else None, "published": "UNAVAILABLE"},
+            "detail": {"next_high_at": nxt["at"] if nxt else None, "published": pub["label"],
+                       "published_status": pub.get("status"), "published_checked_at": pub.get("checked_at")},
         }
-        return {"generated_at": self.now().isoformat(), "city": "kolkata", "chips": chips}
+        # additive: OBSERVED air beside the modelled chip (null until a keyed provider answers)
+        chips["air"]["observed"] = (a.get("observed") or {}).get("city_naqi")
+        return {"generated_at": self.now().isoformat(), "city": "kolkata", "chips": chips,
+                "keyed_sources": {k: v["state"] for k, v in self.keyed_sources().items()}}
 
     async def warm(self) -> None:
         """Fill every cache once at start-up (never in offline mode), so the first deck poll is fast."""
@@ -205,6 +328,7 @@ class CityFeeds:
         try:
             await self.summary()
             await self.notices()
+            await self.fires()
         except Exception:  # noqa: BLE001 — a warm-up failure is just a cold cache
             pass
 

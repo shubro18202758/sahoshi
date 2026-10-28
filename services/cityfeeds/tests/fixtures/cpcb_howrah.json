@@ -1,0 +1,4 @@
+{"index_name": "Real time Air Quality Index from various locations", "total": 2, "count": 2, "records": [
+ {"country": "India", "state": "West_Bengal", "city": "Howrah", "station": "Ghusuri, Howrah - WBPCB", "last_update": "29-10-2026 01:00:00", "latitude": "22.61", "longitude": "88.35", "pollutant_id": "PM2.5", "pollutant_min": "50", "pollutant_max": "130", "pollutant_avg": "101"},
+ {"country": "India", "state": "West_Bengal", "city": "Howrah", "station": "Ghusuri, Howrah - WBPCB", "last_update": "29-10-2026 01:00:00", "latitude": "22.61", "longitude": "88.35", "pollutant_id": "PM10", "pollutant_min": "80", "pollutant_max": "200", "pollutant_avg": "160"}
+]}

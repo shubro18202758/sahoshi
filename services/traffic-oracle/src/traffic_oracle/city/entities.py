@@ -598,7 +598,9 @@ def junction_entity(row: Mapping[str, Any], now: datetime) -> dict:
         row["lat"],
         now=now,
         state=state,
-        source="live",
+        # no signal-controller adapter exists (Kolkata Police ATCS access is not granted): the phase is the stored
+        # program's clock, so the badge is EMULATED, never LIVE (HON-11)
+        source="emulated",
         t=t,
         props=props,
     )

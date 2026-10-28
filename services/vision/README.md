@@ -67,7 +67,7 @@ The service starts its own llama-server on the first request
 (`VISION_LLM_MANAGE=1`, the default) after checking MemAvailable, and stops it
 after `VISION_IDLE_UNLOAD_S` (600 s) without a request, so the model costs no
 memory while nobody looks at a camera. Below `need_gib + min_free_gib`
-(8 + 12 GiB) it refuses to start and answers 503. With `VISION_LLM_MANAGE=0`
+(8 + 8 GiB) it refuses to start and answers 503. With `VISION_LLM_MANAGE=0`
 it uses an external server at `VISION_LLM_URL` instead (the compose layout;
 start it with `scripts/serve_llm.sh start`).
 

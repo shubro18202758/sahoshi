@@ -28,6 +28,20 @@ export interface Chip {
 	detail: Record<string, unknown> | null;
 	next_48h?: { aqi: number; band: string; band_en: string; band_bn: string; band_hi: string } | null;
 	proposal?: boolean;
+	/** Air only: the stations' OBSERVED National AQI (CPCB via data.gov.in), null until a keyed provider answers. */
+	observed?: ObservedNaqi | null;
+}
+
+/** The worst CPCB station's National AQI from its own PM averages (label OBSERVED, sub-label INDICATIVE). */
+export interface ObservedNaqi {
+	aqi: number;
+	band: string;
+	site: string;
+	prominent: string;
+	at: string | null;
+	label: 'OBSERVED';
+	sub_label?: string;
+	source: string;
 }
 
 export type ChipId = 'air' | 'heat' | 'cyclone' | 'river' | 'quake' | 'tide';
@@ -83,6 +97,8 @@ export interface AirView {
 	grid_note: string;
 	stations: AirStation[];
 	city: (Naqi & { worst_site: string; worst_site_name: string; worst_site_bn: string; pm25_24h: number | null; pm10_24h: number | null }) | null;
+	/** The stations' own measurements from the keyed services; label NONE when no provider has a key. */
+	observed?: { label: 'OBSERVED' | 'NONE'; sites_observed: number; city_naqi: ObservedNaqi | null };
 	feed: FeedMeta;
 	proposal: ProposalOrNone;
 }

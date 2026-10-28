@@ -1,0 +1,7 @@
+{"meta": {"found": 2}, "results": [
+ {"id": 5001, "name": "Fort William, Kolkata - WBPCB", "coordinates": {"latitude": 22.5562, "longitude": 88.3422},
+  "sensors": [{"id": 9001, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}},
+              {"id": 9002, "name": "pm10 µg/m³", "parameter": {"id": 1, "name": "pm10", "units": "µg/m³"}}]},
+ {"id": 5002, "name": "An unrelated site", "coordinates": {"latitude": 22.70, "longitude": 88.52},
+  "sensors": [{"id": 9003, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}]}
+]}

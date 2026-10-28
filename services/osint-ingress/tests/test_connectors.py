@@ -372,11 +372,31 @@ def test_official_page_notices(tmp_path, protect):
     assert any(t.startswith("Shri [PERSON] reviews pumping station") for t in titles)  # officer name redacted
     assert not any("injected" in t or "Tender" in t or "another site" in t or "Photo" in t or "Payment" in t
                    for t in titles)
-    assert conn.last_dropped["paperwork_link"] == 2  # the tender form and the payment page are not notices
+    # the tender form (no place in it) and the payment page (paperwork) are not notices
+    assert conn.last_dropped["paperwork_link"] == 1 and conn.last_dropped["not_about_a_place"] == 1
     for s in sigs:
         assert s.publisher == "kmcgov.in" and s.url.startswith("https://www.kmcgov.in/KMCPortal/")
         assert s.raw_geo_hint.admin_codes == ["LGD:KOLKATA"] and s.provenance_label == "OFFICIAL-VERIFIED"
         assert s.raw["page_url_domain"] == "www.kmcgov.in" and len(s.raw["page_hash"]) == 64
+
+
+def test_kmc_keeps_place_notices_and_drops_notices_about_persons(tmp_path, protect):
+    """The portal's live home page (29 Oct 2026) mixes place notices with HR circulars, hearing lists and menus."""
+    page = (
+        '<a href="/KMCPortal/downloads/Public_Guidelines_Puja_Immersions_2026.pdf">Public Guidelines for Puja '
+        'Immersions, 2026</a>'
+        '<a href="/KMCPortal/downloads/Weekly_Drainage_Activity_Chart.pdf">Weekly Drainage Activity Chart</a>'
+        '<a href="/KMCPortal/downloads/Hearing_Intimation.pdf">Hearing Intimation to Political Parties</a>'
+        '<a href="/KMCPortal/downloads/Notification_BCW.pdf">Enhancement of Compensation for Sewer Deaths &amp; '
+        'Disabilities</a>'
+        '<a href="/KMCPortal/downloads/CM_Circular26.pdf">Chief Manager(Personal)\'s Circular No.26 of 2021-22</a>'
+        '<a href="/KMCPortal/jsp/CM_Circular.jsp">Office Order/Circular</a>'
+    ).encode()
+    conn = KmcPage(RobotsCache())
+    titles = sorted(s.title for s in conn.parse(_page_entry(tmp_path, page), protect))
+    assert titles == ["Public Guidelines for Puja Immersions, 2026", "Weekly Drainage Activity Chart"]
+    # the hearing list, the HR circular and the menu name no place; the sewer-deaths notice names one but is about persons
+    assert conn.last_dropped["about_persons"] == 1 and conn.last_dropped["not_about_a_place"] == 3
 
 
 def test_official_page_reads_a_latin1_page(tmp_path, protect):
@@ -439,16 +459,20 @@ async def test_an_unreachable_robots_txt_is_a_failure_that_serves_the_cache(tmp_
     finally:
         await rt.aclose()
     assert len(signals) == 4 and st.fetch_mode == "cached-sample" and st.disabled_by is None
-    assert st.error.startswith("robots.txt unreachable") and "serving the cached entry" in st.error
+    assert st.error.startswith("robots.txt unreachable (HTTP 503)") and "serving the last live answer" in st.error
     assert [r.url.path for r in rec.requests] == ["/robots.txt"]  # nothing crawled (RFC 9309 complete disallow)
 
 
-@pytest.mark.parametrize("cls", [PolicePage, WbsdmaPage])
-def test_unverified_official_connectors_are_disabled_and_not_allow_listed(cls):
-    """The police and WBSDMA hosts refused the connection on 2026-10-28: nothing they serve was verified."""
-    conn = cls()
+def test_the_unverified_wbsdma_connector_is_disabled_and_not_allow_listed():
+    """wbdmd.gov.in answers plain HTTP on port 443 and 503 over http (2026-10-29): nothing it serves is verified."""
+    conn = WbsdmaPage()
     assert not conn.enabled and "host unverified" in (conn.disabled_reason or "")
     assert conn.host not in ALLOWED_HOSTS
+
+
+def test_the_traffic_police_connector_is_enabled_on_its_verified_host():
+    conn = PolicePage()
+    assert conn.enabled and conn.disabled_reason is None and conn.host in ALLOWED_HOSTS
 
 
 # ── Common Crawl (backfill) ───────────────────────────────────────────────────────────────────────────────────

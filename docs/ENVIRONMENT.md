@@ -223,6 +223,11 @@ Fixed in code, not configurable:
 | Variable | Secret | Default | What it does |
 |---|---|---|---|
 | `SAHOSHI_CESIUM_ION_TOKEN` | yes | empty: keyless everywhere | Cesium ion access token, served by the deck's `GET /gods-eye/mode`. With the gate on, only a signed-in session receives it (Google Photorealistic 3D Tiles, Cesium World Terrain and Bing aerial imagery through ion); an anonymous caller gets the keyless OpenStreetMap mode. **With the gate off, any caller of `/gods-eye/mode` receives the token**: keep the gate on whenever it is set. It spends your ion quota. Also read by `secret_scan.sh` |
+| `DATA_GOV_IN_API_KEY` | yes | empty: off, health says `needs DATA_GOV_IN_API_KEY` | City feeds (`services/cityfeeds`, read from the environment by this exact name): CPCB real-time AQI from data.gov.in, the stations' OBSERVED pollutant averages beside the MODELLED air values. Free: <https://data.gov.in/> (sign in; the key is under My Account). See `docs/DATA_SOURCES.md` |
+| `WAQI_TOKEN` | yes | empty: off, `needs WAQI_TOKEN` | City feeds: World Air Quality Index station AQI (OBSERVED, US EPA scale). Free: <https://aqicn.org/data-platform/token/> |
+| `OPENAQ_API_KEY` | yes | empty: off, `needs OPENAQ_API_KEY` | City feeds: OpenAQ v3 latest station PM2.5 and PM10 (OBSERVED; sent as a header). Free: <https://explore.openaq.org/register> |
+| `FIRMS_MAP_KEY` | yes | empty: the public FIRMS South Asia 24-h files are read instead (live, no key) | City feeds: NASA FIRMS area API for the Kolkata Metropolitan Area box, last 2 days. Free: <https://firms.modaps.eosdis.nasa.gov/api/map_key/> |
+| `MAPILLARY_TOKEN` | yes | empty: off, `needs MAPILLARY_TOKEN` | City feeds `GET /feeds/street-image`: the nearest public Mapillary photo to a junction (CC BY-SA 4.0, "Reference photo · not live"; sent as a header; never passed to the vision model). Free client token: <https://www.mapillary.com/dashboard/developers> |
 
 With no token the canvas draws Sahoshi's own roads and entities over OpenStreetMap raster tiles; there is no other
 map key.
@@ -263,8 +268,8 @@ configuration error is reported once.
 
 | Variable | Secret | Default | What it does |
 |---|---|---|---|
-| `DECIDER_SNAPSHOT_PATH` | | `serve_models.sh` and `--write`: the decider's snapshot directory in the local Hugging Face cache. model-host: `decider.snapshot_path` in `sahoshi_models.yaml` | **Required**: the 27B decider's weights (:8083). Load it by path; the snapshot's files link into the cache's blob store, so never copy the tree |
-| `LLAMA_SERVER_BIN` | | `$HOME/llama.cpp/build/bin/llama-server` | **Required**: llama.cpp server binary of the tactical tier (:8084). `services/vision/scripts/serve_llm.sh` reads the same name |
+| `DECIDER_SNAPSHOT_PATH` | | `serve_models.sh` and `--write`: the decider's snapshot directory in the local Hugging Face cache. model-host: `decider.snapshot_path` in `sahoshi_models.yaml` | **Required**: the 27B decider's weights (:8083). Load it by path; the snapshot's files link into the cache's blob store, so never copy the tree. An optional `~/.config/sahoshi/decider.env` (written by `services/model-host/switch_decider.sh`, read after `sahoshi.env`) overrides it with `DECIDER_SNAPSHOT_PATH`, `DECIDER_RUNTIME` and `DECIDER_QUESTION_MODE`; the live box serves `pplx-decider-v1.2` that way ([`docs/ai/decider.md`](ai/decider.md)) |
+| `LLAMA_SERVER_BIN` | | `$HOME/llama.cpp/build/bin/llama-server` | **Required**: llama.cpp server binary of the tactical tier (:8084). `services/vision/scripts/serve_llm.sh` reads the same name. The live box points this, `VISION_LLAMA_SERVER_BIN` and `SPEECH_LLAMA_SERVER_BIN` at one llama.cpp build (c3df4b7, 28 Oct 2026; about 15 % faster Gemma generation than 69bf643 in an A/B on 29 Oct) |
 | `GEMMA_GGUF` | | `$HOME/models/q4-stack/v7h-merged-Q4_K_M.gguf` | **Required**: the Gemma 4 12B Q4_K_M model the tactical tier serves |
 | `GEMMA_CTX_PER_SLOT`, `GEMMA_PARALLEL_SLOTS` | | `8192`, `2` | Context tokens per llama slot and number of slots (total context = their product) |
 | `BGE_M3_PATH` | | `--write` records `$HOME/models/bge-m3` when it exists; the service's own fallback is a fixed host path | **Required**: local `bge-m3` dense encoder of the embedding service (:8085) |
@@ -450,7 +455,7 @@ the contract variables are read by their exact names (`osint_ingress/config.py`)
 | `OSINT_CACHE_DIR` | | `/var/cache/osint-ingress` (the `osint_cache` volume) | Capture cache |
 | `OSINT_GAZETTEER_PATH` | | the repository's `scripts/data/osint_gazetteer.json`, else the image path | Place gazetteer (osint-ingress, osint-common, osint-geo, also inside the oracle). A set but missing path is an error, never silently replaced |
 | `OSINT_NETWORK_PATH` | | the repository's `scripts/data/osm_network.json`, else the image path | osint-geo (ingress and oracle): the road network places snap to; same rule |
-| `OSINT_CADENCE_<CONNECTOR>_SEC` | | `SACHET_CAP` 300, `GOOGLE_NEWS_RSS` 600, `GDELT_EVENTS` 900, `GDELT_DOC` 900, `REDDIT_RSS` 900, the three official-page scrapers 3600, `COMMON_CRAWL` 0 | Per-connector schedule (`<CONNECTOR>` = upper-cased name in `CONNECTOR_NAMES`). `0` unschedules; 1 to 59 is raised to 60; a non-integer is ignored. Common Crawl is backfill only |
+| `OSINT_CADENCE_<CONNECTOR>_SEC` | | `SACHET_CAP` 300, `GOOGLE_NEWS_RSS` 600, `GDELT_EVENTS` 900, `GDELT_DOC` 1800 (a throttle backs it off further, up to 6 h), `REDDIT_RSS` 900, the three official-page scrapers 3600, `COMMON_CRAWL` 0 | Per-connector schedule (`<CONNECTOR>` = upper-cased name in `CONNECTOR_NAMES`). `0` unschedules; 1 to 59 is raised to 60; a non-integer is ignored. Common Crawl is backfill only |
 | `OSINT_JITTER` | | `0.1` (0 to 0.5) | Plus-or-minus fraction applied to each cadence |
 | `OSINT_PROBE_INTERVAL_SEC`, `OSINT_PROBE_TIMEOUT_SEC` | | `30` (at most 30), `2` (at most 10) | Oracle reachability probe |
 | `OSINT_RETENTION_HOURS`, `OSINT_RETENTION_BYTES` | | `72`, `209715200` (200 MB) | Cache limits (the newest capture of each connector is always kept) |
@@ -649,6 +654,12 @@ POSTGIS_PASSWORD=<database password, set before the first bring-up>
 
 # optional
 # SAHOSHI_CESIUM_ION_TOKEN=<Cesium ion access token>
+# free keys for the city feeds (docs/DATA_SOURCES.md §6); each source stays off until its key is set
+# DATA_GOV_IN_API_KEY=<data.gov.in API key>
+# WAQI_TOKEN=<aqicn.org data-platform token>
+# OPENAQ_API_KEY=<OpenAQ API key>
+# FIRMS_MAP_KEY=<NASA FIRMS map key>
+# MAPILLARY_TOKEN=<Mapillary client token>
 # OSINT_MODE=offline
 # SAHOSHI_FORECAST_MODEL=chronos2
 # SAHOSHI_TWIN_LLM=0

@@ -288,12 +288,17 @@ const SHOTS = [
 			await page.waitForSelector('[data-testid="field-result"]', { visible: true, timeout: 120000 });
 			await sleep(2500);
 		} },
-	{ name: 'road-state', url: '/o/camera:EM-J12', view: CONSOLE, lang: 'en', wait: 10000,
+	{ name: 'road-state', url: '/o/camera:EM-J12', view: { width: 1440, height: 1320 }, lang: 'en', wait: 10000,
 		act: async (page) => {
 			await clickSel(page, 'button.th', /rain|water/i, 20000).catch(() => {});
 			await sleep(800);
 			await clickSel(page, '[data-testid="rs-read"]');
 			await waitText(page, /confidence|waterlogged|depth/i, 240000);
+			// the click scrolls the card into view; the shot shows the page from its header, model line included
+			await page.evaluate(() => {
+				window.scrollTo(0, 0);
+				for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
+			});
 			await sleep(3000);
 		} },
 	{ name: 'plan', url: '/plan', view: CONSOLE, lang: 'en', wait: 12000 },

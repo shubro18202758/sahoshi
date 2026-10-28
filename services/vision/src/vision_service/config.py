@@ -42,12 +42,17 @@ class Settings(BaseSettings):
     ctx_size: int = 8192
     gpu_layers: int = 99
     llm_start_timeout_s: float = 240.0
+    # llama-server's own output (truncated at every start); its last lines go into last_error on a failed start
+    llm_log_path: Path = Path.home() / ".cache" / "sahoshi" / "vision-llama-server.log"
+    # a start that dies early (a transient allocation failure while another model loads) is tried once more
+    llm_start_attempts: int = 2
     llm_request_timeout_s: float = 180.0
 
     idle_unload_s: int = 600
-    # Q4_K_M weights + F16 projector + KV cache ≈ 7.5 GiB; keep a floor on top
+    # Q4_K_M weights + F16 projector + KV cache ≈ 7.5 GiB; keep a floor on top. The box's memory
+    # guard evicts llama servers under 6 GiB available, so 8 GiB left after the load keeps 2 GiB clear.
     need_gib: float = 8.0
-    min_free_gib: float = 12.0
+    min_free_gib: float = 8.0
 
     max_image_bytes: int = 12 * 1024 * 1024
     max_side: int = 1024

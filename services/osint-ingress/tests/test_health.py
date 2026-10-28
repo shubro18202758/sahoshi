@@ -76,9 +76,9 @@ async def test_health_shape_after_a_cycle(tmp_path):
     assert h["connectors"]["sachet_cap"]["fetch_mode"] == "cached-sample" and h["connectors"]["sachet_cap"]["signals"] == 7
     assert h["connectors"]["sachet_cap"]["cadence_sec"] == 300 and h["connectors"]["google_news_rss"]["cadence_sec"] == 600
     assert h["connectors"]["common_crawl"]["enabled"] is False and h["connectors"]["common_crawl"]["cadence_sec"] == 0
-    for name in ("kolkata_police_scrape", "wbsdma"):
-        assert h["connectors"][name]["enabled"] is False
-        assert "host unverified" in h["connectors"][name]["error"]
+    assert h["connectors"]["wbsdma"]["enabled"] is False and "host unverified" in h["connectors"]["wbsdma"]["error"]
+    assert h["connectors"]["kolkata_police_scrape"]["enabled"] is True
+    assert h["connectors"]["kolkata_police_scrape"]["cadence_sec"] == 3600
     lc = h["last_cycle"]
     assert lc["signals"] == 32 and lc["accepted"] == 32 and lc["surfaced"] == 3 and lc["pii_redactions"] > 0
     assert h["egress_allowlist"] == sorted(ALLOWED_HOSTS)
@@ -230,7 +230,7 @@ async def test_common_crawl_is_never_scheduled_even_with_a_cadence(tmp_path, mon
     async with app.router.lifespan_context(app):
         engine = app.state.runtime.engine
         assert "common_crawl" not in engine.scheduled_names()
-        assert "kolkata_police_scrape" not in engine.scheduled_names()
+        assert "kolkata_police_scrape" in engine.scheduled_names()  # its host verified on 2026-10-29
         assert "wbsdma" not in engine.scheduled_names()
 
 

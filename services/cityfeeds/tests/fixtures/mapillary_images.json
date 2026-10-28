@@ -1,0 +1,5 @@
+{"data": [
+ {"id": "111", "thumb_1024_url": "https://scontent.example/pano.jpg", "thumb_256_url": "https://scontent.example/pano_s.jpg", "captured_at": 1700000000000, "compass_angle": 10.0, "is_pano": true, "geometry": {"type": "Point", "coordinates": [88.35121, 22.56461]}},
+ {"id": "222", "thumb_1024_url": "https://scontent.example/far.jpg", "thumb_256_url": "https://scontent.example/far_s.jpg", "captured_at": 1710000000000, "compass_angle": 90.0, "is_pano": false, "geometry": {"type": "Point", "coordinates": [88.3517, 22.5650]}},
+ {"id": "333", "thumb_1024_url": "https://scontent.example/near.jpg", "thumb_256_url": "https://scontent.example/near_s.jpg", "captured_at": 1720000000000, "compass_angle": 182.5, "is_pano": false, "computed_geometry": {"type": "Point", "coordinates": [88.35125, 22.56465]}, "geometry": {"type": "Point", "coordinates": [88.3513, 22.5647]}}
+]}

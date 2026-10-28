@@ -112,6 +112,12 @@ export const hi: Record<FeedsKey, string | Fn> = {
 	cf_f_news: (n: unknown) => `72 घंटों में ख़बरों में DVC के पानी छोड़ने का ज़िक्र: ${s(n)}`,
 	cf_f_quake: (mag: unknown, place: unknown, km: unknown) => `M${s(mag)}, ${s(place)}, ${s(km)} किमी दूर`,
 	cf_f_quake_count: (n: unknown) => `पिछले एक साल में ${s(n)}`,
+	cf_f_observed: (band: unknown, aqi: unknown, site: unknown) => `CPCB केंद्रों पर मापा गया: ${s(band)} (AQI ${s(aqi)}), सबसे खराब ${s(site)}`,
+	cf_f_observed_sites: (n: unknown) => `${s(n)} केंद्रों पर मापे गए मान`,
+	cf_f_observed_none: 'केंद्रों के मापे गए मान अभी जुड़े नहीं हैं: ऊपर के मान मॉडल से हैं',
+	cf_f_tide_port: (status: unknown) => `बंदरगाह की ज्वार सारणी पढ़ी नहीं जा सकी (बंदरगाह की साइट कोड ${s(status)} दे रही है)`,
+	cf_f_tide_linked: (n: unknown) => `बंदरगाह के ज्वार नोटिस: ${s(n)} (लिंक, पढ़े नहीं गए)`,
+	cf_f_tide_noanswer: 'बंदरगाह की ज्वार सारणी: बंदरगाह की साइट ने जवाब नहीं दिया',
 
 	cf_pub_title: 'आज की हवा',
 	cf_pub_lead: 'मॉडल से कोलकाता की हवा, भारत के राष्ट्रीय वायु गुणवत्ता सूचकांक के स्तरों में।',

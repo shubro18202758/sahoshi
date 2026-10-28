@@ -57,15 +57,16 @@ CONNECTOR_NAMES: tuple[str, ...] = (
     "common_crawl",
 )
 
-#: Schedule (seconds): SACHET 5 min, IMD and Google News 10 min, the outlets' feeds, GDELT and Reddit 15 min,
-#: official pages hourly, Common Crawl off (backfill only, `once --backfill`).
+#: Schedule (seconds): SACHET 5 min, IMD and Google News 10 min, the outlets' feeds, GDELT bulk and Reddit 15 min,
+#: GDELT DOC 30 min (it throttles this box; a throttle backs it off further, see ``runner.Backoff``), official pages
+#: hourly, Common Crawl off (backfill only, `once --backfill`).
 DEFAULT_CADENCE_SEC: Mapping[str, int] = {
     "sachet_cap": 300,
     "imd": 600,
     "google_news_rss": 600,
     "news_rss": 900,
     "gdelt_events": 900,
-    "gdelt_doc": 900,
+    "gdelt_doc": 1800,
     "reddit_rss": 900,
     "kmc_scrape": 3600,
     "wbsdma": 3600,

@@ -114,6 +114,12 @@ export const bn: Record<FeedsKey, string | Fn> = {
 	cf_f_news: (n: unknown) => `72 ঘণ্টায় খবরে ডিভিসির জল ছাড়ার উল্লেখ ${s(n)}টি`,
 	cf_f_quake: (mag: unknown, place: unknown, km: unknown) => `M${s(mag)}, ${s(place)}, ${s(km)} কিমি দূরে`,
 	cf_f_quake_count: (n: unknown) => `গত এক বছরে ${s(n)}টি`,
+	cf_f_observed: (band: unknown, aqi: unknown, site: unknown) => `CPCB কেন্দ্রে মাপা মান: ${s(band)} (AQI ${s(aqi)}), সবচেয়ে খারাপ ${s(site)}`,
+	cf_f_observed_sites: (n: unknown) => `${s(n)}টি কেন্দ্রে মাপা মান`,
+	cf_f_observed_none: 'কেন্দ্রের মাপা মান এখনও যুক্ত হয়নি: ওপরের মান মডেল-ভিত্তিক',
+	cf_f_tide_port: (status: unknown) => `বন্দরের জোয়ার-ভাটার সারণি পড়া যাচ্ছে না (বন্দরের সাইট কোড ${s(status)} দিচ্ছে)`,
+	cf_f_tide_linked: (n: unknown) => `বন্দরের জোয়ার-ভাটার বিজ্ঞপ্তি: ${s(n)}টি (লিংক, পড়া হয়নি)`,
+	cf_f_tide_noanswer: 'বন্দরের জোয়ার-ভাটার সারণি: বন্দরের সাইট সাড়া দেয়নি',
 
 	cf_pub_title: 'আজকের বাতাস',
 	cf_pub_lead: 'মডেল থেকে কলকাতার বাতাসের মান, ভারতের জাতীয় বায়ু মান সূচকের স্তরে।',

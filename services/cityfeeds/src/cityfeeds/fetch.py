@@ -8,7 +8,11 @@ Every outbound call goes through ``Fetcher.get``:
 * a refresh closer than ``min_interval_sec`` to the last one, or past the feed's daily cap, is refused; a failed
   refresh keeps the last answer, marked ``stale`` with the error; with no answer ever the feed is ``UNAVAILABLE``
   and says so (never a zero);
-* ``offline`` makes no call at all: the recorded fixture answers, labelled ``RECORDED``.
+* ``offline`` makes no call at all: the recorded fixture answers, labelled ``RECORDED``;
+* an error is stored only after :func:`cityfeeds.keys.redact` (no key, no URL query string ever reaches /health);
+* the default transport (:func:`cityfeeds.tls.default_transport`) verifies every certificate, with the two narrow,
+  recorded per-host exceptions in ``tls.py`` (the port's expired-but-pinned certificate; the traffic police's
+  legacy TLS server).
 
 The schedules (``FEEDS``) are far inside every provider's published fair-use terms: Open-Meteo's free tier
 (non-commercial, 10 000 calls a day), GDACS, USGS, CWC and the news feeds at one refresh per 10–60 minutes.
@@ -25,6 +29,9 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable
 
 import httpx
+
+from cityfeeds.keys import redact
+from cityfeeds.tls import default_transport
 
 __all__ = ["FeedPolicy", "FEEDS", "Fetched", "Fetcher", "load_fixture", "FIXTURES"]
 
@@ -61,6 +68,17 @@ FEEDS: dict[str, FeedPolicy] = {p.id: p for p in (
                "https://www.kmcgov.in/KMCPortal/jsp/KMCPortalHome1.jsp"),
     FeedPolicy("hydro_tide", "Sahoshi hydro service (Garden Reach tide model, on this box)", 600, 30, 2000,
                "http://127.0.0.1:8197/hydro/tide"),
+    FeedPolicy("port_tide", "Syama Prasad Mookerjee Port, Kolkata: Tidal Notices page (pinned certificate)", 21600, 3600,
+               8, "https://smp.smportkolkata.in/smpk/en/tidal-notices/"),
+    FeedPolicy("ktp", "Kolkata Traffic Police public home page: current traffic advisories", 21600, 3600, 8,
+               "https://kolkatatrafficpolice.gov.in/"),
+    FeedPolicy("fires", "NASA FIRMS active fires (VIIRS S-NPP, NOAA-20, NOAA-21 and MODIS; NRT)", 10800, 1800, 16,
+               "https://firms.modaps.eosdis.nasa.gov/active_fire/"),
+    FeedPolicy("air_waqi", "World Air Quality Index project (aqicn.org): observed station AQI", 1800, 300, 96,
+               "https://aqicn.org/api/"),
+    FeedPolicy("air_openaq", "OpenAQ v3: observed station measurements", 1800, 300, 96, "https://docs.openaq.org/"),
+    FeedPolicy("air_cpcb", "CPCB real-time air quality index (data.gov.in)", 1800, 300, 96,
+               "https://www.data.gov.in/resource/real-time-air-quality-index-various-locations"),
 )}
 
 
@@ -117,8 +135,8 @@ class Fetcher:
         self.offline = offline
         self.cache_scale = cache_scale
         self.first_wait = first_wait_sec
-        self.client = httpx.AsyncClient(timeout=timeout, transport=transport, follow_redirects=True,
-                                        headers={"user-agent": USER_AGENT})
+        self.client = httpx.AsyncClient(timeout=timeout, transport=transport or default_transport(),
+                                        follow_redirects=True, headers={"user-agent": USER_AGENT})
         self._state: dict[str, _State] = {k: _State() for k in FEEDS}
         self._locks: dict[str, asyncio.Lock] = {k: asyncio.Lock() for k in FEEDS}
 
@@ -148,7 +166,7 @@ class Fetcher:
                 data = await fetch(self.client)
                 st.data, st.at, st.fetched_at, st.last_error = data, time.monotonic(), datetime.now(UTC), None
             except Exception as exc:  # noqa: BLE001 — kept as the feed's error; the cache (if any) still answers
-                st.last_error = f"{type(exc).__name__}: {exc}"[:200]
+                st.last_error = redact(f"{type(exc).__name__}: {exc}")[:200]
 
     def _kick(self, feed: str, fetch: Callable[[httpx.AsyncClient], Awaitable[Any]]) -> asyncio.Task:
         st = self._state[feed]

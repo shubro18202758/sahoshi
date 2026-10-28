@@ -77,7 +77,7 @@ services:
         max-file: "3"
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9-alpine
     container_name: vvip-valkey
     restart: unless-stopped
     ports:

@@ -35,8 +35,8 @@ What :func:`postprocess` does to the raw model spans, in order:
    exactly that word, so a surname that is also a place word ("Hazra") still leaves the given name redacted. The
    guard only ever removes MODEL spans; the rule redactor's own spans are not this module's business.
 
-The protected names default to the Kolkata landmarks file (``cities/kolkata/landmarks.json``, found by walking up
-from this file; absent in an image, the guard still has its place-word rule) plus :data:`KOLKATA_EPONYMOUS_PLACES`,
+The protected names default to the Kolkata landmarks and gazetteer files (``cities/kolkata/landmarks.json`` and
+``gazetteer.json``, found by walking up from this file; absent in an image, the guard still has its place-word rule) plus :data:`KOLKATA_EPONYMOUS_PLACES`,
 the public places named after people that carry no place word ("Bagha Jatin", "Masterda Surya Sen"). Callers can
 pass their own set.
 
@@ -278,9 +278,51 @@ def load_landmark_names(path: str | Path | None = None) -> frozenset[str]:
     return frozenset(out)
 
 
-def default_protected_names(landmarks_path: str | Path | None = None) -> frozenset[str]:
-    """Landmark names (:func:`load_landmark_names`) plus :data:`KOLKATA_EPONYMOUS_PLACES`."""
-    return load_landmark_names(landmarks_path) | frozenset(KOLKATA_EPONYMOUS_PLACES)
+def load_gazetteer_names(path: str | Path | None = None) -> frozenset[str]:
+    """The place names and aliases of a gazetteer file (``{"places": [{"en":..., "bn":..., "hi":..., "aka":
+    [...], "aka_bn": [...], "aka_hi": [...]}]}``) and their variants: every neighbourhood, market and road the
+    city pack knows, not only the landmarks ("Behala", "বেহালা"). ``path`` None: ``cities/kolkata/gazetteer.json``
+    found by walking up from this file. Never raises: a missing or malformed file gives the empty set."""
+    p: Path | None
+    if path is not None:
+        p = Path(path)
+    else:
+        p = None
+        for parent in Path(__file__).resolve().parents:
+            cand = parent / "cities" / "kolkata" / "gazetteer.json"
+            if cand.is_file():
+                p = cand
+                break
+    if p is None or not p.is_file():
+        return frozenset()
+    try:
+        if p.stat().st_size > 4 * 1024 * 1024:
+            return frozenset()
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return frozenset()
+    out: set[str] = set()
+    items = doc.get("places", []) if isinstance(doc, Mapping) else []
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, Mapping):
+            continue
+        names: list[object] = [item.get(k) for k in ("en", "bn", "hi")]
+        for key in ("aka", "aka_bn", "aka_hi"):
+            v = item.get(key)
+            if isinstance(v, list):
+                names += v
+        for v in names:
+            if isinstance(v, str) and v.strip():
+                out |= _name_variants(v[:200])
+    return frozenset(out)
+
+
+def default_protected_names(landmarks_path: str | Path | None = None,
+                            gazetteer_path: str | Path | None = None) -> frozenset[str]:
+    """Landmark names (:func:`load_landmark_names`), gazetteer places (:func:`load_gazetteer_names`) plus
+    :data:`KOLKATA_EPONYMOUS_PLACES`."""
+    return (load_landmark_names(landmarks_path) | load_gazetteer_names(gazetteer_path)
+            | frozenset(KOLKATA_EPONYMOUS_PLACES))
 
 
 class ToponymGuard:

@@ -197,6 +197,13 @@ export function sheetFigures(id: ChipId, view: Record<string, unknown> | null, L
 		if (nx) out.push(L('cf_f_next', bandName(nx), nx.aqi));
 		const sites = Array.isArray(view.stations) ? view.stations.length : 0;
 		if (typeof view.grid_cells === 'number' && sites) out.push(L('cf_f_grid', view.grid_cells, sites));
+		// OBSERVED beside MODELLED: the stations' own CPCB averages when a keyed provider answers, else say so
+		const ob = view.observed as { label?: string; sites_observed?: number; city_naqi?: { aqi: number; band: string; site: string } | null } | undefined;
+		if (ob?.city_naqi) {
+			const st = (view.stations as Array<{ id: string; name: string; name_bn: string }> | undefined)?.find((x) => x.id === ob.city_naqi?.site);
+			out.push(L('cf_f_observed', bandName(ob.city_naqi), ob.city_naqi.aqi, st ? (lang === 'bn' ? st.name_bn : st.name) : ob.city_naqi.site));
+		} else if (ob && (ob.sites_observed ?? 0) > 0) out.push(L('cf_f_observed_sites', ob.sites_observed));
+		else if (ob) out.push(L('cf_f_observed_none'));
 	} else if (id === 'heat') {
 		const c = view.city as { temp: number; rh: number; apparent: number } | null;
 		if (c) out.push(L('cf_f_heat', n1(c.temp), n1(c.rh, 0), n1(c.apparent)));
@@ -225,6 +232,12 @@ export function sheetFigures(id: ChipId, view: Record<string, unknown> | null, L
 		const last = view.latest as { mag: number; place: string; distance_km: number } | null;
 		if (last) out.push(L('cf_f_quake', last.mag, last.place, last.distance_km));
 		if (typeof view.count_365d === 'number') out.push(L('cf_f_quake_count', view.count_365d));
+	} else if (id === 'tide') {
+		// the port's published table, as the port answered (read live over the pinned connection)
+		const pub = view.published as { label?: string; status?: number | null; notices?: unknown[] } | undefined;
+		if (pub?.label === 'LINKED') out.push(L('cf_f_tide_linked', Array.isArray(pub.notices) ? pub.notices.length : 0));
+		else if (pub && typeof pub.status === 'number') out.push(L('cf_f_tide_port', pub.status));
+		else if (pub) out.push(L('cf_f_tide_noanswer'));
 	}
 	return out;
 }

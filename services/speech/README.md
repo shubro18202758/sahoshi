@@ -145,21 +145,32 @@ to WebM/Opus (what a browser's `MediaRecorder` sends) and posted to
   for the deployment's token: access has not been requested on that account).
   Requesting it means accepting AI4Bharat's terms on the account owner's
   behalf, so it was left to them. Once granted, it can drop in behind the
-  same `ASRBackend` interface. The fallback the plan named,
+  same `ASRBackend` interface, and it is wired in already
+  (`SPEECH_ASR_BACKEND=indic_conformer`, below). The fallback the plan named,
   `openai/whisper-large-v3-turbo`, was measured and is unusable for Bengali:
   it answers Bengali speech largely in **Devanagari script** even with the
-  language forced (CER 58 %). Five open Whisper-family checkpoints were
-  measured on the same audio (a sixth would not load: GPU memory on the
-  shared box; see [Evaluation](#evaluation)); the Bengali fine-tune of
-  Whisper-medium won clearly (CER 2.6 %), is the smallest of the accurate
-  ones and is Apache-2.0. Turbo is kept for English and Hindi, where it is
-  good.
+  language forced (CER 58 %). Seven open checkpoints have been measured on
+  the same audio (see [Evaluation](#evaluation)); the Bengali fine-tune of
+  Whisper-medium still has the lowest error (WER 11.2 %, CER 2.5 %), is the
+  smallest of the accurate ones and is Apache-2.0. Turbo is kept for English
+  and Hindi, where it is good.
 - *TTS: AI4Bharat Indic Parler-TTS* (`ai4bharat/indic-parler-tts`,
   Apache-2.0) is gated the same way and was refused the same way. Of the open
   alternatives with Bengali, Svara-TTS v1 (Apache-2.0) covers Bengali, Hindi
   and Indian English in one model with a male and a female voice per
   language; `facebook/mms-tts-ben` was not used because it is CC BY-NC 4.0
   (non-commercial).
+- *The gated models drop in by config.* `SPEECH_ASR_BACKEND=indic_conformer`
+  and `SPEECH_TTS_BACKEND=indic_parler` put IndicConformer and Indic
+  Parler-TTS first. Both load lazily; while one cannot load (access not
+  granted, weights not downloaded, a package missing) the service logs and
+  shows `gated: request access at https://huggingface.co/…` in `/health`
+  (`preferred_error`, `"active": "fallback"`) and the open model answers.
+  A memory refusal is not a reason to switch: it stays a 503. `parler-tts`
+  pins `transformers==4.46.1`, so Parler runs in its own venv
+  (`scripts/make_parler_venv.sh`) as a child process that talks over pipes
+  (`speech_service/parler_worker.py`, `SPEECH_TTS_PARLER_PYTHON`).
+  Runbook: [docs/ai/speech.md, "When access is granted"](../../docs/ai/speech.md#when-access-is-granted).
 - *Lineage note:* Svara-TTS is fine-tuned from Canopy Labs' Orpheus 3B, which
   is itself built on Meta's Llama-3.2-3B (Llama 3.2 Community License), and
   is trained on SYSPIN, RASA, IndicTTS and SPICOR speech. The model is
@@ -195,7 +206,7 @@ the cache is exact. Long text is read sentence by sentence (। . ! ?).
 
 | Part | GPU memory (measured) | Latency (measured, 28 Oct 2026) |
 |---|---|---|
-| ASR, Bengali Whisper-medium fp16 | ≈2.0 GiB (process incl. CUDA context); 3.6 GiB with the en/hi model also loaded | median 1.54 s per clip; a whole report 1.55 s |
+| ASR, Bengali Whisper-medium fp16 | ≈2.0 GiB (process incl. CUDA context; allocator peak 1.75 GiB); 3.6 GiB with the en/hi model also loaded | median 1.3–1.5 s per clip; a whole report 1.29 s (29 Oct) |
 | ASR, en/hi (whisper-large-v3-turbo) | ≈1.6 GiB more, only once en/hi/auto is used | ≈1 s per clip warm; first load ≈11 s |
 | TTS, llama.cpp Q8_0 | 4.0 GiB llama-server + 0.8 GiB in the service (SNAC codec, CUDA context) | median 6.8 s for a 4.3 s clip (1.57× real time) |
 | TTS, transformers bf16 (container) | ≈7.0 GiB | median 16.5 s for a 4.4 s clip (3.45× real time) |
@@ -236,21 +247,44 @@ rules on every model's transcripts (`run_eval.py rescore`).
 Upper bound (the report rules on the reference text, no audio): place
 **30/30**, kind **30/30**.
 
-| ASR checkpoint | Size | Licence | WER | CER | CER folded | Place (top-1) | Kind | s / clip |
-|---|---|---|---|---|---|---|---|---|
-| **`bengaliAI/tugstugi_bengaliai-asr_whisper-medium`** | medium (0.77B) | Apache-2.0 | 11.5 % | **2.6 %** | 2.2 % | 53/60 | 60/60 | 1.42 |
-| `ARTPARK-IISc/whisper-medium-vaani-bengali` | medium (0.77B) | MIT | 46.0 % | 10.1 % | 7.9 % | 52/60 | 47/60 | 1.84 |
-| `bangla-speech-processing/BanglaASR` | small (0.24B) | MIT | 45.1 % | 13.2 % | 10.6 % | 51/60 | 45/60 | 1.16 |
-| `openai/whisper-large-v3` | large (1.55B) | Apache-2.0 (card) · MIT (release) | 87.6 % | 40.9 % | 37.9 % | 47/60 | 36/60 | 3.33 |
-| `openai/whisper-large-v3-turbo` | large-turbo (0.81B) | MIT | 97.0 % | 58.1 % | 55.3 % | 12/60 | 25/60 | 0.70 |
-| `mozilla-ai/whisper-large-v3-bn` | large (1.55B) | Apache-2.0 | not measured: CUDA out of memory twice on the shared box | | | | | |
+| ASR checkpoint | Size | Licence | WER | CER | CER folded | Place (top-1) | Kind | s / clip | GPU peak |
+|---|---|---|---|---|---|---|---|---|---|
+| **`bengaliAI/tugstugi_bengaliai-asr_whisper-medium`** (current) † | medium (0.77B) | Apache-2.0 | **11.2 %** | **2.5 %** | **2.1 %** | 55/60 | **60/60** | 1.54 | 1.75 GiB |
+| `bengaliAI/tugstugi_bengaliai-regional-asr_whisper-medium` † | medium (0.77B) | Apache-2.0 | 16.6 % | 3.9 % | 3.2 % | 55/60 | 59/60 | 1.14 | 1.75 GiB |
+| `mozilla-ai/whisper-large-v3-bn` † | large (1.55B) | Apache-2.0 | 33.2 % | 8.6 % | 6.4 % | **56/60** | 50/60 | 2.16 | 3.43 GiB |
+| `ARTPARK-IISc/whisper-medium-vaani-bengali` | medium (0.77B) | MIT | 46.0 % | 10.1 % | 7.9 % | 51/60 | 47/60 | 1.84 | — |
+| `bangla-speech-processing/BanglaASR` | small (0.24B) | MIT | 45.1 % | 13.1 % | 10.6 % | 50/60 | 45/60 | 1.16 | — |
+| `openai/whisper-large-v3` | large (1.55B) | Apache-2.0 (card) · MIT (release) | 87.6 % | 41.0 % | 37.9 % | 46/60 | 36/60 | 3.33 | — |
+| `openai/whisper-large-v3-turbo` | large-turbo (0.81B) | MIT | 97.0 % | 58.1 % | 55.3 % | 9/60 | 25/60 | 0.70 | — |
+| `facebook/omniASR-CTC-1B` | 1B | Apache-2.0 | not measured: no Linux aarch64 build of its runtime (`fairseq2n`), which also pins torch 2.8 | | | | | | |
+| `ai4bharat/indic-conformer-600m-multilingual` | 0.6B | MIT | not measured: gated, access not granted yet; `--models indic_conformer` once it is | | | | | | |
 
-`openai/whisper-large-v3-turbo` answered 48 of the 60 Bengali clips partly or
-wholly in Devanagari script; `whisper-large-v3` did so in 15 and romanised
-others. "s / clip" is ASR time per clip on the shared GPU (median).
+† measured on 29 Oct 2026 (one model per process); the other rows' times
+are from 28 Oct. Place and kind are re-scored on every row's saved
+transcripts with today's rules (gazetteer of 203 places, split-name rule),
+so they differ slightly from the 28 Oct table. "s / clip" is ASR time per
+clip on the shared GPU (median; it varies by about 2× between runs). "GPU
+peak" is PyTorch's allocator peak without the CUDA context; it was not
+recorded on 28 Oct. `openai/whisper-large-v3-turbo` answered 48 of the 60
+Bengali clips partly or wholly in Devanagari script; `whisper-large-v3` did
+so in 15 and romanised others.
 
-End to end through the running service (`POST /speech/report` with each WAV,
-production ASR, final rules): WER 11.5 %, CER 2.6 %, place **53/60**, kind **60/60**, median 1.55 s per report (ASR 1.54 s); every report `UNVERIFIED-FIELD`. Of the seven place misses, six are clips where the name came out of the round trip misspelt ("বড়িয়াহাট", "সাইন সিটি", "লাসবিহারী", "কেষ্টকুন" …; most likely mispronounced by the TTS, since the same ASR transcribed the rest almost perfectly) and the matcher asserted no place; one ("কারাতলা" for Taratala) was matched to Kumartuli, wrongly. The right place was among the three candidates in 57 of 60.
+**29 Oct: the current checkpoint stays.** The regional-dialect fine-tune
+(Ben-10) is worse on this standard Bengali speech (WER 16.6 %) with the same
+place score; Mozilla's large-v3 fine-tune gets one more place but has three
+times the word errors and ten wrong kinds (it misspells the cue words:
+"আগুম", "যানজন", "অগরোধ"), at 1.4× the latency and twice the memory. The
+switch rule was "better on WER and place within about 2× latency"; neither
+qualifies. Either stays one variable away (`SPEECH_ASR_MODEL`).
+
+End to end through a dev instance of the service (`POST /speech/report`
+with each WAV, default config, 29 Oct): WER 11.2 %, CER 2.5 %, place
+**55/60**, kind **60/60**, median 1.29 s per report (ASR 1.26 s); every
+report `UNVERIFIED-FIELD`. Of the five place misses, four are clips where
+the name came out of the round trip misspelt ("বড়িয়াহাট", "লাসবিহারী",
+"কেষ্টকুন", "সাইল সিটি"; most likely mispronounced by the TTS, since the same
+ASR transcribed the rest almost perfectly) and the matcher asserted no
+place; one ("কারাতলা" for Taratala) was matched to Kumartuli, wrongly.
 
 **TTS.** With the llama.cpp backend the median synthesis time
 was **6.8 s for a 4.3 s clip** (1.57× real time; best 1.49×; 90th percentile
@@ -284,9 +318,13 @@ Environment variables (prefix `SPEECH_`, see `config.py`):
 | Variable | Default | Meaning |
 |---|---|---|
 | `SPEECH_HOST` / `SPEECH_PORT` | `127.0.0.1` / `8194` | bind address |
-| `SPEECH_ASR_MODEL` | the Bengali Whisper-medium | Bengali ASR checkpoint |
+| `SPEECH_ASR_BACKEND` | `whisper` | `whisper`, or `indic_conformer` (gated; `SPEECH_ASR_MODEL` answers until it loads) |
+| `SPEECH_ASR_MODEL` | the Bengali Whisper-medium | Bengali Whisper checkpoint (and the IndicConformer fallback) |
+| `SPEECH_ASR_INDIC_CONFORMER_MODEL` / `_DECODER` / `_REVISION` | `ai4bharat/indic-conformer-600m-multilingual` / `rnnt` / main | IndicConformer repo, `rnnt` or `ctc`, and the reviewed commit to pin (it runs remote code) |
 | `SPEECH_ASR_MULTILINGUAL_MODEL` | `openai/whisper-large-v3-turbo` | English/Hindi ASR and `auto` detection |
-| `SPEECH_TTS_BACKEND` | `auto` | `llama` (GGUF in llama.cpp), `transformers`, or `auto` (llama when available) |
+| `SPEECH_TTS_BACKEND` | `auto` | `llama` (GGUF in llama.cpp), `transformers`, `auto` (llama when available), or `indic_parler` (gated; Svara answers until it loads) |
+| `SPEECH_TTS_PARLER_MODEL` / `SPEECH_TTS_PARLER_PYTHON` | `ai4bharat/indic-parler-tts` / empty | Parler repo; the python of its own venv (`scripts/make_parler_venv.sh`; empty = load in-process) |
+| `SPEECH_TTS_PARLER_DESCRIPTION` | calm, clear, unhurried advisory | Parler caption; `{speaker}` becomes the language's recommended voice |
 | `SPEECH_TTS_GGUF` / `SPEECH_LLAMA_SERVER_BIN` | `~/.cache/sahoshi/svara-gguf/svara-tts-v1-q8_0.gguf` / `~/llama.cpp/build/bin/llama-server` | llama.cpp backend files |
 | `SPEECH_TTS_LLM_PORT` | `8202` | loopback port of the TTS llama-server the service starts |
 | `SPEECH_TTS_MODEL` / `SPEECH_TTS_CODEC` | `kenpath/svara-tts-v1` / SNAC 24 kHz | TTS model (tokenizer) and codec |
@@ -305,6 +343,7 @@ Environment variables (prefix `SPEECH_`, see `config.py`):
 python -m pytest -q -p no:cacheprovider          # offline, models mocked
 SPEECH_SLOW=1 python -m pytest -q -m slow         # real TTS → ASR round trip on the GPU
 python eval/run_eval.py --help                     # the synthetic round-trip evaluation
+scripts/fetch_gated_models.sh check                # access to the gated models (downloads nothing)
 ```
 
 ## Limits

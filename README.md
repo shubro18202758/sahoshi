@@ -17,7 +17,7 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square">
   <img alt="City: Kolkata, West Bengal" src="https://img.shields.io/badge/city-Kolkata%2C%20West%20Bengal-111111?style=flat-square">
   <img alt="Languages: Bengali, English, Hindi" src="https://img.shields.io/badge/languages-%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%20%C2%B7%20EN%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%82%E0%A4%A6%E0%A5%80-111111?style=flat-square">
-  <img alt="Tests: 5,921 pytest and 121 cargo" src="https://img.shields.io/badge/tests-5%2C921%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
+  <img alt="Tests: 5,987 pytest and 121 cargo" src="https://img.shields.io/badge/tests-5%2C987%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
   <img alt="Status: prototype on one edge server" src="https://img.shields.io/badge/status-prototype%20on%20one%20edge%20server-555555?style=flat-square">
 </p>
 
@@ -108,7 +108,7 @@ offline; none is in this repository.
 | Bengali speech synthesis | Svara-TTS v1 (`kenpath/svara-tts-v1`) with the SNAC 24 kHz codec | Apache-2.0; MIT | Advisories read aloud in Bengali, English or Hindi | "Synthetic voice" |
 | Road-state vision | **Qwen3-VL-8B-Instruct** (Q4_K_M GGUF on llama.cpp) | Apache-2.0 | A camera still → waterlogged, blocked, tree fall, stalled vehicle, crash debris, congested or clear | UNVERIFIED-CAMERA; person and plate questions refused |
 | Signal-timing proposals | A cell-transmission traffic twin with Webster and max-pressure baselines; the local LLM only words the rationale | — | Tests each candidate timing against doing nothing over the whole network | MODELLED; demand SIMULATED |
-| Assistant and decision AI | A 27B decider model asked typed questions; Gemma 4 12B (Q4_K_M) for drafting; `bge-m3` and `pplx-embed-v2-late-0.6b` for memory | per model card (`bge-m3`: MIT) | Answers about the live picture, plans movements, checks every claim against tool results | Labels per answer; cannot approve |
+| Assistant and decision AI | A 27B decider model (`pplx-decider-v1.2`) asked typed questions; Gemma 4 12B (Q4_K_M) for drafting; `pplx-embed-context-v1-4b` and `pplx-embed-v2-late-0.6b` for memory, `PII-Tracer` for personal details in news | Apache-2.0 (decider), MIT (embeddings, PII-Tracer) | Answers about the live picture, plans movements, checks every claim against tool results | Labels per answer; cannot approve |
 
 How each model was chosen, evaluated and limited: [`docs/ai/`](docs/ai/).
 
@@ -263,7 +263,7 @@ Measured on 28 Oct 2026, every suite offline:
 
 | Suite | Result |
 |---|---|
-| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **5,921 passed**, 161 skipped (they need a database sandbox or real models) |
+| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **5,987 passed**, 160 skipped (they need a database sandbox or real models) |
 | Rust (`signal-ingress`) | **121 passed** |
 | Deck | `svelte-check` 0 errors; design-token, English copy (4,263 strings) and Bengali-script lints pass; 42 unit suites |
 | City Pack | `city_build.py kolkata --check`: every derived file is current |
@@ -300,6 +300,7 @@ Per-suite totals, the items in progress, 48 representative test cases with their
 | [`PRODUCT.md`](PRODUCT.md) | The product: the Kolkata problems with sources, users and journeys, every screen, the AI and its limits, guardrails, modelled impact, cost, pilot plan, scale and roadmap |
 | [`docs/TECHNICAL_DESIGN.md`](docs/TECHNICAL_DESIGN.md) | The technical design: architecture diagrams, every service, the AI services, the City Pack, the data model, APIs, flows, security, privacy, observability, deployment, testing and 15 ADRs |
 | [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md) | Every environment variable, by service, with defaults and secrets marked |
+| [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Every outside data source: live, needs a free key, or simulated, with the check behind each |
 | [`docs/SAMPLE_DATA_AND_TESTS.md`](docs/SAMPLE_DATA_AND_TESTS.md) · [`docs/samples/`](docs/samples/) | The data Sahoshi ships, sample API answers, every test suite and 48 test cases |
 | [`docs/DESIGN_NOTES.md`](docs/DESIGN_NOTES.md) · [`docs/wireframes/`](docs/wireframes/) | Visual language, Bengali typography, imagery, honest labelling in the UI, wireframes |
 | [`docs/ai/`](docs/ai/) | One note per AI capability: model choice, evaluation, limits |

@@ -18,9 +18,14 @@ Bulk (``gdelt_events``, OSINT_SOURCES.md §1a):
   it holds no Actor1/Actor2 column (names, codes or geographies, 0-based 5-24 and 35-50). The GKG file, with its
   V1/V2 PERSONS and ALLNAMES, is never fetched.
 
-DOC 2.0 (``gdelt_doc``, §1b): one ArtList query, requests spaced ≥ 5 s apart (the API's own limit); a 429 or the
-throttle banner fails the fetch, and the runner falls back to the cached answer (``cached-sample``). The article
-URL is never emitted (its slug can name a person): ``source_id`` is ``url-sha256:<hex>`` of the canonical URL.
+DOC 2.0 (``gdelt_doc``, §1b): one ArtList query every 30 minutes (the DOC index itself refreshes every 15 min, and
+the 72-hour article list changes slowly), requests spaced ≥ 5 s apart process-wide (the API's documented limit:
+"Please limit requests to one every 5 seconds"). On 2026-10-28/29 the API answered this box with HTTP 429 (no
+``Retry-After``) even at one request per 15 minutes, and often took longer than 25 s. So a 429, the throttle banner
+or a timeout raises :class:`~.base.ConnectorThrottled` (with the server's ``Retry-After`` when it sends one): the
+runner backs off (jittered, exponential from the cadence, at most 6 h) and serves the last LIVE answer with its
+real fetch time and age meanwhile. The request itself may take up to 60 s. The article URL is never emitted (its
+slug can name a person): ``source_id`` is ``url-sha256:<hex>`` of the canonical URL.
 """
 
 from __future__ import annotations
@@ -46,6 +51,7 @@ from osint_ingress.connectors.base import (
     PERSON_RECORD_DOMAINS,
     Connector,
     ConnectorError,
+    ConnectorThrottled,
     Draft,
     bare_domain,
     build_signals,
@@ -61,6 +67,7 @@ __all__ = [
     "GdeltBulk",
     "GdeltDoc",
     "export_named_by",
+    "retry_after",
 ]
 
 LASTUPDATE_URL = "https://data.gdeltproject.org/gdeltv2/lastupdate.txt"
@@ -124,10 +131,31 @@ _MAX_EXPORT_BYTES = 64 * 1024 * 1024
 _MAX_CSV_BYTES = 256 * 1024 * 1024
 _MAX_ROWS = 500_000
 _DOC_SPACING_SEC = 5.0
+#: the DOC API is slow under load: one request may take this long before it counts as a throttle
+_DOC_TIMEOUT_SEC = 60.0
 _DOC_LANG = {
     "English": "en", "Hindi": "hi", "Bengali": "bn", "Gujarati": "gu", "Marathi": "mr", "Urdu": "ur",
     "Tamil": "ta", "Telugu": "te", "Kannada": "kn", "Malayalam": "ml", "Punjabi": "pa", "Oriya": "or",
 }
+
+
+def retry_after(value: str | None, now: float | None = None) -> float | None:
+    """Seconds from an HTTP ``Retry-After`` (delta-seconds or an HTTP-date, RFC 9110 §10.2.3); ``None`` if absent
+    or unreadable."""
+    if not value:
+        return None
+    v = value.strip()
+    if v.isdigit():
+        return float(v)
+    try:
+        from email.utils import parsedate_to_datetime
+
+        when = parsedate_to_datetime(v)
+    except (TypeError, ValueError, IndexError):
+        return None
+    if when is None:
+        return None
+    return max(0.0, when.timestamp() - (time.time() if now is None else now))
 
 
 def export_named_by(lastupdate: str) -> tuple[str, int | None, str | None, str] | None:
@@ -329,7 +357,7 @@ class GdeltDoc(Connector):
     """GDELT DOC 2.0 ArtList for Kolkata (India-sourced articles)."""
 
     name = "gdelt_doc"
-    default_cadence_sec = 900
+    default_cadence_sec = 1800
     max_bytes = 4 * 1024 * 1024
 
     def __init__(self, spacer: _Spacer | None = None) -> None:
@@ -338,13 +366,16 @@ class GdeltDoc(Connector):
 
     async def fetch(self, client: httpx.AsyncClient, cache: Cache) -> CacheEntry | None:
         await self._spacer.wait()
-        res = await fetch(client, DOC_URL, max_bytes=self.max_bytes)
-        if res.status == 429:
-            raise ConnectorError("HTTP 429 (throttled)")
+        try:
+            res = await fetch(client, DOC_URL, max_bytes=self.max_bytes, timeout=_DOC_TIMEOUT_SEC)
+        except httpx.TimeoutException as exc:
+            raise ConnectorThrottled(f"timed out after {_DOC_TIMEOUT_SEC:.0f} s (GDELT DOC overloaded)") from exc
+        if res.status in (429, 503):
+            raise ConnectorThrottled(f"HTTP {res.status} (throttled)", retry_after(res.headers.get("retry-after")))
         if not res.ok:
             raise ConnectorError(f"HTTP {res.status}")
         if not res.content.lstrip().startswith(b"{"):
-            raise ConnectorError("throttled (non-JSON answer)")
+            raise ConnectorThrottled("throttled (the API's rate-limit banner, not JSON)")
         try:
             doc = json.loads(res.content)
         except ValueError as exc:

@@ -116,3 +116,40 @@ def test_classify_parses_llama_server_json(monkeypatch) -> None:
     out = asyncio.run(m.classify(b"\xff\xd8\xff"))
     assert out["state"] == "clear"
     assert out["_timings"]["predicted_ms"] == 2000.0
+
+
+def test_manager_retries_an_early_exit_once_and_reports_the_server_output(tmp_path: Path, monkeypatch) -> None:
+    s = _files(tmp_path)
+    count = tmp_path / "starts"
+    s.llama_server_bin.write_text(f"#!/bin/sh\necho x >> {count}\necho 'ggml_cuda_init: failed to allocate'\nexit 134\n")
+    s.llama_server_bin.chmod(0o755)
+    s.llm_log_path = tmp_path / "llama.log"
+    monkeypatch.setattr(model_mod, "_mem_available_gib", lambda: 100.0)
+
+    async def no_wait(_s: float) -> None:
+        return None
+
+    monkeypatch.setattr(model_mod.asyncio, "sleep", no_wait)
+    mgr = LlamaServerManager(s)
+    with pytest.raises(ModelUnavailable, match="exited with 134: ggml_cuda_init: failed to allocate"):
+        asyncio.run(mgr.ensure())
+    assert count.read_text().count("x") == 2
+    assert not mgr.running
+
+
+def test_manager_does_not_retry_when_memory_has_gone(tmp_path: Path, monkeypatch) -> None:
+    s = _files(tmp_path)
+    count = tmp_path / "starts"
+    s.llama_server_bin.write_text(f"#!/bin/sh\necho x >> {count}\nexit 1\n")
+    s.llama_server_bin.chmod(0o755)
+    s.llm_log_path = tmp_path / "llama.log"
+    free = iter([100.0, 5.0])
+    monkeypatch.setattr(model_mod, "_mem_available_gib", lambda: next(free))
+
+    async def no_wait(_s: float) -> None:
+        return None
+
+    monkeypatch.setattr(model_mod.asyncio, "sleep", no_wait)
+    with pytest.raises(ModelUnavailable, match="exited with 1"):
+        asyncio.run(LlamaServerManager(s).ensure())
+    assert count.read_text().count("x") == 1

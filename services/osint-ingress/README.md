@@ -43,10 +43,11 @@ reaches the live oracle by accident. The deployment names its oracle explicitly;
 | `google_news_rss` | 10 min | Google News RSS search, English (`hl=en-IN`) and Bengali (`hl=bn`) Kolkata incident queries (pointer layer, never redistributed) |
 | `news_rss` | 15 min | the outlets' own RSS feeds (Kolkata and Bengal sections, English and Bengali; pointer layer, never redistributed; robots.txt honoured per feed) |
 | `gdelt_events` | 15 min | GDELT 2.1 `lastupdate.txt` and only the export zip it names (Kolkata metro bbox, ADM1 `IN28`) |
-| `gdelt_doc` | 15 min | GDELT DOC 2.0 ArtList, `(Kolkata OR Calcutta) sourcecountry:IN` (≥ 5 s between requests; a 429 serves the cache) |
+| `gdelt_doc` | 30 min | GDELT DOC 2.0 ArtList, `(Kolkata OR Calcutta) sourcecountry:IN` (≥ 5 s between requests). A 429, the throttle banner or a 60 s timeout backs it off: `Retry-After` honoured, else jittered exponential from the cadence, at most 6 h; no request meanwhile, and the last live answer is served with its real fetch time and age |
 | `reddit_rss` | 15 min | r/kolkata newest-posts Atom feed (aggregate social signal only; the committed synthetic capture uses the fictional `r/example_city`) |
-| `kmc_scrape` | hourly | the KMC portal page, best effort; a robots.txt disallow disables the connector |
-| `wbsdma`, `kolkata_police_scrape` | off | disabled: their hosts refused the connection on 2026-10-28; not allow-listed |
+| `kmc_scrape` | hourly | the KMC portal page, best effort, notices about places and roads only (never HR circulars, hearings or menu links); a robots.txt disallow disables the connector. The server offers RSA key exchange only: one narrow TLS allowance (`safe_http.TLS_COMPAT`), certificate still verified |
+| `kolkata_police_scrape` | hourly | the Kolkata Traffic Police home page's current advisories (diversions, closures); menu links and commented-out advisories never read. The server lacks secure renegotiation: one narrow TLS allowance, certificate still verified |
+| `wbsdma` | off | disabled: `wbdmd.gov.in` answers plain HTTP on port 443 and 503 over http (2026-10-29); not allow-listed |
 | `common_crawl` | never | backfill only (`once --backfill`; TOI Kolkata archive) |
 
 ### Sources (checked 2026-10-28 with the service's user agent, one request each)
@@ -66,8 +67,9 @@ browser user agent and never a bot-check workaround. A source that refuses is ex
 | IMD CAP (WMO Alert Hub mirror) | `https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml` | 200, live and empty (0 items) | en | yes (`imd`) |
 | NDMA SACHET, all India | `https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml` | 403 to this user agent in the morning, 200 at 17:00 IST (100 items, 13 West Bengal); the state file name is unknown (guesses 404) | en, bn | yes (`sachet_cap`; a refusal serves the cache) |
 | KMC portal | `https://www.kmcgov.in/KMCPortal/jsp/KMCPortalHome1.jsp` | 200; no robots.txt (404: no restriction) | en | yes (`kmc_scrape`) |
-| WB Disaster Management dept. | `https://wbdmd.gov.in/` | connection refused | — | no: `wbsdma` disabled, not allow-listed |
-| Kolkata Police / Kolkata Traffic Police | `kolkatapolice.gov.in`, `kolkatatrafficpolice.gov.in` | connection refused | — | no: `kolkata_police_scrape` disabled, not allow-listed |
+| WB Disaster Management dept. | `https://wbdmd.gov.in/` | port 443 speaks plain HTTP (no TLS); http 503 (2026-10-29) | — | no: `wbsdma` disabled, not allow-listed |
+| Kolkata Traffic Police | `https://kolkatatrafficpolice.gov.in/` | 200 with the legacy-renegotiation allowance (OpenSSL 3 refuses the server by default); GeoTrust certificate verified; robots.txt 404 (2026-10-29) | en | yes (`kolkata_police_scrape`) |
+| Kolkata Police | `kolkatapolice.gov.in` | same legacy TLS; recruitment and security notices, no traffic advisories | — | no |
 | The Telegraph | `telegraphindia.com` feeds | 403 to the parent probe; the old feed path now redirects to the home page (no feed) | en | **excluded** |
 | Anandabazar Patrika | `anandabazar.com/rss…` | 403 to the parent probe; `/rss` answers 404 | bn | **excluded** |
 | Ei Samay | `eisamay.com` (old `eisamay.indiatimes.com` feeds) | 410 / the old feed path redirects to the home page; no feed found | bn | **excluded** |

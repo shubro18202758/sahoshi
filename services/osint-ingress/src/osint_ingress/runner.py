@@ -4,6 +4,12 @@ One cycle: run the chosen connectors in order (live: ``fetch`` then ``parse``; a
 newest cache entry, honestly labelled ``cached-sample``; offline: ``parse`` the newest entry), apply cache
 retention, then queue the new signals in the outbox and flush it to the oracle when the oracle is reachable.
 
+A source that asks us to slow down (``ConnectorThrottled``: HTTP 429, a throttle banner, an overload timeout) is
+backed off (:class:`Backoff`): no request to it until the server's ``Retry-After`` or a jittered exponential delay
+(the connector's cadence × 2^(n-1), ±20 %, at most 6 h), whichever is later. Meanwhile each run serves the
+connector's last LIVE answer and says so with its real fetch time and age (``cache_age_sec``); it is never a
+recorded sample. One answer resets the back-off.
+
 A source that says no (``ConnectorDisabled``: "robots.txt disallows") is not a failure: that connector is
 disabled for the run, its cache is NOT served in place of the fetch, and ``/health`` shows it ``enabled: false``
 with the reason as its ``error``. It stays on the schedule, so it re-enables itself once the source allows it
@@ -29,11 +35,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 import secrets
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
@@ -44,11 +51,11 @@ from osint_common.types import RawOsintSignal
 from osint_ingress import __version__
 from osint_ingress.cache import Cache, stamp_of
 from osint_ingress.connectors._redact import has_poster_handle, has_url
-from osint_ingress.connectors.base import Connector, ConnectorDisabled, ConnectorError
+from osint_ingress.connectors.base import Connector, ConnectorDisabled, ConnectorError, ConnectorThrottled
 from osint_ingress.publish import PublishResult, Publisher
-from osint_ingress.safe_http import ALLOWED_HOSTS, EgressRefused, FetchError
+from osint_ingress.safe_http import ALLOWED_HOSTS, EgressRefused, FetchError, network_reason
 
-__all__ = ["ConnectorStatus", "CycleReport", "Engine", "new_run_id", "signal_checks"]
+__all__ = ["Backoff", "ConnectorStatus", "CycleReport", "Engine", "new_run_id", "signal_checks"]
 
 log = structlog.get_logger("osint_ingress.runner")
 
@@ -60,6 +67,51 @@ def _iso(dt: datetime | None) -> str | None:
 def new_run_id(now: datetime | None = None) -> str:
     """``osint-<UTC stamp>-<4 hex>`` (≤ 64 characters, the C-T ``run_id`` bound)."""
     return f"osint-{stamp_of(now or datetime.now(UTC))}-{secrets.token_hex(2)}"
+
+
+#: the longest back-off (a throttled source is asked again at least every six hours)
+MAX_BACKOFF_SEC = 6 * 3600
+
+
+@dataclass
+class Backoff:
+    """Jittered exponential back-off for one throttled connector (module docstring)."""
+
+    base_sec: float
+    failures: int = 0
+    until: datetime | None = None
+    rng: random.Random = field(default_factory=random.Random)
+
+    def active(self, now: datetime) -> bool:
+        return self.until is not None and now < self.until
+
+    def fail(self, now: datetime, retry_after_sec: float | None = None) -> datetime:
+        self.failures += 1
+        delay = min(MAX_BACKOFF_SEC, max(60.0, self.base_sec) * 2 ** (self.failures - 1))
+        delay *= 1.0 + self.rng.uniform(-0.2, 0.2)
+        if retry_after_sec is not None and retry_after_sec > 0:
+            delay = max(delay, min(float(retry_after_sec), 24 * 3600.0))
+        self.until = now + timedelta(seconds=delay)
+        return self.until
+
+    def reset(self) -> None:
+        self.failures, self.until = 0, None
+
+
+def _hhmm(dt: datetime) -> str:
+    return dt.astimezone(UTC).strftime("%Y-%m-%d %H:%MZ")
+
+
+def _age(sec: float) -> str:
+    m = int(sec // 60)
+    return f"{m} min old" if m < 120 else f"{m // 60} h {m % 60} min old"
+
+
+def _serving(entry: Any, now: datetime) -> str:
+    """How a fallback entry is described: the last LIVE answer with its fetch time and age, or an imported capture."""
+    if getattr(entry, "origin", "live") == "live" and not getattr(entry, "synthetic", False):
+        return f"serving the last live answer, fetched {_hhmm(entry.captured_at)} ({_age(entry.age_sec(now))})"
+    return f"serving the cached entry (an imported capture from {_hhmm(entry.captured_at)}, not a live answer)"
 
 
 @dataclass
@@ -78,6 +130,8 @@ class ConnectorStatus:
     dropped: dict[str, int] = field(default_factory=dict)
     #: set while the source disables the connector ("robots.txt disallows"); cleared by the next allowed fetch
     disabled_by: str | None = None
+    #: the throttle that started the current back-off ("HTTP 429 (throttled)"); cleared by the next answer
+    throttle_reason: str | None = None
 
     @property
     def active(self) -> bool:
@@ -223,10 +277,8 @@ def signal_checks(signals: Sequence[RawOsintSignal]) -> dict[str, int]:
 def _short(exc: BaseException) -> str:
     if isinstance(exc, (ConnectorError, EgressRefused, FetchError)):
         return str(exc)[:200]
-    if isinstance(exc, httpx.TimeoutException):
-        return "timed out"
     if isinstance(exc, httpx.HTTPError):
-        return f"network error ({type(exc).__name__})"
+        return network_reason(exc)
     return f"failed ({type(exc).__name__})"
 
 
@@ -261,6 +313,11 @@ class Engine:
         }
         self.last: CycleReport | None = None
         self._lock = asyncio.Lock()
+        #: per-connector back-off after a throttle (module docstring); based on the connector's cadence
+        self.backoff: dict[str, Backoff] = {
+            name: Backoff(base_sec=float(cadences.get(name) or conn.default_cadence_sec or 900))
+            for name, conn in connectors.items()
+        }
 
     @property
     def offline(self) -> bool:
@@ -286,20 +343,32 @@ class Engine:
                 error = "no cached entry (offline mode)"
         else:
             disabled: str | None = None
-            try:
-                entry = await conn.fetch(self.client, self.cache)
-            except ConnectorDisabled as exc:  # the source says no: disabled, and the cache is NOT served instead
-                disabled = error = str(exc)[:200]
-            except Exception as exc:  # noqa: BLE001 - any connector failure degrades to the cache, never crashes
-                error = _short(exc)
-                if not isinstance(exc, (ConnectorError, EgressRefused, FetchError, httpx.HTTPError)):
-                    log.error("fetch_crashed", connector=name, error=type(exc).__name__)
+            backoff = self.backoff[name]
+            if backoff.active(now):  # throttled earlier: no request until the back-off ends
+                assert backoff.until is not None
+                error = (f"{st.throttle_reason or 'throttled'}; backing off until {_hhmm(backoff.until)} "
+                         f"(attempt {backoff.failures}, no request sent)")
+            else:
+                try:
+                    entry = await conn.fetch(self.client, self.cache)
+                    backoff.reset()
+                    st.throttle_reason = None
+                except ConnectorThrottled as exc:  # slow down: back off, serve the last live answer meanwhile
+                    until = backoff.fail(now, exc.retry_after_sec)
+                    st.throttle_reason = str(exc)[:120]
+                    error = f"{st.throttle_reason}; backing off until {_hhmm(until)} (attempt {backoff.failures})"
+                except ConnectorDisabled as exc:  # the source says no: disabled, and the cache is NOT served instead
+                    disabled = error = str(exc)[:200]
+                except Exception as exc:  # noqa: BLE001 - any connector failure degrades to the cache, never crashes
+                    error = _short(exc)
+                    if not isinstance(exc, (ConnectorError, EgressRefused, FetchError, httpx.HTTPError)):
+                        log.error("fetch_crashed", connector=name, error=type(exc).__name__)
             st.disabled_by = disabled
             if entry is None and disabled is None:
                 cached = self.cache.latest(name)
                 if cached is not None:
                     entry = cached
-                    error = f"{error or 'fetch skipped'}; serving the cached entry"
+                    error = f"{error or 'fetch skipped'}; {_serving(cached, now)}"
                 elif error is None:
                     error = "fetch skipped and nothing cached"
         signals: list[RawOsintSignal] = []

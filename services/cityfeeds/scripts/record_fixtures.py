@@ -22,10 +22,12 @@ from cityfeeds.cyclones import fetch_cyclones
 from cityfeeds.fetch import FIXTURES, USER_AGENT
 from cityfeeds.geo import decimate
 from cityfeeds.heat import fetch_heat
-from cityfeeds.notices import PERSON_WORDS, PLACE_WORDS, fetch_notices
+from cityfeeds.fires import fetch_fires_public
+from cityfeeds.notices import KTP_ADVISORY, PERSON_WORDS, PLACE_WORDS, fetch_notices
 from cityfeeds.quakes import fetch_quakes
 from cityfeeds.river import DVC_TERMS, fetch_news, fetch_river
-from cityfeeds.tide_table import fetch_hydro_tide
+from cityfeeds.tide_table import fetch_hydro_tide, fetch_port_notices
+from cityfeeds.tls import default_transport
 
 
 def _slim_gdacs(raw: dict) -> dict:
@@ -44,7 +46,8 @@ def _slim_gdacs(raw: dict) -> dict:
 async def main(only: set[str]) -> None:
     s = Settings()
     box = (s.region_south, s.region_west, s.region_north, s.region_east)
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True, headers={"user-agent": USER_AGENT}) as c:
+    async with httpx.AsyncClient(timeout=60, follow_redirects=True, headers={"user-agent": USER_AGENT},
+                                 transport=default_transport()) as c:
         jobs = {
             "air.json": lambda: fetch_air(c, s.open_meteo_air_url),
             "heat.json": lambda: fetch_heat(c, s.open_meteo_forecast_url),
@@ -54,6 +57,9 @@ async def main(only: set[str]) -> None:
             "usgs.json": lambda: fetch_quakes(c, s.usgs_url, s.quake_radius_km),
             "kmc_portal.html": lambda: fetch_notices(c, s.kmc_portal_url),
             "hydro_tide.json": lambda: fetch_hydro_tide(c, s.hydro_url),
+            "port_tidal_notices.json": lambda: fetch_port_notices(c, s.port_tide_url),
+            "ktp_home.html": lambda: fetch_notices(c, s.ktp_url),
+            "firms_kma.json": lambda: fetch_fires_public(c),
         }
         for name, job in jobs.items():
             if only and name not in only:
@@ -79,6 +85,13 @@ async def main(only: set[str]) -> None:
                     return bool(PLACE_WORDS.search(hay) or PERSON_WORDS.search(hay))
                 data = "<!-- KMC portal home, download anchors only -->\n" + "\n".join(
                     a for a in anchors if "/downloads/" in a.lower() and len(a) < 600 and relevant(a))
+            if name == "ktp_home.html":  # the anchors outside HTML comments, the menu and the advisories
+                live = re.sub(r"<!--.*?-->", "", data, flags=re.S)
+                anchors = re.findall(r'<a[^>]*href="[^"]+"[^>]*>.*?</a>', live, re.S | re.I)
+                data = "<!-- Kolkata Traffic Police home page, anchors only (comments dropped) -->\n" + "\n".join(
+                    a for a in anchors if len(a) < 800 and (KTP_ADVISORY.search(a) or "traffic" in a.lower()))
+            if name == "port_tidal_notices.json":
+                data = {**data, "page": data["page"][:20000]}
             if name == "news.json":  # links and dates only (a headline is kept only when it mentions a DVC release)
                 for f in data["feeds"].values():
                     f["items"] = [{"title": it["title"] if DVC_TERMS.search(f"{it['title']} {it['description']}") else "",

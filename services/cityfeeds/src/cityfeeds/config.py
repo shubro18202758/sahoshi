@@ -2,7 +2,9 @@
 
 Production port 8199 (``infra/systemd/sahoshi-feeds.service``, loopback only); ``PORT`` / ``HOST`` override.
 
-Every feed is open and needs no key. Each one has its own polite schedule (``FEEDS`` in ``fetch.py``: a cache
+The open feeds need no key. Five free services need a personal key, read from the environment by its own name
+(``WAQI_TOKEN``, ``OPENAQ_API_KEY``, ``DATA_GOV_IN_API_KEY``, ``FIRMS_MAP_KEY``, ``MAPILLARY_TOKEN``; see
+``keys.py``): without it that source makes no call and says ``needs <ENV_VAR>``. Each feed has its own polite schedule (``FEEDS`` in ``fetch.py``: a cache
 age, a minimum interval between calls and a daily cap). ``offline=1`` never calls out: every feed answers from
 the recorded fixtures in ``src/cityfeeds/fixtures/`` and says so (label ``RECORDED``), which is what the tests
 and an air-gapped box use.
@@ -37,6 +39,8 @@ class Settings(BaseSettings):
     usgs_url: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"
     cwc_base_url: str = "https://ffs.india-water.gov.in/iam/api"
     kmc_portal_url: str = "https://www.kmcgov.in/KMCPortal/jsp/KMCPortalHome1.jsp"
+    ktp_url: str = "https://kolkatatrafficpolice.gov.in/"
+    port_tide_url: str = "https://smp.smportkolkata.in/smpk/en/tidal-notices/"
     #: the hydro service's modelled tide (compared with a published table when one is available)
     hydro_url: str = "http://127.0.0.1:8197"
 

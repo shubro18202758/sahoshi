@@ -399,7 +399,7 @@ recommendations, dispatches, signal plans, OSINT situations, decision-support re
 The brain orchestrates the platform's decision AI. It asks the models, runs deterministic tools through the
 oracle, checks every claim, and turns anything that would change a plan into a proposal for a named officer.
 
-- **Two tiers.** The strategic tier is a 27B decider model served by model-host as **typed questions** (choice,
+- **Two tiers.** The strategic tier is a 27B decider model (`pplx-decider-v1.2`) served by model-host as **typed questions** (choice,
   probability, score), never as a chat model. The tactical tier is a Gemma 4 12B model on llama-server, which drafts
   tool arguments against each tool's JSON schema and words answers. Below both sits a deterministic heuristic floor.
   Every fallback is recorded.
@@ -466,7 +466,8 @@ at credibility 0.30; `OFFICIAL-VERIFIED` needs an official source; a surfaced si
 
 ### 4.9 model-host and llama-server
 
-- **model-host** (`127.0.0.1:8083`) serves the decider (`pplx-decider-v1-27b`, 48.6 GiB BF16). API:
+- **model-host** (`127.0.0.1:8083`) serves the decider (`pplx-decider-v1.2`, a Qwen3.8-27B fine-tune, 48.6 GiB BF16,
+  protocol v3 joint; switched from `pplx-decider-v1-27b` on 29 Oct 2026, p95 1.0 s, see [`docs/ai/decider.md`](ai/decider.md)). API:
   `POST /decide` with `{state, questions}`, at most 6 questions batched into one forward pass; question types
   `choice`, `noul` (a probability), `score`. Explicit errors: 429 when 8 requests are queued, 503 while loading, 413
   when the state exceeds 8,192 tokens (never truncated). No outbound calls.
@@ -589,7 +590,7 @@ flowchart TB
 - `POST /speech/speak` returns 24 kHz WAV for Bengali, English or Hindi, with `X-Speech-Label: synthetic-voice`.
   Synthesis is seeded, so one text gives one waveform and the cache is exact.
 - Audio is decoded in memory and dropped; there is no speaker identification and no voice storage.
-- Evaluation (synthetic round trip, 60 clips): CER 2.6 %, place 53/60, kind 60/60, median 1.55 s per report.
+- Evaluation (synthetic round trip, 60 clips, re-run 29 Oct 2026 with the 203-name place list): WER 11.2 %, CER 2.5 %, place 55/60, kind 60/60, median 1.29 s per report. Two newer open checkpoints (Bengali.AI regional, Mozilla large-v3-bn) were measured and did not beat it ([`docs/ai/speech.md`](ai/speech.md)).
 
 ### 5.4 Road-state vision (`services/vision`)
 
@@ -1155,7 +1156,7 @@ The on-demand models load lazily and unload when idle, so the box keeps headroom
 
 | Level | What | Count (28 Oct 2026) |
 |---|---|---|
-| Unit and API (Python) | Every service, offline, outbound calls mocked | 5,921 passed |
+| Unit and API (Python) | Every service, offline, outbound calls mocked | 5,987 passed |
 | Real-model (opt-in) | forecast `-m model`, speech and vision `-m slow` | run on the box with weights |
 | Rust | signal-ingress | 121 passed |
 | Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 42 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |

@@ -1,0 +1,6 @@
+{"status": "ok", "data": [
+ {"lat": 22.5448, "lon": 88.3404, "uid": 10001, "aqi": "152", "station": {"name": "Victoria, Kolkata, India", "time": "2026-10-29T01:00:00+05:30"}},
+ {"lat": 22.6278, "lon": 88.3803, "uid": 10002, "aqi": "-", "station": {"name": "Rabindra Bharati University, Kolkata, India", "time": "2026-10-28T09:00:00+05:30"}},
+ {"lat": 22.5124, "lon": 88.3653, "uid": 10003, "aqi": "88", "station": {"name": "Rabindra Sarobar, Kolkata, India", "time": "2026-10-29T01:00:00+05:30"}},
+ {"lat": 22.9000, "lon": 88.4000, "uid": 10004, "aqi": "60", "station": {"name": "Somewhere far, India", "time": "2026-10-29T01:00:00+05:30"}}
+]}

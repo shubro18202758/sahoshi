@@ -3,7 +3,9 @@
 Backend: Svara-TTS v1 (Apache-2.0), an Orpheus-style model that writes SNAC
 audio codes which the SNAC 24 kHz codec (MIT) turns into a waveform. Indic
 Parler-TTS was the first choice; its weights are gated and were not granted
-to this deployment (README "Models").
+to this deployment (README "Models"). It drops in by configuration once
+access is granted (``SPEECH_TTS_BACKEND=indic_parler``): until then
+:class:`FallbackTTS` says why it cannot load and Svara answers.
 
 Svara takes a speaker id ("Bengali (Female)") plus an end-of-utterance style
 tag. The house voice is the female speaker of the requested language with
@@ -16,26 +18,37 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
+import logging
 import os
 import re
+import select
+import subprocess
 import tempfile
 import threading
 import time
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Callable, Protocol
 
 import numpy as np
 
 from .audio import encode_wav
-from .runtime import LazyModel
+from .runtime import LazyModel, ModelNotProvisioned, ModelUnavailable, not_provisioned
+
+log = logging.getLogger("speech.tts")
 
 __all__ = [
     "Speech",
     "TTSBackend",
     "SvaraTTS",
     "SvaraLlamaTTS",
+    "IndicParlerTTS",
+    "ParlerWorkerTTS",
+    "FallbackTTS",
+    "PARLER_SPEAKERS",
+    "PARLER_DESCRIPTION",
     "TTSCache",
     "split_sentences",
     "speaker_for",
@@ -329,6 +342,284 @@ class SvaraLlamaTTS:
         return (audio / max(peak, 1.0) * 0.95).astype(np.float32), SAMPLE_RATE
 
 
+# Indic Parler-TTS names its trained voices; these are the model card's
+# recommended speakers for each of our languages.
+PARLER_SPEAKERS = {
+    ("bn", "female"): "Aditi", ("bn", "male"): "Arjun",
+    ("en", "female"): "Mary", ("en", "male"): "Thoma",
+    ("hi", "female"): "Divya", ("hi", "male"): "Rohit",
+}
+# The house advisory voice as a Parler caption ({speaker} is filled in).
+PARLER_DESCRIPTION = (
+    "{speaker} speaks in a calm, clear and unhurried voice at a steady, moderate pace, "
+    "reading a public traffic advisory. The recording is of very high quality, with the "
+    "speaker's voice sounding clear and very close up, and no background noise."
+)
+
+
+class IndicParlerTTS:
+    """AI4Bharat Indic Parler-TTS (Apache-2.0; **gated** on Hugging Face).
+
+    Loaded as the model card documents: ``ParlerTTSForConditionalGeneration``
+    from the ``parler_tts`` package, the prompt tokenizer of the repo and the
+    description tokenizer of its text encoder. The voice is a named speaker
+    (:data:`PARLER_SPEAKERS`) plus the house caption; sampling is seeded from
+    the text, so one text gives one waveform and the cache stays exact.
+    """
+
+    DEFAULT_MODEL = "ai4bharat/indic-parler-tts"
+
+    def __init__(self, model_id: str = DEFAULT_MODEL, *, device: str = "cuda",
+                 description: str = PARLER_DESCRIPTION, seed: int = 1847,
+                 min_free_gib: float = 12.0, idle_unload_s: float = 600,
+                 loader: Callable[[], Any] | None = None) -> None:
+        self.model_id = model_id
+        self.device = device
+        self.description = description
+        self.seed = seed
+        self._run_lock = threading.Lock()
+        self._lazy = LazyModel(
+            f"tts:{model_id}", loader or self._load, need_gib=5.0,
+            min_free_gib=min_free_gib, idle_unload_s=idle_unload_s,
+        )
+
+    def _load(self):
+        try:
+            from parler_tts import ParlerTTSForConditionalGeneration
+            from transformers import AutoTokenizer
+        except ImportError as exc:
+            raise not_provisioned(self.model_id, exc, gated=True) from exc
+        try:
+            model = ParlerTTSForConditionalGeneration.from_pretrained(self.model_id)
+            model = model.to(self.device).eval()
+            tok = AutoTokenizer.from_pretrained(self.model_id)
+            desc_tok = AutoTokenizer.from_pretrained(model.config.text_encoder._name_or_path)
+        except Exception as exc:
+            mapped = not_provisioned(self.model_id, exc, gated=True)
+            if mapped is not None:
+                raise mapped from exc
+            raise
+        return tok, desc_tok, model
+
+    def status(self) -> dict:
+        return {"model": self.model_id, **self._lazy.status()}
+
+    def maybe_unload_idle(self) -> bool:
+        return self._lazy.maybe_unload_idle()
+
+    def unload(self) -> bool:
+        return self._lazy.unload()
+
+    def caption(self, lang: str, voice: str) -> str:
+        return self.description.format(speaker=PARLER_SPEAKERS[(lang, voice)])
+
+    def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        # first: a gated model fails here, before torch is touched
+        tok, desc_tok, model = self._lazy.get()
+        import torch
+
+        sr = int(model.config.sampling_rate)
+        caption = self.caption(lang, voice)
+        pieces: list[np.ndarray] = []
+        gap = np.zeros(int(0.22 * sr), dtype=np.float32)
+        with self._run_lock, torch.inference_mode():
+            desc = desc_tok(caption, return_tensors="pt").to(self.device)
+            for sent in split_sentences(text):
+                digest = hashlib.sha256(f"{caption}|{sent}".encode()).hexdigest()
+                torch.manual_seed(self.seed ^ int(digest[:8], 16))
+                prompt = tok(sent, return_tensors="pt").to(self.device)
+                out = model.generate(input_ids=desc.input_ids, attention_mask=desc.attention_mask,
+                                     prompt_input_ids=prompt.input_ids,
+                                     prompt_attention_mask=prompt.attention_mask)
+                wav = out.float().cpu().numpy().squeeze()
+                if wav.size == 0:
+                    continue
+                if pieces:
+                    pieces.append(gap)
+                pieces.append(wav.astype(np.float32))
+        self._lazy.touch()
+        if not pieces:
+            raise RuntimeError("the TTS model produced no audio for this text")
+        audio = np.concatenate(pieces)
+        peak = float(np.max(np.abs(audio))) or 1.0
+        return (audio / max(peak, 1.0) * 0.95).astype(np.float32), sr
+
+
+class ParlerWorkerTTS:
+    """:class:`IndicParlerTTS` in a child interpreter with its own venv.
+
+    ``parler-tts`` pins ``transformers==4.46.1``; the service runs on
+    transformers 5.x. Set ``SPEECH_TTS_PARLER_PYTHON`` to the python of a
+    venv that has parler-tts, and the model runs there
+    (``python -m speech_service.parler_worker``), started after the memory
+    check on the first advisory and stopped when the backend unloads. The
+    child talks over its stdin/stdout only (no port).
+    """
+
+    def __init__(self, python: Path | str, model_id: str = IndicParlerTTS.DEFAULT_MODEL, *,
+                 device: str = "cuda", description: str = PARLER_DESCRIPTION, seed: int = 1847,
+                 min_free_gib: float = 12.0, idle_unload_s: float = 600,
+                 load_timeout_s: float = 900.0, synth_timeout_s: float = 300.0,
+                 cmd: list[str] | None = None) -> None:
+        self.python = Path(python)
+        self.model_id = model_id
+        self.device = device
+        self.description = description
+        self.seed = seed
+        self.load_timeout_s = load_timeout_s
+        self.synth_timeout_s = synth_timeout_s
+        self._cmd_override = cmd
+        self._proc: subprocess.Popen[bytes] | None = None
+        self._run_lock = threading.Lock()
+        self._lazy = LazyModel(
+            f"tts:{model_id} (worker)", self._load, need_gib=5.0,
+            min_free_gib=min_free_gib, idle_unload_s=idle_unload_s,
+        )
+
+    def cmd(self) -> list[str]:
+        if self._cmd_override is not None:
+            return list(self._cmd_override)
+        return [str(self.python), "-m", "speech_service.parler_worker", "--model", self.model_id,
+                "--device", self.device, "--seed", str(self.seed),
+                "--description", self.description]
+
+    @property
+    def running(self) -> bool:
+        return self._proc is not None and self._proc.poll() is None
+
+    def _load(self):
+        if self._cmd_override is None and not self.python.is_file():
+            raise ModelNotProvisioned(
+                f"{self.model_id}: the Parler venv's python is missing ({self.python}); "
+                f"see docs/ai/speech.md \"When access is granted\"")
+        src = str(Path(__file__).resolve().parents[1])
+        env = dict(os.environ)
+        env["PYTHONPATH"] = src + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+        self._proc = subprocess.Popen(  # noqa: S603 - argv from config, no shell
+            self.cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env,
+            start_new_session=True,
+        )
+        try:
+            self._call({"op": "load"}, self.load_timeout_s)
+        except BaseException:
+            self._stop()
+            raise
+        return self._proc
+
+    def _call(self, req: dict, timeout_s: float) -> tuple[dict, bytes]:
+        proc = self._proc
+        if proc is None or proc.stdin is None or proc.stdout is None or proc.poll() is not None:
+            raise ModelUnavailable("the Parler worker is not running")
+        try:
+            proc.stdin.write(json.dumps(req, ensure_ascii=False).encode("utf-8") + b"\n")
+            proc.stdin.flush()
+        except (BrokenPipeError, OSError) as exc:
+            raise ModelUnavailable(f"the Parler worker exited (code {proc.poll()})") from exc
+        ready, _, _ = select.select([proc.stdout], [], [], timeout_s)
+        if not ready:
+            self._stop()
+            raise ModelUnavailable(f"the Parler worker did not answer within {timeout_s:.0f} s")
+        line = proc.stdout.readline()
+        if not line:
+            code = proc.wait(timeout=5)
+            raise ModelUnavailable(f"the Parler worker exited (code {code}); see the service log")
+        head = json.loads(line)
+        if not head.get("ok"):
+            msg = str(head.get("error") or "the Parler worker failed")
+            if head.get("not_provisioned"):
+                raise ModelNotProvisioned(msg)
+            raise RuntimeError(msg)
+        n = int(head.get("bytes") or 0)
+        payload = proc.stdout.read(n) if n else b""
+        if len(payload) != n:
+            raise ModelUnavailable("the Parler worker's answer was cut short")
+        return head, payload
+
+    def _stop(self) -> None:
+        proc, self._proc = self._proc, None
+        if proc is None:
+            return
+        try:
+            if proc.stdin:
+                proc.stdin.close()  # EOF: the worker leaves its loop and exits
+            proc.wait(timeout=10)
+        except Exception:
+            proc.kill()
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                pass
+
+    def status(self) -> dict:
+        return {"model": self.model_id, "backend": "parler-worker", "python": str(self.python),
+                "worker_running": self.running, **self._lazy.status()}
+
+    def maybe_unload_idle(self) -> bool:
+        if self._lazy.maybe_unload_idle():
+            self._stop()
+            return True
+        return False
+
+    def unload(self) -> bool:
+        self._stop()
+        return self._lazy.unload()
+
+    def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        if PARLER_SPEAKERS.get((lang, voice)) is None:
+            raise ValueError(f"no Parler voice for {lang}/{voice}")
+        self._lazy.get()
+        with self._run_lock:
+            if not self.running:  # died since it loaded: start over on the next call
+                self._lazy.unload()
+                self._lazy.get()
+            head, payload = self._call({"op": "synthesize", "text": text, "lang": lang,
+                                        "voice": voice}, self.synth_timeout_s)
+        self._lazy.touch()
+        return np.frombuffer(payload, dtype="<f4").copy(), int(head["sr"])
+
+
+class FallbackTTS:
+    """The preferred TTS first; the fallback when it cannot be provisioned
+    (gated access not granted, weights not downloaded, package missing). The
+    reason is logged once and shown in ``/health``; the fallback answers until
+    the service restarts. A memory refusal stays a 503 and does not switch."""
+
+    def __init__(self, preferred: TTSBackend, fallback: TTSBackend) -> None:
+        self.preferred = preferred
+        self.fallback = fallback
+        self.preferred_error: str | None = None
+
+    @property
+    def model_id(self) -> str:
+        return self.fallback.model_id if self.preferred_error else self.preferred.model_id
+
+    def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        if self.preferred_error is None:
+            try:
+                return self.preferred.synthesize(text, lang, voice)
+            except ModelNotProvisioned as exc:
+                self.preferred_error = str(exc)
+                log.warning("TTS %s unavailable, using %s: %s", self.preferred.model_id,
+                            self.fallback.model_id, exc)
+        return self.fallback.synthesize(text, lang, voice)
+
+    def status(self) -> dict:
+        return {"model": self.model_id,
+                "active": "fallback" if self.preferred_error else "preferred",
+                "preferred": self.preferred.status(), "preferred_error": self.preferred_error,
+                "fallback": self.fallback.status()}
+
+    def maybe_unload_idle(self) -> bool:
+        a = self.preferred.maybe_unload_idle()
+        b = self.fallback.maybe_unload_idle()
+        return a or b
+
+    def unload(self) -> bool:
+        a = getattr(self.preferred, "unload", lambda: False)()
+        b = getattr(self.fallback, "unload", lambda: False)()
+        return a or b
+
+
 class TTSCache:
     """wav files keyed by sha256(model | voice | style | lang | text)."""
 
@@ -364,7 +655,8 @@ class TTSCache:
 
 def speak(backend: TTSBackend, cache: TTSCache, text: str, lang: str, voice: str,
           style: str) -> Speech:
-    key = TTSCache.key(f"{backend.model_id}|{PROMPT_FORMAT}", lang, voice, style, text)
+    model_id = backend.model_id
+    key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}", lang, voice, style, text)
     hit = cache.get(key)
     if hit is not None:
         try:
@@ -375,7 +667,12 @@ def speak(backend: TTSBackend, cache: TTSCache, text: str, lang: str, voice: str
             pass  # a damaged cache file is regenerated below
     t0 = time.perf_counter()
     audio, sr = backend.synthesize(text, lang, voice)
+    if backend.model_id != model_id:
+        # a fallback answered for the preferred model: file the audio under
+        # the model that actually spoke it, never under the preferred one
+        model_id = backend.model_id
+        key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}", lang, voice, style, text)
     wav = encode_wav(audio, sr)
     cache.put(key, wav)
-    return Speech(wav, sr, round(audio.size / sr, 2), backend.model_id, voice, False,
+    return Speech(wav, sr, round(audio.size / sr, 2), model_id, voice, False,
                   round(time.perf_counter() - t0, 3))
