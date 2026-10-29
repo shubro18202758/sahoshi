@@ -3,8 +3,10 @@
 	 * "Air today" (public, Bengali-first): the city's air in one plain sentence and what to do about it, from the city
 	 * feeds' indicative National AQI (Open-Meteo's CAMS model at the WBPCB/CPCB sites, banded with CPCB's breakpoints),
 	 * the site where it is worst and the next 48 hours, and a Listen button that reads it aloud in the page's
-	 * language. Labelled MODELLED: a model banded with the National AQI, not a station reading. Reads only the public
-	 * GET /api/cityfeeds/feeds/summary; no operator code, no location is asked for or sent.
+	 * language. When the CPCB stations' own 24-hour averages are in (the summary's `observed`), the headline is that
+	 * measured value, labelled Measured; otherwise the model's, labelled MODELLED (not a station reading). The
+	 * 48-hour outlook is always the model's and says so. Reads only the public GET /api/cityfeeds/feeds/summary; no
+	 * operator code, no location is asked for or sent.
 	 */
 	import { onMount } from 'svelte';
 	import { localizeNumber, t } from '$lib/i18n/strings';
@@ -25,6 +27,8 @@
 		label: string;
 		detail: { worst_site_name?: string; worst_site_bn?: string } | null;
 		next_48h?: { aqi: number; band: string } | null;
+		/** the CPCB stations' measured National AQI (worst site), when a keyed provider answers */
+		observed?: { aqi: number; band: string; site?: string; site_name?: string | null; site_bn?: string | null } | null;
 	}
 	let chip = $state<AirChip | null>(null);
 	let status = $state<'loading' | 'ready' | 'down'>('loading');
@@ -50,21 +54,33 @@
 	});
 
 	const L = (key: string, ...a: unknown[]) => t(lang, key, ...a);
-	const today = $derived(chip ? airToday(chip.band, chip.value, L) : null);
-	const level = $derived(chip?.band ? NAQI_ORDER.indexOf(chip.band as (typeof NAQI_ORDER)[number]) : -1);
-	const site = $derived(chip?.detail ? (lang === 'bn' ? chip.detail.worst_site_bn : chip.detail.worst_site_name) ?? null : null);
+	/** the measured value when the stations answer, else the model's */
+	const obs = $derived(chip?.observed?.band ? chip.observed : null);
+	const band = $derived(obs ? obs.band : (chip?.band ?? null));
+	const value = $derived(obs ? obs.aqi : (chip?.value ?? null));
+	const today = $derived(chip && band ? airToday(band, value, L) : null);
+	const level = $derived(band ? NAQI_ORDER.indexOf(band as (typeof NAQI_ORDER)[number]) : -1);
+	const site = $derived(
+		obs ? ((lang === 'bn' ? obs.site_bn : obs.site_name) ?? null)
+			: chip?.detail ? ((lang === 'bn' ? chip.detail.worst_site_bn : chip.detail.worst_site_name) ?? null) : null
+	);
 	const next = $derived(chip?.next_48h?.band ? L(`cf_naqi_${chip.next_48h.band}`) : null);
-	const spoken = $derived(today ? [today.head, today.advice, next ? L('cf_pub_tomorrow', next) : ''].filter(Boolean).join(' ') : '');
+	const nextKey = $derived(obs ? 'cf_pub_tomorrow_model' : 'cf_pub_tomorrow');
+	const spoken = $derived(today ? [today.head, today.advice, next ? L(nextKey, next) : ''].filter(Boolean).join(' ') : '');
 </script>
 
-<section class="air" aria-labelledby="air-title" data-testid="air-card" data-status={status} data-band={chip?.band ?? 'none'} lang={lang}>
+<section class="air" aria-labelledby="air-title" data-testid="air-card" data-status={status} data-band={band ?? 'none'} data-measured={obs ? 'yes' : 'no'} lang={lang}>
 	<header class="ah">
 		<span class="ai"><Glyph name="globe" size={22} /></span>
 		<div class="at">
 			<h2 id="air-title">{t(lang, 'cf_pub_title')}</h2>
-			<p class="lead">{P('cf_pub_lead')}</p>
+			<p class="lead">{P(obs ? 'cf_pub_lead_obs' : 'cf_pub_lead')}</p>
 		</div>
-		<span class="tagbox" data-label="MODELLED"><PublicTag tone="dashed" glyph="graph" label={t(lang, 'cf_pub_tag')} title={t(lang, 'cf_pub_tag_tip')} /></span>
+		{#if obs}
+			<span class="tagbox" data-label="OBSERVED"><PublicTag tone="live" glyph={null} label={t(lang, 'cf_pub_tag_obs')} title={P('cf_pub_tag_obs_tip')} /></span>
+		{:else}
+			<span class="tagbox" data-label="MODELLED"><PublicTag tone="dashed" glyph="graph" label={t(lang, 'cf_pub_tag')} title={t(lang, 'cf_pub_tag_tip')} /></span>
+		{/if}
 	</header>
 	{#if status === 'down'}
 		<p class="quiet">{t(lang, 'cf_pub_down')}</p>
@@ -80,9 +96,9 @@
 		</div>
 		<ListenButton text={localizeNumber(spoken, lang)} {lang} />
 		{#if site}<p class="more">{L('cf_pub_worst', site)}</p>{/if}
-		{#if next}<p class="more">{P('cf_pub_tomorrow', next)}</p>{/if}
+		{#if next}<p class="more">{P(nextKey, next)}</p>{/if}
 	{/if}
-	<p class="src">{P('cf_pub_source')}</p>
+	<p class="src">{P(obs ? 'cf_pub_source_obs' : 'cf_pub_source')}</p>
 </section>
 
 <style>

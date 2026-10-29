@@ -261,7 +261,7 @@ class TestLlamaBridge:
         )
         assert out == '{"overall_status": "green"}'
         request = seen[0]
-        assert request["model"] == "aditi-ps18-v7h"
+        assert request["model"] == "sahoshi-tactical"
         assert request["response_format"]["type"] == "json_schema"
         assert request["response_format"]["json_schema"]["schema"] == schema
         assert request["messages"][0]["role"] == "system"

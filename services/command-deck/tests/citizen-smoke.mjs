@@ -93,7 +93,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DECK = path.resolve(HERE, '..');
 
 // Puppeteer is vendored once, in the repo's legacy frontend tree.
-const PUPPETEER_HOME = process.env.PUPPETEER_HOME ?? '/home/sandy050405/argus/sahoshi/frontend';
+const PUPPETEER_HOME = process.env.PUPPETEER_HOME ?? path.resolve(DECK, '../../frontend');
 const require2 = createRequire(path.join(PUPPETEER_HOME, 'package.json'));
 const puppeteer = require2('puppeteer').default ?? require2('puppeteer');
 

@@ -1,4 +1,4 @@
-# VVIP compose override — NVIDIA GB10 (linux/arm64) single-host layout.
+# Sahoshi compose override — NVIDIA GB10 (linux/arm64) single-host layout.
 #
 # Deltas vs infra/compose.yml, all driven by facts on this host:
 #
@@ -12,7 +12,7 @@
 #    - The docker-entrypoint-initdb.d mount is DROPPED (volumes !override):
 #      migrations 001-003 use bare CREATE TABLE (not idempotent), and the
 #      platform contract is that schema comes from
-#      VVIP/scripts/migrate.py (idempotent, ledgered) instead. A fresh
+#      scripts/migrate.py (idempotent, ledgered) instead. A fresh
 #      postgis_data volume + migrate.py = exactly one application.
 #
 # 2. traffic-oracle / convoy-brain run with network_mode: host

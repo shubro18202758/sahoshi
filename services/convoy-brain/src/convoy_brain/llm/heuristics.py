@@ -840,7 +840,17 @@ def _segment_label(segment_id: int, names: dict[int, str]) -> str:
 def _summarize_live(args: dict, result: Any) -> str:
     rows = _extract_segment_rows(result)
     requested = args.get("segment_ids")
+    scope = result.get("scope") if isinstance(result, dict) else None
+    city_wide = isinstance(scope, dict) and scope.get("kind") == "city"
     if not rows:
+        if city_wide or not requested:
+            # "nothing cached" is not "nothing congested": say what was read
+            asked = int(scope.get("segments_asked") or 0) if city_wide else 0
+            return (
+                "get_live_traffic: no live observations anywhere on the city road network "
+                f"({asked} segments read) — the live feed has nothing cached, so "
+                "congestion is UNKNOWN, not low"
+            )
         return (
             f"get_live_traffic: no live observations for segments {_ids_text(requested)} "
             f"(the live feed has nothing cached for them)"
@@ -854,6 +864,19 @@ def _summarize_live(args: dict, result: Any) -> str:
         str(o.get("data_quality")) for o in (result.get("observations") or [])
         if isinstance(o, dict) and o.get("data_quality")
     }) if isinstance(result, dict) else []
+    if city_wide:
+        ranked = sorted(rows, key=lambda r: (-r["congestion_idx"], r["speed_kmh"]))[:5]
+        top = "; ".join(
+            f"{_segment_label(r['segment_id'], names)} {r['congestion_idx']:.2f}"
+            f" at {r['speed_kmh']:.0f} km/h" for r in ranked
+        )
+        return (
+            f"get_live_traffic: city-wide, {len(rows)} of "
+            f"{int(scope.get('segments_asked') or len(rows))} segments observed — avg speed "
+            f"{sum(speeds) / len(speeds):.1f} km/h, avg congestion "
+            f"{sum(congestion) / len(congestion):.2f}; most congested: {top}"
+            + (" (SIMULATED FEED)" if "synthetic" in qualities else "")
+        )
     return (
         f"get_live_traffic: {len(rows)} observation(s) — avg speed "
         f"{sum(speeds) / len(speeds):.1f} km/h, avg congestion "

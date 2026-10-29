@@ -70,7 +70,7 @@ def models_config_path(env: dict[str, str] | None = None) -> Path:
 #: Tactical tier model id on the wire: the alias llama-server serves on
 #: LLAMA_BASE_URL (infra/scripts/serve_models.sh --alias). Internal only —
 #: never shown to an operator.
-GEMMA_MODEL_ID = "aditi-ps18-v7h"
+GEMMA_MODEL_ID = "sahoshi-tactical"
 #: The tactical tier's operator-facing name (done.tiers_used, /health,
 #: build info): a neutral label, not the served file's alias.
 GEMMA_DISPLAY_NAME = "gemma4-12b-sahoshi"

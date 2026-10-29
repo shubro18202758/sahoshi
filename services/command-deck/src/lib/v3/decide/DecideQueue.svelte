@@ -487,4 +487,46 @@
 			background: var(--v3-ok);
 		}
 	}
+
+	/* a phone: the queue is a strip of art along the top (scrolls sideways); the sheet takes the page below it */
+	@media (max-width: 720px) {
+		.queue {
+			flex-direction: row;
+			align-items: center;
+			gap: 6px;
+			padding: 8px 12px;
+			border-right: 0;
+			border-bottom: 1px solid var(--v3-line-1);
+			overflow-x: auto;
+			overflow-y: hidden;
+		}
+
+		.list {
+			flex-direction: row;
+			gap: 6px;
+		}
+
+		.q {
+			grid-template-columns: 52px;
+			padding: 3px;
+		}
+
+		.mini {
+			width: 52px;
+			height: 52px;
+		}
+
+		.ai {
+			flex-direction: row;
+			align-items: center;
+			margin: 0 0 0 6px;
+			padding: 0 0 0 10px;
+			border-top: 0;
+			border-left: 1px solid var(--v3-line-1);
+		}
+
+		.empty {
+			padding: 0;
+		}
+	}
 </style>

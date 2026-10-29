@@ -8,6 +8,10 @@ environment names, lazily on the first request, and drop the weights again
 after ``SPEECH_IDLE_UNLOAD_S`` seconds without a call (the box is shared).
 Before a load the service checks MemAvailable and refuses (503) below
 ``SPEECH_MIN_FREE_GIB``, so it never pushes the host into the memory guard.
+Before refusing it makes room (``memroom.py``): its own idle models, then the
+other on-demand services' idle ones (``POST /admin/release`` on loopback), are
+released and the same floor is checked again. Released models reload on their
+next use.
 """
 
 from __future__ import annotations
@@ -17,7 +21,10 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-__all__ = ["Settings", "get_settings", "default_city_dir"]
+__all__ = ["Settings", "get_settings", "default_city_dir", "DEFAULT_MIN_FREE_GIB"]
+
+#: defined in runtime (no pydantic there), so the Parler worker's own venv can import tts
+from .runtime import DEFAULT_MIN_FREE_GIB  # noqa: E402
 
 
 def default_city_dir() -> Path:
@@ -107,9 +114,27 @@ class Settings(BaseSettings):
     # --- shared --------------------------------------------------------------
     device: str = "cuda"
     idle_unload_s: int = 600
-    min_free_gib: float = 12.0
+    min_free_gib: float = DEFAULT_MIN_FREE_GIB
     max_audio_bytes: int = 8 * 1024 * 1024
     max_audio_seconds: float = 60.0
+    # --- making room (memroom.py; docs/ai/speech.md "Making room") --------------
+    # A load that would break the floor first releases this service's own idle
+    # models, then asks the other on-demand services on loopback to release
+    # theirs (forecast first: small and quick to reload). Port 0 skips a peer.
+    make_room: bool = True
+    peer_forecast_port: int = 8195
+    peer_vision_port: int = 8196
+    # POST /admin/release called by hand (or by scripts/ai_warm.sh) keeps a model used within this
+    # many seconds; one serving a request is never released
+    release_idle_s: float = 20.0
+    # making room for a waiting load has priority: every model not serving a request right now (own
+    # and the peers') may be released, however recently used; it reloads on its next use
+    make_room_idle_s: float = 0.0
+    # create the process's CUDA context at start (see api.open_cuda_context): creating it at the
+    # first ASR load failed on the shared box with plenty of memory available
+    cuda_context_at_start: bool = True
+    make_room_timeout_s: float = 2.0   # per peer call
+    make_room_wait_s: float = 5.0      # MemAvailable is polled this long after a release
     city_dir: Path = default_city_dir()
     # Gazetteer from the events stream; optional (landmarks.json always loads).
     gazetteer_file: str = "gazetteer.json"

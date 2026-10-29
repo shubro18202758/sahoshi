@@ -664,6 +664,38 @@
 		}
 	}
 
+	/* a phone: the wall's three columns stack in one scroll (decisions, the map tile, the record), then the audit band */
+	@media (max-width: 720px) {
+		.wall {
+			overflow-x: hidden;
+			overflow-y: auto;
+		}
+
+		.wall-main {
+			flex: none;
+		}
+
+		.wall-grid,
+		.wall-grid.with-drawer {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: none;
+			grid-auto-rows: auto;
+		}
+
+		.col {
+			overflow: visible;
+		}
+
+		.col + .col {
+			border-left: 0;
+			border-top: 1px solid var(--v-line-2);
+		}
+
+		.audit-band {
+			flex: none;
+		}
+	}
+
 	/* the audit probe's answer gets room: the band grows while it is open */
 	.audit-band:has(:global([data-probe-open])) {
 		flex-basis: clamp(300px, 38vh, 420px);

@@ -608,4 +608,17 @@
 			min-height: 300px;
 		}
 	}
+
+	/* a phone: the hero over the city's pulse, one column */
+	@media (max-width: 720px) {
+		.home {
+			gap: 24px;
+			padding: 16px var(--v3-gut) 28px;
+		}
+
+		.hero {
+			grid-template-columns: minmax(0, 1fr);
+			min-height: 0;
+		}
+	}
 </style>

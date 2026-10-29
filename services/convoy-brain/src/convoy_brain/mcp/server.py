@@ -318,8 +318,11 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
         "name": "get_live_traffic",
         "description": (
-            "Fetch real-time traffic conditions for specified road segments from "
-            "Valkey cache. Returns speed, congestion index, and last update time."
+            "Fetch real-time traffic conditions for road segments from the Valkey "
+            "cache. Returns speed, congestion index, and last update time. Omit "
+            "segment_ids (or pass []) for the WHOLE city road network — e.g. 'which "
+            "roads are most congested right now' — the answer then lists the most "
+            "congested segments first."
         ),
         "inputSchema": {
             "type": "object",
@@ -327,10 +330,10 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 "segment_ids": {
                     "type": "array",
                     "items": {"type": "integer"},
-                    "description": "Segment IDs to query.",
+                    "description": "Segment IDs to query; omit or [] for every segment of the city.",
                 },
             },
-            "required": ["segment_ids"],
+            "required": [],
         },
     },
     {
@@ -1129,6 +1132,11 @@ HIGHLIGHT_MAX = 20
 #: proposal valid here is never dropped as 'bbox' there).
 CANVAS_BBOX = CITY_BBOX
 FLY_RANGE_M = (100.0, 60_000.0)
+#: A city-wide get_live_traffic (no segment named) reads at most this many
+#: segments (the oracle's live route reads one cache key per id).
+CITY_WIDE_LIVE_MAX_SEGMENTS = 200
+#: How many of the worst live segments a city-wide answer lists first.
+MOST_CONGESTED_TOP = 5
 
 #: URN kinds and id grammar — a mirror of traffic-oracle city/common.py
 #: parse_entity_id, so a malformed id never reaches a path.
@@ -1729,9 +1737,44 @@ class ToolExecutor:
     # -- Live traffic and history ------------------------------------------
 
     async def _get_live_traffic(self, args: dict) -> dict:
-        return await self._post("/api/v1/traffic/live", {
-            "segment_ids": args["segment_ids"],
+        """Live rows for the named segments — or, when none is named, the whole city.
+
+        An empty or missing ``segment_ids`` used to reach the oracle as ``[]`` and
+        come back empty, which an answer then read as "no road is congested".
+        A city-wide question ("which roads are most congested right now?") now
+        reads every segment of the city road network (the oracle's segments in
+        the city box) and says so in ``scope``; ``most_congested`` lists the
+        worst live segments first.
+        """
+        requested = args.get("segment_ids")
+        if requested not in (None, []):
+            return await self._post("/api/v1/traffic/live", {"segment_ids": requested})
+        min_lon, min_lat, max_lon, max_lat = CITY_BBOX
+        resp = await self._client.get("/api/v1/spatial/segments", params={
+            "min_lon": min_lon, "min_lat": min_lat, "max_lon": max_lon, "max_lat": max_lat,
         })
+        resp.raise_for_status()
+        listing = resp.json()
+        rows = listing.get("segments") if isinstance(listing, dict) else listing
+        ids = sorted({
+            int(r["segment_id"]) for r in rows or []
+            if isinstance(r, dict) and isinstance(r.get("segment_id"), int)
+            and not isinstance(r.get("segment_id"), bool)
+        })[:CITY_WIDE_LIVE_MAX_SEGMENTS]
+        scope = {
+            "kind": "city",
+            "segments_asked": len(ids),
+            "note": "no segment was named: every segment of the city road network was read",
+        }
+        if not ids:
+            return {"observations": [], "emulated_observations": [], "scope": scope,
+                    "most_congested": []}
+        body = await self._post("/api/v1/traffic/live", {"segment_ids": ids})
+        body = dict(body) if isinstance(body, dict) else {"observations": body}
+        # the ranking FIRST: a model's context caps long lists and truncates the
+        # rendered result, so the worst segments must not sit behind 65 rows
+        return {"scope": scope, "most_congested": _most_congested(body.get("observations")),
+                **body}
 
     async def _get_historical_pattern(self, args: dict) -> dict:
         """Same IST weekday/hour baseline over the last 7 days (contract C-P).
@@ -2766,6 +2809,35 @@ def _dss_summary(
             "a named duty officer decides"
         ),
     }
+
+
+def _most_congested(observations: Any, top: int = MOST_CONGESTED_TOP) -> list[dict]:
+    """The worst live rows first (congestion index, then speed): a city-wide answer's ranking.
+
+    Each entry keeps the row's own labels (``data_quality``, ``origin``) so a
+    simulated feed is never presented as measured traffic.
+    """
+    rows = []
+    for obs in observations or []:
+        if not isinstance(obs, dict):
+            continue
+        sid, cong = obs.get("segment_id"), obs.get("congestion_idx")
+        if not isinstance(sid, int) or isinstance(sid, bool) \
+                or not isinstance(cong, (int, float)) or isinstance(cong, bool):
+            continue
+        speed = obs.get("speed_kmh")
+        rows.append({
+            "segment_id": sid,
+            "road_name": obs.get("road_name"),
+            "congestion_idx": round(float(cong), 3),
+            "speed_kmh": round(float(speed), 1) if isinstance(speed, (int, float))
+            and not isinstance(speed, bool) else None,
+            "data_quality": obs.get("data_quality"),
+            "origin": obs.get("origin"),
+        })
+    rows.sort(key=lambda r: (-r["congestion_idx"],
+                             r["speed_kmh"] if r["speed_kmh"] is not None else float("inf")))
+    return rows[:max(0, top)]
 
 
 def _bbox_arg(value: Any) -> tuple[float, float, float, float] | None:

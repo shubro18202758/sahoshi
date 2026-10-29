@@ -198,6 +198,9 @@ function contentSecurityPolicy(nonce: string, cesium: boolean): string {
 		`font-src 'self' data: ${CSP_SOURCES.fontFiles}`,
 		`img-src 'self' data: blob: ${CSP_SOURCES.tiles} ${CSP_SOURCES.ion}${operatorTiles}`,
 		`connect-src 'self' ${CSP_SOURCES.tiles} ${CSP_SOURCES.ion}${operatorTiles}`,
+		// the Listen button and the voice field report play synthetic speech the page fetched (an in-memory blob URL);
+		// without this the policy falls back to default-src and the browser refuses to play it
+		"media-src 'self' blob:",
 		"worker-src 'self' blob:",
 		"child-src 'self' blob:",
 		"object-src 'none'",

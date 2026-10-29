@@ -1,14 +1,14 @@
-# VVIP Convoy Orchestration Platform — Production Compose
+# Sahoshi city operations platform — Production Compose
 # Hardware-aware deployment for NVIDIA GB10 (Grace-Blackwell, 121.44 GiB
 # unified memory — /proc/meminfo is the source of truth; nvidia-smi reports
 # memory.total as N/A on GB10).
 #
 # Model Stack (runs on HOST, native unified-memory access — serve_models.sh):
 #   :8083 model-host  pplx-decider-v1-27b (T5 strategic)   ~55 GiB process budget
-#   :8084 llama-server aditi-ps18-v7h Gemma 4 12B Q4_K_M    ~9.5 GiB
+#   :8084 llama-server sahoshi-tactical Gemma 4 12B Q4_K_M    ~9.5 GiB
 #   :8085 embedding-service pplx-late-0.6b + bge-m3         ~5.0 GiB
 #   Containers reach them via host.docker.internal (extra_hosts).
-#   Full budget + measured RSS: VVIP/models/MEMORY_BUDGET.md
+#   Full budget + measured RSS: models-config/MEMORY_BUDGET.md
 #
 # CPU Core Allocation (20-core GB10; indicative — cpuset entries below):
 #   latency-sensitive ingest, ML inference, spatial DB, orchestration, system

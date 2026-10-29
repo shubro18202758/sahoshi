@@ -110,7 +110,8 @@ export function dispatchRow(d: Record<string, unknown>): ObjectRow | null {
 		end: ms(d.updated_at),
 		lon: num(wp.lon),
 		lat: num(wp.lat),
-		source: 'live',
+		// a dispatch the emulator's 108 control room asked for (its EM units) is EMULATED, never a live record
+		source: /\(emulated\)|event-emulator/i.test(String(d.requested_by ?? '')) || /-EM\d/i.test(String(d.unit_id ?? '')) ? 'emulated' : 'live',
 		verification: null,
 		credibility: null,
 		test: anyTest(d.requested_by, d.unit_id, d.decided_by),

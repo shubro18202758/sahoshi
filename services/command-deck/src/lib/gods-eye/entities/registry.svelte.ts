@@ -38,6 +38,7 @@ import {
 	type EntityKind,
 	type KindFeed,
 } from '../city-api';
+import { operatorSession } from '$lib/shell/session.svelte';
 
 export type RegistryStatus = 'idle' | 'ok' | 'not-deployed' | 'down';
 
@@ -97,6 +98,12 @@ class CityRegistry {
 	}
 
 	private async poll() {
+		// the operator gate on and nobody signed in: the fused snapshot is an operator read (403) — wait for the
+		// sign-in instead of a refusal every few seconds (the page shows its one sign-in card meanwhile)
+		if (typeof fetch !== 'undefined') {
+			if (operatorSession.gate === null) await Promise.race([operatorSession.refresh(), new Promise((r) => setTimeout(r, 3000))]);
+			if (operatorSession.gate === true && !operatorSession.officer) return;
+		}
 		try {
 			const snap = await fetchCitySnapshot(AbortSignal.timeout(8000));
 			this.apply(snap);

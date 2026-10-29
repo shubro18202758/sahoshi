@@ -50,7 +50,7 @@ __all__ = [
     "LOOPBACK_HOSTS",
     "PATH_RESTRICTED_HOSTS",
     "ROBOTS_DISALLOWS",
-    "ROBOTS_TOKEN",
+    "ROBOTS_PRODUCT",
     "TLS_COMPAT",
     "AllowListTransport",
     "EgressRefused",
@@ -138,7 +138,7 @@ _COMPAT_CIPHERS = "ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:RSA+AESGCM:!aNULL:!eNU
 LOOPBACK_HOSTS: frozenset[str] = frozenset({"127.0.0.1", "localhost", "::1"})
 
 #: The robots.txt product token (matched by ``urllib.robotparser`` against ``User-agent:`` lines).
-ROBOTS_TOKEN = "sahoshi-osint-ingress"
+ROBOTS_PRODUCT = "sahoshi-osint-ingress"
 #: The reason (prefix) of every verdict in which the site itself disallows the fetch (the connector is disabled).
 ROBOTS_DISALLOWS = "robots.txt disallows"
 
@@ -482,6 +482,6 @@ class RobotsCache:
         if entry.verdict is not None:
             return entry.verdict, (None if entry.verdict else (entry.reason or ROBOTS_DISALLOWS))
         assert entry.parser is not None
-        if entry.parser.can_fetch(ROBOTS_TOKEN, str(u)):
+        if entry.parser.can_fetch(ROBOTS_PRODUCT, str(u)):
             return True, None
         return False, ROBOTS_DISALLOWS

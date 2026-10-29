@@ -74,6 +74,8 @@ const en: Pack = {
 	citizen_preview_none: 'No public corridor event to preview right now.',
 	map_unavailable: 'Map unavailable',
 	map_unavailable_hint: 'The map could not start on this device.',
+	map_title: 'Map of the corridor',
+	map_credits: 'Map credits',
 
 	// ── /driver — "The Window" ──────────────────────────────────────────
 	driver_kicker: 'Green corridor',

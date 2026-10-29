@@ -109,7 +109,6 @@ const DECK = path.resolve(HERE, '..');
 const PUPPETEER_CANDIDATES = [
 	process.env['PUPPETEER_FROM'],
 	path.resolve(DECK, '../../frontend/package.json'),
-	'/home/sandy050405/argus/sahoshi/frontend/package.json'
 ].filter(Boolean);
 let puppeteer = null;
 for (const from of PUPPETEER_CANDIDATES) {

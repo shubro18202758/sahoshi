@@ -785,4 +785,37 @@
 			display: none;
 		}
 	}
+
+	/* a phone: queue strip on top, then a short map, then the whole sheet in the page's own scroll */
+	@media (max-width: 720px) {
+		.dec {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto minmax(0, 1fr);
+		}
+
+		.center {
+			overflow-x: hidden;
+			overflow-y: auto;
+		}
+
+		.stage {
+			position: relative;
+			height: 190px;
+		}
+
+		.map-src {
+			top: 10px;
+			left: 10px;
+		}
+
+		.sheet {
+			position: relative;
+			top: auto;
+			right: auto;
+			bottom: auto;
+			width: auto;
+			margin: -20px 10px 12px;
+			min-height: 420px;
+		}
+	}
 </style>

@@ -265,11 +265,13 @@ class TestOracleShapeFixes:
     async def test_key_and_type_errors_are_typed_and_not_retryable(self):
         from convoy_brain.mcp.server import ToolExecutionError
 
+        # (get_live_traffic without ids is now a city-wide read, so a tool whose
+        # argument is still required carries this check)
         executor = executor_with(lambda r: (_ for _ in ()).throw(AssertionError("no call")))
         with pytest.raises(ToolExecutionError) as err:
-            await executor.dispatch("get_live_traffic", {})
+            await executor.dispatch("query_segment_details", {})
         assert err.value.retryable is False
-        assert "segment_ids" in str(err.value)
+        assert "segment_id" in str(err.value)
         await executor.close()
 
     async def test_http_4xx_is_not_retryable_but_5xx_is(self):

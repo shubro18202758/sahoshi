@@ -135,4 +135,9 @@ export const hi: Record<FeedsKey, string | Fn> = {
 	cf_pub_worst: (site: unknown) => `सूचकांक सबसे ऊँचा ${s(site)} के पास।`,
 	cf_pub_tomorrow: (band: unknown) => `अगले 48 घंटे: ${s(band)}।`,
 	cf_pub_source: 'Open-Meteo (CAMS) · CPCB के राष्ट्रीय AQI स्तर',
+	cf_pub_lead_obs: 'CPCB निगरानी केंद्रों पर मापी गई कोलकाता की हवा, भारत के राष्ट्रीय वायु गुणवत्ता सूचकांक के स्तरों में।',
+	cf_pub_tag_obs: 'मापा गया',
+	cf_pub_tag_obs_tip: 'CPCB केंद्रों के अपने 24 घंटे के औसत (OpenAQ से), राष्ट्रीय AQI स्तरों में। केवल दो प्रदूषक, इसलिए सांकेतिक।',
+	cf_pub_tomorrow_model: (band: unknown) => `मॉडल का पूर्वानुमान, अगले 48 घंटे: ${s(band)}।`,
+	cf_pub_source_obs: 'CPCB केंद्र (OpenAQ) · CPCB के राष्ट्रीय AQI स्तर। पूर्वानुमान: Open-Meteo (CAMS)',
 };

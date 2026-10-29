@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     dtype: Literal["float32", "bfloat16"] = "float32"
     #: free the model after this many idle seconds
     idle_unload_sec: float = 600.0
+    #: POST /admin/release (another on-demand service making room, or scripts/ai_warm.sh) frees a model
+    #: unused for this long and not serving a forecast; it reloads on its next use
+    release_idle_sec: float = 20.0
     context_days: int = 14
     step_min: int = 15
     default_horizon_min: int = 120

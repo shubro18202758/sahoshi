@@ -60,7 +60,7 @@ LATE_MODEL_ID = os.environ.get(
     "LATE_EMBED_MODEL", "perplexity-ai/pplx-embed-v2-late-0.6b"
 )
 # bge-m3 local snapshot (verified: (N,1024) unit-norm): the fallback dense model.
-DENSE_MODEL_PATH = os.environ.get("BGE_M3_PATH", "/home/sandy050405/models/bge-m3")
+DENSE_MODEL_PATH = os.environ.get("BGE_M3_PATH", os.path.expanduser("~/models/bge-m3"))
 
 # The 9B aux embedder is a config slot, default OFF (architecture plan T1).
 AUX_LATE_MODEL_ID = os.environ.get("AUX_LATE_EMBED_MODEL", "")

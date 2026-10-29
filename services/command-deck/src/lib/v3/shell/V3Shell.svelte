@@ -174,4 +174,19 @@
 	.skip:focus {
 		top: 8px;
 	}
+
+	/* a phone (390 px): the rail becomes a tab bar along the bottom and the page takes the full width */
+	@media (max-width: 720px) {
+		.v3-app {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: var(--v3-top) auto minmax(0, 1fr) auto;
+			height: 100dvh;
+			--v3-top: 56px;
+			--v3-gut: 16px;
+		}
+
+		.v3-main {
+			grid-column: 1;
+		}
+	}
 </style>

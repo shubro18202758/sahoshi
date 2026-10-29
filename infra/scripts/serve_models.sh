@@ -26,7 +26,7 @@
 #                            (48.58 GiB weights); DECIDER_SNAPSHOT_PATH or
 #                            ~/.config/sahoshi/decider.env select a protocol v3
 #                            checkpoint (services/model-host/switch_decider.sh)
-#   :8084  llama-server      aditi-ps18-v7h Gemma 4 12B Q4_K_M (T4 tactical,
+#   :8084  llama-server      sahoshi-tactical Gemma 4 12B Q4_K_M (T4 tactical,
 #                            2 slots × 8192 ctx, --jinja = embedded Gemma 4
 #                            canonical chat template, --metrics Prometheus)
 #   :8205  embedding-service (T1 memory; EMBEDDING_PORT): pplx-embed-v2-late-0.6b
@@ -44,7 +44,7 @@
 #   - llama-server has no model-eviction: the process is supervised with
 #     restart-on-exit instead.
 #   - model-host loads once at boot (~285 s cold) and stays resident.
-#   - ollama (debug side-load gemma-vvip:12b) must run with OLLAMA_KEEP_ALIVE=-1.
+#   - ollama (debug side-load gemma-sahoshi:12b) must run with OLLAMA_KEEP_ALIVE=-1.
 #   - ollama :11434 is externally active and is NEVER started/stopped here.
 
 set -euo pipefail
@@ -215,7 +215,7 @@ foreground() {  # <svc>
             need -x "$LLAMA_BIN" "llama-server binary (LLAMA_SERVER_BIN)" || exit $EX_CONFIG
             need -f "$GEMMA_GGUF" "Gemma GGUF (GEMMA_GGUF)" || exit $EX_CONFIG
             log "llama-server :$LLAMA_PORT (foreground) — $GEMMA_GGUF"
-            exec "$LLAMA_BIN" -m "$GEMMA_GGUF" --alias aditi-ps18-v7h-12b \
+            exec "$LLAMA_BIN" -m "$GEMMA_GGUF" --alias sahoshi-tactical \
                 --host 127.0.0.1 --port "$LLAMA_PORT" \
                 -c "$(( CTX_PER_SLOT * SLOTS ))" -np "$SLOTS" --cont-batching --metrics --jinja
             ;;
@@ -289,7 +289,7 @@ start_llama() {
     [ -f "$GEMMA_GGUF" ] || { warn "Gemma GGUF missing: $GEMMA_GGUF"; return 1; }
     local ctx_total=$(( CTX_PER_SLOT * SLOTS ))
     supervise "llama-server-$LLAMA_PORT" "$(pid_file llama-server)" \
-        "$LLAMA_BIN" -m "$GEMMA_GGUF" --alias aditi-ps18-v7h-12b \
+        "$LLAMA_BIN" -m "$GEMMA_GGUF" --alias sahoshi-tactical \
         --host 127.0.0.1 --port "$LLAMA_PORT" \
         -c "$ctx_total" -np "$SLOTS" --cont-batching --metrics --jinja
     wait_http "http://127.0.0.1:$LLAMA_PORT/health" "llama-server" 300 || true

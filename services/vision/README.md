@@ -67,7 +67,10 @@ The service starts its own llama-server on the first request
 (`VISION_LLM_MANAGE=1`, the default) after checking MemAvailable, and stops it
 after `VISION_IDLE_UNLOAD_S` (600 s) without a request, so the model costs no
 memory while nobody looks at a camera. Below `need_gib + min_free_gib`
-(8 + 8 GiB) it refuses to start and answers 503. With `VISION_LLM_MANAGE=0`
+(8 + 8 GiB) it refuses to start, answers 503 and logs the reason; `GET /health`
+then says `"status": "degraded"`, `"ready": false` with that reason
+(`model.readiness`), so a check sees the outage before a camera call does.
+With `VISION_LLM_MANAGE=0`
 it uses an external server at `VISION_LLM_URL` instead (the compose layout;
 start it with `scripts/serve_llm.sh start`).
 

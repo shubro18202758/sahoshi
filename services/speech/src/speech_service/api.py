@@ -4,6 +4,13 @@
     POST /speech/transcribe   audio (wav/webm/ogg) → {text, language, confidence, model}
     POST /speech/report       audio or {"text": …}  → structured field report (UNVERIFIED-FIELD)
     POST /speech/speak        {"text", "lang": bn|en|hi} → audio/wav (cached by hash)
+    POST /admin/release       loopback machine callers only: unload this service's idle models
+                              (unused for ?idle_s=, default 20 s, and not serving a request)
+
+A load that would break the memory floor first makes room (``memroom.py``):
+this service's own idle models, then the other on-demand services' idle ones,
+are released and the floor is checked again. Released models reload on their
+next use; /health shows the last attempt.
 
 Audio is sent as the raw request body with its Content-Type (what a browser
 ``fetch(url, {body: blob})`` does), or as multipart form field ``audio`` when
@@ -32,11 +39,13 @@ from .asr import (
     IndicConformerASR,
     RoutedASR,
     WhisperASR,
+    lazy_models_of,
 )
 from .audio import AudioError, decode_audio
 from .config import Settings, get_settings
 from .places import Gazetteer, load_gazetteer
 from .report import build_report
+from .memroom import RELOAD_NOTE, RoomMaker, loopback_refusal, summarize
 from .runtime import ModelUnavailable, mem_available_gib
 from .tts import (
     FallbackTTS,
@@ -49,7 +58,8 @@ from .tts import (
     speak,
 )
 
-__all__ = ["create_app", "make_asr", "make_tts", "main", "ASR_BACKENDS", "TTS_BACKENDS"]
+__all__ = ["create_app", "make_asr", "make_tts", "make_room_maker", "release_idle_models", "main",
+           "ASR_BACKENDS", "TTS_BACKENDS"]
 
 ASR_BACKENDS = ("whisper", "indic_conformer")
 TTS_BACKENDS = ("auto", "llama", "transformers", "indic_parler")
@@ -104,7 +114,10 @@ async def _read_audio(request: Request, settings: Settings) -> bytes:
 def _raise_if_oom(exc: BaseException) -> None:
     """A GPU out-of-memory during inference is "try later" (503), not a bug.
     On the GB10's unified memory this can happen with MemAvailable still high
-    when most of it is page cache."""
+    when most of it is page cache. A ModelUnavailable is already a 503 and keeps its own
+    message (a load that ran out of memory says what making room found)."""
+    if isinstance(exc, ModelUnavailable):
+        return
     if "out of memory" in str(exc).lower() or type(exc).__name__.endswith("OutOfMemoryError"):
         raise ModelUnavailable(f"GPU memory exhausted: {str(exc)[:160]}") from exc
 
@@ -157,6 +170,29 @@ def make_tts(s: Settings) -> TTSBackend:
                     seed=s.tts_seed, min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s)
 
 
+def release_idle_models(backends: tuple[Any, ...], min_idle_s: float, exclude: str | None = None) -> dict[str, Any]:
+    """Unload every model behind ``backends`` that is loaded, not serving a request and unused for
+    ``min_idle_s`` seconds (``exclude``: the model a load is making room for)."""
+    items = []
+    for lm in lazy_models_of(*backends):
+        if exclude is not None and lm.name == exclude:
+            continue
+        r = lm.release_if_idle(min_idle_s)
+        if r is not None:
+            items.append(r)
+    return summarize("speech", items)
+
+
+def make_room_maker(s: Settings, backends: tuple[Any, ...], **kw: Any) -> RoomMaker:
+    """Own models not serving a request first (the Parler worker while the ASR loads, and the
+    reverse), then forecast (≈2 GiB, quick to reload), then vision (≈8 GiB)."""
+    peers = [("forecast", s.peer_forecast_port), ("vision", s.peer_vision_port)]
+    return RoomMaker("speech", peers,
+                     own_release=lambda model: release_idle_models(backends, s.make_room_idle_s, exclude=model),
+                     timeout_s=s.make_room_timeout_s, wait_s=s.make_room_wait_s,
+                     release_idle_s=s.make_room_idle_s, **kw)
+
+
 def create_app(
     settings: Settings | None = None,
     *,
@@ -164,12 +200,18 @@ def create_app(
     tts: TTSBackend | None = None,
     gazetteer: Gazetteer | None = None,
     cache: TTSCache | None = None,
+    room: RoomMaker | None = None,
 ) -> FastAPI:
     s = settings or get_settings()
     asr = asr or make_asr(s)
     tts = tts or make_tts(s)
     gaz = gazetteer or load_gazetteer(s.city_dir, s.gazetteer_file, s.place_threshold)
     tts_cache = cache or TTSCache(s.tts_cache_dir)
+    if room is None and s.make_room:
+        room = make_room_maker(s, (asr, tts))
+    for lm in lazy_models_of(asr, tts):
+        lm.room = room
+    last_release: dict[str, Any] = {}
 
     @contextlib.asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -198,6 +240,7 @@ def create_app(
     app.state.asr = asr
     app.state.tts = tts
     app.state.gazetteer = gaz
+    app.state.room = room
 
     @app.exception_handler(ModelUnavailable)
     async def _unavailable(_req: Request, exc: ModelUnavailable) -> JSONResponse:
@@ -216,6 +259,13 @@ def create_app(
             "tts": tts.status(),
             "places": {"total": len(gaz), **sources},
             "mem_available_gib": round(mem, 1) if mem is not None else None,
+            "make_room": {
+                **(room.config() if room is not None else {"enabled": False}),
+                "release_idle_s": s.release_idle_s,
+                "last_event": room.last_event if room is not None else None,
+                "last_release": last_release or None,
+                "note": RELOAD_NOTE,
+            },
             "privacy": "audio is decoded in memory and discarded after the request; "
                        "no speaker identification; no voice storage",
         }
@@ -272,6 +322,22 @@ def create_app(
         out["latency_s"] = round(time.perf_counter() - t0, 3)
         return out
 
+    @app.post("/admin/release")
+    async def admin_release(request: Request,
+                            idle_s: float | None = Query(None, ge=0, le=3600)) -> dict[str, Any]:
+        why = loopback_refusal(request.client.host if request.client else None, request.headers)
+        if why:
+            raise HTTPException(403, why)
+        min_idle = s.release_idle_s if idle_s is None else idle_s
+        out = await run_in_threadpool(release_idle_models, (asr, tts), min_idle)
+        last_release.clear()
+        last_release.update(at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), idle_s=min_idle,
+                            released=out["released"], freed_gib_estimate=out["freed_gib_estimate"],
+                            kept=out["kept"])
+        log.info("release asked: released %s (~%.1f GiB); kept %s", out["released"] or "nothing",
+                 out["freed_gib_estimate"], out["kept"] or "nothing")
+        return out
+
     @app.post("/speech/speak")
     async def speak_ep(req: SpeakRequest) -> Response:
         text = " ".join(req.text.split())
@@ -302,9 +368,33 @@ def create_app(
     return app
 
 
+def open_cuda_context(s: Settings) -> bool:
+    """Create this process's CUDA context now, at start, while memory allows.
+
+    On this unified-memory box creating it later failed (``cuDevicePrimaryCtxRetain``: out of memory)
+    with 18 GiB available and 16 GiB free, after making room (29 Oct, live), and the first Bengali
+    ASR load is where it would be created (the Parler worker has its own process). torch keeps the
+    context for the life of the process once a model has run, so this only moves it earlier; the
+    weights still load on first use. A failure here is logged and the first load tries again."""
+    if not s.cuda_context_at_start or not s.device.startswith("cuda"):
+        return False
+    try:
+        import torch
+
+        if not torch.cuda.is_available():
+            return False
+        torch.zeros(1, device=s.device)
+    except Exception:  # noqa: BLE001 - never stop the service for this
+        log.warning("CUDA context not created at start; the first model load will try", exc_info=True)
+        return False
+    log.info("CUDA context ready on %s", s.device)
+    return True
+
+
 def main() -> None:
     import uvicorn
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     s = get_settings()
+    open_cuda_context(s)
     uvicorn.run(create_app(s), host=s.host, port=s.port, log_level="info")

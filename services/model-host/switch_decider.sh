@@ -16,7 +16,7 @@
 # reads the optional ~/.config/sahoshi/decider.env AFTER sahoshi.env, so the
 # DECIDER_SNAPSHOT_PATH / DECIDER_RUNTIME / DECIDER_QUESTION_MODE written
 # there win; serve_models.sh passes them through. sahoshi.env (which holds
-# secrets) is never read or edited here, except the one SAHOSHI_VENV_DIR line.
+# secrets) is never read or edited here, except the SAHOSHI_ROOT and SAHOSHI_VENV_DIR lines (read only).
 # Rollback = delete decider.env + restart.
 #
 # Memory: a 27B decider holds ~49 GiB of the GB10 unified pool; two cannot be
@@ -28,8 +28,11 @@
 
 set -euo pipefail
 
-ROOT="${SAHOSHI_ROOT:-/home/sandy050405/argus/sahoshi}"   # the tree the live unit runs
 CONF_DIR="$HOME/.config/sahoshi"
+# the tree the live unit runs: SAHOSHI_ROOT, else the SAHOSHI_ROOT line of sahoshi.env (what the unit reads),
+# else the checkout this script is in
+ROOT="${SAHOSHI_ROOT:-$( { sed -n 's/^SAHOSHI_ROOT=//p' "$CONF_DIR/sahoshi.env" 2>/dev/null || true; } | tail -1 | tr -d "\"'")}"
+ROOT="${ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 DECIDER_ENV="$CONF_DIR/decider.env"
 UNIT=sahoshi-decider.service
 URL="${MODEL_HOST_URL:-http://127.0.0.1:8083}"

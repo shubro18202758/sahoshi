@@ -418,7 +418,9 @@ class TestAnswerShape:
     async def test_the_served_alias_never_reaches_an_operator(self):
         orch, _executor = orchestrator([json.dumps(FINAL_OK)], {}, ["final_answer"])
         result = await turn(orch, "status?")
-        assert not any("ps18" in tier for tier in result["tiers"] + result["tiers_used"])
+        from convoy_brain.config import GEMMA_MODEL_ID
+        tiers = result["tiers"] + result["tiers_used"]
+        assert not any(GEMMA_MODEL_ID in tier for tier in tiers)
 
 
 # ---------------------------------------------------------------------------

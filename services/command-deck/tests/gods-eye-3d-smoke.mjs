@@ -111,8 +111,6 @@ const OUT = process.env['GODS_EYE_3D_OUT'] ?? path.join(HERE, 'artifacts');
 const PUPPETEER_CANDIDATES = [
 	process.env['PUPPETEER_FROM'],
 	path.resolve(DECK, '../../frontend/package.json'),
-	'/home/sandy050405/argus/sahoshi/frontend/package.json',
-	'/home/sandy050405/argus/sahoshi/frontend/package.json',
 ].filter(Boolean);
 let puppeteer = null;
 for (const from of PUPPETEER_CANDIDATES) {

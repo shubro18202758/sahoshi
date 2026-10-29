@@ -417,6 +417,8 @@ function metadataOf(v: unknown): EventMetadata {
 		useCaseId: str(m.use_case_id),
 		isReplay: typeof m.is_replay === 'boolean' ? m.is_replay : null,
 		label: str(m.label)?.trim() || null,
+		titleBn: str(m.title_bn)?.trim() || null,
+		cause: str(m.cause)?.trim() || null,
 	};
 }
 

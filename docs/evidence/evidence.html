@@ -30,7 +30,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
         a signal-timing traffic twin, Bengali voice (speech-to-text and read-aloud) and camera road state (Qwen3-VL).</li>
     <li><b>Real Kolkata roads</b>: 49 junctions and 65 road segments (125 km), the Nabanna → airport route 29 km from OpenStreetMap; a 163-place gazetteer in English, Bengali and Hindi (wards, police stations, hospitals, pandals, ghats, low-lying spots).</li>
     <li><b>Open feeds wired in</b>: IMD / NDMA SACHET alerts for West Bengal, Bengali and English Kolkata news, KMC notices and Kolkata Traffic Police advisories, Open-Meteo rainfall and air, NASA FIRMS fire hotspots, GDACS cyclones, CWC river gauges, USGS quakes, the Hooghly tide (modelled), Copernicus 30 m terrain, KMC FFEWS adapter (emulated).</li>
-    <li><b>Quality</b>: 68 automated gates green: 6,030 Python tests, 121 Rust tests, 45 console unit suites, contract replays and type checks.</li>
+    <li><b>Quality</b>: 68 automated gates green: 6,212 Python tests, 121 Rust tests, 45 console unit suites, contract replays and type checks.</li>
   </ul>
   <p class="note">Labels used throughout: <b>LIVE</b> (a real open feed), <b>OBSERVED</b> (a measured record), <b>MODELLED</b> (computed
   under stated assumptions), <b>SIMULATED</b> (an exercise scenario), <b>EMULATED</b> (a stand-in for a feed that needs an agency's access).</p>
@@ -71,7 +71,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
 </section>
 <section>
   <h2>7 · Tests and quality</h2>
-  <table><thead><tr><th>Suite</th><th>Result</th></tr></thead><tbody><tr><td>traffic-oracle</td><td>2,106 passed</td></tr><tr><td>convoy-brain</td><td>753 passed</td></tr><tr><td>OSINT (common, ingress, geo, analysis)</td><td>2,011 passed</td></tr><tr><td>event-emulator</td><td>367 passed</td></tr><tr><td>embedding-service</td><td>191 passed</td></tr><tr><td>corridor-store</td><td>147 passed</td></tr><tr><td>speech · vision · twin · forecast · hydro · city feeds</td><td>157 · 75 · 48 · 37 · 23 · 108 passed</td></tr><tr><td>signal-ingress (Rust)</td><td>121 passed</td></tr><tr><td>command-deck</td><td>45 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,847 strings)</td></tr><tr><td>Total</td><td>68 of 68 gates green · 6,030 Python + 121 Rust tests</td></tr></tbody></table>
+  <table><thead><tr><th>Suite</th><th>Result</th></tr></thead><tbody><tr><td>traffic-oracle</td><td>2,106 passed</td></tr><tr><td>convoy-brain</td><td>800 passed</td></tr><tr><td>OSINT (common, ingress, geo, analysis)</td><td>2,032 passed</td></tr><tr><td>event-emulator</td><td>367 passed</td></tr><tr><td>embedding-service</td><td>191 passed</td></tr><tr><td>corridor-store</td><td>153 passed</td></tr><tr><td>speech · vision · twin · forecast · hydro · city feeds</td><td>219 · 102 · 50 · 46 · 26 · 113 passed</td></tr><tr><td>signal-ingress (Rust)</td><td>121 passed</td></tr><tr><td>command-deck</td><td>45 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,908 strings)</td></tr><tr><td>Total</td><td>68 of 68 gates green · 6,212 Python + 121 Rust tests</td></tr></tbody></table>
 </section>
 <section>
   <h2>8 · Implementation and cost</h2>

@@ -8,9 +8,8 @@
 # smokes (puppeteer's Chrome for Testing has no linux-arm64 build), the
 # ingress-vs-store check, the signed-in live tier and the model panels.
 #
-# The repository is checked out into VVIP/ so the docs-consistency oracle sees
-# the layout it expects (VVIP/ inside its workspace); the workspace documents
-# are not in this repository, so the oracle runs --vvip-only.
+# The repository is checked out into sahoshi/ inside the runner's workspace;
+# every job runs from there.
 
 name: gates
 
@@ -34,7 +33,7 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: VVIP
+    working-directory: sahoshi
 
 jobs:
   scripts-syntax:
@@ -44,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -70,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -78,7 +77,7 @@ jobs:
         with:
           node-version: '22'
       - name: deck node deps (the proxy-guard suite bundles its TS entry with the deck's esbuild)
-        working-directory: VVIP/services/command-deck
+        working-directory: sahoshi/services/command-deck
         run: npm install --no-package-lock --no-audit --no-fund
       - name: gate venv (GATE_DEPS of scripts/verify_all.sh)
         run: |
@@ -93,7 +92,7 @@ jobs:
           failed=0
           for suite in "${suites[@]}"; do
               echo "::group::pytest ${suite#"$PWD"/}"
-              py="$GITHUB_WORKSPACE/VVIP/.venvs/gate/bin/python"
+              py="$GITHUB_WORKSPACE/sahoshi/.venvs/gate/bin/python"
               if [ -d "$suite/../src" ]; then
                   (cd "$suite" && PYTHONPATH="$(cd ../src && pwd)" "$py" -m pytest . -q) || failed=1
               else
@@ -109,11 +108,11 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: VVIP/services/command-deck
+        working-directory: sahoshi/services/command-deck
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -144,11 +143,11 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: VVIP/services/command-deck
+        working-directory: sahoshi/services/command-deck
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -175,19 +174,19 @@ jobs:
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: VVIP/services/signal-ingress
+        working-directory: sahoshi/services/signal-ingress
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            VVIP/services/signal-ingress/target
-          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('VVIP/services/signal-ingress/Cargo.lock') }}
+            sahoshi/services/signal-ingress/target
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sahoshi/services/signal-ingress/Cargo.lock') }}
       - run: cargo test --locked
 
   repetition-fast:
@@ -197,7 +196,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -210,7 +209,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -223,7 +222,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: VVIP
+          path: sahoshi
           fetch-depth: 0
       - name: the rules fire on planted fakes (and stay silent on placeholders)
         run: bash scripts/secret_scan.sh --selftest

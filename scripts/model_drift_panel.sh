@@ -7,7 +7,7 @@
 #                                  cross-field consistency (value vs its own
 #                                  distribution), SEMANTIC anchors and wall
 #                                  latency within baseline bounds.
-#   aditi-ps18-v7h-12b    :8084  POST /v1/chat/completions — a FIXED
+#   sahoshi-tactical    :8084  POST /v1/chat/completions — a FIXED
 #                                  JSON-requesting prompt (seed pinned; the
 #                                  server is not grammar-constrained, JSON is
 #                                  requested — the panel validates the PARSE,
@@ -285,7 +285,7 @@ DECIDER_BODY = {
 }
 
 GEMMA_BODY = {
-    "model": "aditi-ps18-v7h-12b",
+    "model": "sahoshi-tactical",
     "max_tokens": 200,
     "temperature": 0.2,
     "seed": 20261017,  # pinned: reduces sampling variance; NOT a determinism guarantee
@@ -537,7 +537,7 @@ PROBE_DEFS = [
     },
     {
         "name": "gemma",
-        "surface": "aditi-ps18-v7h-12b chat JSON (:8084)",
+        "surface": "sahoshi-tactical chat JSON (:8084)",
         "calls": [
             {
                 "name": "chat",

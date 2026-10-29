@@ -33,6 +33,7 @@
 	import { colStamp, fmtTime } from '$lib/ui/format/format';
 	import { t } from '$lib/i18n/strings';
 	import '$lib/i18n/packs.wall';
+	import '$lib/i18n/packs.dss';
 	import { tOps } from '$lib/i18n/strings.ops';
 	import { ops, isLiveUuidEvent, actorKindOfName } from '$lib/ops/store.svelte';
 	import { isEmulatedActor } from '$lib/ops/client';
@@ -44,6 +45,12 @@
 
 	const lang = $derived(ops.lang);
 	const L = (key: string, ...args: unknown[]) => t(lang, key, ...args);
+	/** The agency in the reader's language (the DSS pack's word for a known agency), else the server's label. */
+	const agencyWord = (code: string, label: string) => {
+		const key = `dss_agency_${code}`;
+		const v = t(lang, key);
+		return lang !== 'en' && v !== key ? v : label;
+	};
 
 	/** Agency → glyph (a named map; the unit kind's glyph for the rest). */
 	const AGENCY_ICON: Readonly<Record<string, IconName>> = { ambulance: 'pulse', fire: 'flash' };
@@ -266,7 +273,7 @@
 								{#if emulatedDispatch(d)}<ProvenanceTag source="emulated" compact {lang} />{/if}
 								{#if d.requestedBy === '108-driver' && d.status === 'requested'}<Tag intent="warning">{L('wall_dispatch_108')}</Tag>{/if}
 							</div>
-							<div class="c l2"><span class="ell muted" title={eventTitle(d.eventId) ?? undefined}>{d.agencyLabel ?? AGENCIES[d.agency as AgencyCode]?.label ?? d.agency}</span></div>
+							<div class="c l2"><span class="ell muted" title={eventTitle(d.eventId) ?? undefined}>{agencyWord(d.agency, d.agencyLabel ?? AGENCIES[d.agency as AgencyCode]?.label ?? d.agency)}</span></div>
 						</td>
 						<td><div class="c"><span class="ell" title={ops.junctionName(d.waypointJunction) ?? undefined}>{d.waypointJunction != null ? `J${d.waypointJunction}` : '—'}</span></div></td>
 						<td>

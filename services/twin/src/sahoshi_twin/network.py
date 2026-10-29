@@ -414,7 +414,19 @@ def load_network(path: str | Path | None = None, *, assume_signals: bool = True)
         doc = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise NetworkError(f"cannot read network {p}: {exc}") from exc
-    return network_from_dict(doc, source_path=str(p), assume_signals=assume_signals)
+    return network_from_dict(doc, source_path=display_source(p), assume_signals=assume_signals)
+
+
+def display_source(path: str | Path) -> str:
+    """The network file as an answer names it: ``cities/kolkata/network.json``.
+
+    Never the absolute path (``/twin/network`` carried the host's user name).
+    """
+    parts = Path(path).parts
+    if "cities" in parts:
+        i = len(parts) - 1 - parts[::-1].index("cities")
+        return "/".join(parts[i:])
+    return Path(path).name
 
 
 def _leg_bearing(seg: Mapping[str, Any], at_from: bool, jpos: dict[int, tuple[float, float]]) -> float:

@@ -1,4 +1,4 @@
-# Sahoshi tactical tier — llama-server (aditi-ps18-v7h Gemma 4 12B Q4_K_M) on
+# Sahoshi tactical tier — llama-server (sahoshi-tactical Gemma 4 12B Q4_K_M) on
 # 127.0.0.1:8084. Pulled in by sahoshi-models.target; installed (linked) by
 # scripts/sahoshi_up.sh --install-units. Paths come from ~/.config/sahoshi/sahoshi.env
 # (scripts/sahoshi_env.sh --write).

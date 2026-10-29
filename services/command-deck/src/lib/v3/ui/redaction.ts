@@ -3,7 +3,9 @@
  * removed something about a person ([PERSON], [AGE], [CONTACT], [URL] …) — split out so RedactedText can
  * show each as a chip ("name withheld", "age withheld", "detail withheld"), never the bracketed code.
  */
-const TOKEN = /\[(PERSON|NAME|AGE|CONTACT|PHONE|EMAIL|ADDRESS|HANDLE|URL|LINK)\]/g;
+// WITHHELD / REDACTED: the generic marker a source's text carries where the pipeline removed a detail it could not
+// classify (an IMD bulletin's Bengali text, for one) — shown as "detail withheld", never the bracketed code
+const TOKEN = /\[(PERSON|NAME|AGE|CONTACT|PHONE|EMAIL|ADDRESS|HANDLE|URL|LINK|WITHHELD|REDACTED)\]/g;
 
 export interface RedactionPart {
 	text: string;

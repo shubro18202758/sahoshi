@@ -54,7 +54,7 @@ export const ROUTES = budgetRoutes();
 // ── harness: puppeteer + Chrome (the smokes' candidates) ───────────────────
 
 export function loadPuppeteer() {
-	const from = [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json'].filter(Boolean);
+	const from = [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json')].filter(Boolean);
 	for (const f of from) {
 		try {
 			const req = createRequire(f);

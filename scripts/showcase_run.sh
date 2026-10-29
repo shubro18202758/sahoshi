@@ -461,7 +461,7 @@ printf '%s' "$lib" | grep -q "\"$SWEEP_ID\""     || die_hint "emulator library l
 printf '%s' "$(health "$DECIDER_URL/decider/health")" | grep -q '"loaded": *true' \
     || die_hint "decider $DECIDER_URL not loaded" "systemctl --user restart sahoshi-decider.service (services/model-host/switch_decider.sh status shows the served checkpoint)"
 [ "$(hcode "$LLAMA_URL/health" 15)" = "200" ] \
-    || die_hint "llama-server $LLAMA_URL not answering" "systemctl --user restart sahoshi-llama.service (aditi-ps18-v7h-12b)"
+    || die_hint "llama-server $LLAMA_URL not answering" "systemctl --user restart sahoshi-llama.service (sahoshi-tactical)"
 [ "$(hcode "$EMBED_URL/health" 15)" = "200" ] \
     || die_hint "embedding-service $EMBED_URL not answering" "systemctl --user restart sahoshi-embed.service"
 # the AI services the evening asks (compute only; their proposals wait for an officer)

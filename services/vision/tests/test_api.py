@@ -194,3 +194,37 @@ def test_every_state_round_trips(state: str) -> None:
                      "water_depth_band": "below_kerb", "rationale": "Road surface visible."}, "m")
     assert out["state"] == state
     assert out["verification_state"] == "UNVERIFIED-CAMERA"
+
+
+class _NotReadyModel:
+    name = "fake-vl"
+
+    def status(self):
+        return {"model": self.name, "managed": True, "running": False,
+                "readiness": {"ready": False, "reason": "a start would be refused now: 15.5 GiB "
+                              "available, needs ~16 GiB", "start_needs_gib": 16.0,
+                              "mem_available_gib": 15.5}}
+
+    async def maybe_stop_idle(self):
+        return False
+
+    async def aclose(self):
+        return None
+
+
+def test_health_says_degraded_when_a_request_would_get_a_503() -> None:
+    """Audit 29 Oct: /health said "ok" while every road-state call answered 503."""
+    from vision_service.api import create_app
+
+    with TestClient(create_app(model=_NotReadyModel())) as c:
+        body = c.get("/health").json()
+    assert body["status"] == "degraded" and body["ready"] is False
+    assert "15.5 GiB available" in body["degraded_reason"]
+    assert body["service"] == "vision" and "no plate reading" in body["policy"]
+
+
+def test_health_ok_carries_ready_true() -> None:
+    c, _ = _client()
+    with c:
+        body = c.get("/health").json()
+    assert body["status"] == "ok" and body["ready"] is True and body["degraded_reason"] is None

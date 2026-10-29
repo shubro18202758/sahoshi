@@ -108,6 +108,7 @@ from convoy_brain.mcp.server import (
     parse_urn,
 )
 from convoy_brain.memory.convoy_context import ConvoyContextStore
+from convoy_brain.person_guard import screen_person_question
 from convoy_brain.protocol_params_gen import ADVANCE_CLOSURE_FLOOR_SEC, MIN_LANES
 
 logger = structlog.get_logger(__name__)
@@ -832,15 +833,37 @@ class Orchestrator:
         # the dossier asked about) are shown like any other tool call.
         await self._stream_grounding_reads(state, events)
 
+        # Vehicles and places, never people: a question that asks to identify,
+        # recognise, track or describe a person is refused in code before any
+        # tool runs (no lookup, no map move) — never "not found".
+        person = screen_person_question(user_input)
+        if person.refused:
+            await events.thought(
+                "Person identification is outside Sahoshi's scope (vehicles and places "
+                "only) — answered deterministically; no lookup was run",
+                "heuristic",
+            )
+            logger.info("orchestrator.person_question_refused", rule=person.rule)
+            final_response = {
+                "action": "refused_person_identification",
+                "reasoning": person.reason,
+                "tool_calls_made": [],
+                "confidence": "high",
+                "data": {"tier": "policy", "rule": person.rule, "policy": "vehicles-and-places-only"},
+                "protocol_assessment": _protocol_not_assessed(None),
+            }
+            state.tiers_used.append("policy")
+
         # HON-2: a road the operator names is resolved against the network
         # by name first — its segments, or 'no segment named X'.
-        tool_round = await self._resolve_road_names(
-            state, user_input, tool_round, events, deadline=turn_deadline)
+        if final_response is None:
+            tool_round = await self._resolve_road_names(
+                state, user_input, tool_round, events, deadline=turn_deadline)
 
         # Deterministic grounding of a map request: one read-only lookup of
         # the kinds the operator named, so the canvas directive never
         # depends on which tool the strategic tier happens to pick first.
-        grounding = _map_grounding_args(user_input, state)
+        grounding = _map_grounding_args(user_input, state) if final_response is None else None
         if grounding is not None:
             tool_round += 1
             await events.thought(
@@ -858,7 +881,7 @@ class Orchestrator:
                 deadline=turn_deadline, tier="heuristic",
             )
 
-        while tool_round < MAX_TOOL_ROUNDS:
+        while final_response is None and tool_round < MAX_TOOL_ROUNDS:
             if time.time() >= turn_deadline:
                 elapsed = round(time.time() - turn_start, 1)
                 logger.warning("orchestrator.turn.timeout", elapsed_sec=elapsed)
@@ -939,8 +962,10 @@ class Orchestrator:
             state.degraded = True
 
         # Agentic God's-eye: the map request's directive, independent of the
-        # tier that answered (proposals only — a human applies them).
-        await self._map_post_step(state, user_input, events)
+        # tier that answered (proposals only — a human applies them). Never
+        # for a refused person question: no camera moves toward a person.
+        if not person.refused:
+            await self._map_post_step(state, user_input, events)
 
         # Audit trail: decisions_log entry for this turn.
         final_response["tool_calls_made"] = _made(state)
@@ -1978,8 +2003,8 @@ class Orchestrator:
             "results above. Reply with ONLY the required JSON object. The "
             "'reasoning' field is shown to the operator verbatim as your answer: "
             "write 2-5 plain sentences (under 1000 characters) that answer the "
-            "question with the concrete facts from the tool results — names, "
-            "statuses, segment ids, congestion values, lane counts, closure "
+            "question with the concrete facts from the tool results — road and "
+            "place names, statuses, congestion values, lane counts, closure "
             "windows, times — never generic reassurance. State only what the "
             "tool results contain: never add a detail they do not report (a "
             "vehicle's make, model or colour, a place, a time). Refer to vehicles, "
@@ -1995,7 +2020,8 @@ class Orchestrator:
             "EMULATED or synthetic is a simulated feed: say so — and never say "
             "data is real, verified or not emulated. Never put JSON "
             "inside 'reasoning'.\n\n"
-            "Original request: " + user_input[:800]
+            + _reply_language_instruction(user_input)
+            + "Original request: " + user_input[:800]
         )
         system_prompt = state.answer_system_prompt or VVIP_AGENT_SYSTEM_PROMPT
         transcript = self._final_transcript(state, user_input, system_prompt, prompt)
@@ -2773,6 +2799,23 @@ def _true_event_status(prose: str, state: ConversationState) -> str:
         return f"{article}{match.group('noun')}{match.group('plural')} (status {word})"
 
     return _ACTIVE_EVENT_RE.sub(fix, prose)
+
+
+#: The operator's language, read from the script of the request: (name, script) for Bengali and Hindi
+_REPLY_SCRIPTS = (("Bengali", "বাংলা", re.compile(r"[\u0980-\u09FF]")),
+                  ("Hindi", "हिंदी", re.compile(r"[\u0900-\u097F]")))
+
+
+def _reply_language_instruction(user_input: str) -> str:
+    """An instruction to answer in the operator's own language when the request is written in Bengali or
+    Hindi script (empty for English). Road and place names stay as the tools spell them, and numbers stay in
+    0-9 digits, so the grounding check can still match every figure against the tool results."""
+    for name, script, rx in _REPLY_SCRIPTS:
+        if rx.search(user_input or ""):
+            return (f"The operator wrote in {name}: write 'reasoning' in {name} ({script} script), "
+                    "keeping road, junction and place names exactly as the tool results spell them and "
+                    "every number in 0-9 digits.\n\n")
+    return ""
 
 
 def _grounded_prose(prose: str, state: ConversationState) -> str:

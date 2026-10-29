@@ -176,7 +176,7 @@ let canvas = null;
 const pageErrors = [];
 
 function resolvePuppeteer() {
-	for (const from of [process.env.PUPPETEER_FROM, path.join(VVIP, 'frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json']) {
+	for (const from of [process.env.PUPPETEER_FROM, path.join(VVIP, 'frontend/package.json')]) {
 		if (!from) continue;
 		try {
 			const req = createRequire(from);

@@ -148,7 +148,7 @@ export function decideFixtures(now = Date.now(), opts = {}) {
 
 
 export function loadPuppeteer() {
-	for (const from of [process.env['PUPPETEER_FROM'], path.resolve(DECK, '../../frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json'].filter(Boolean)) {
+	for (const from of [process.env['PUPPETEER_FROM'], path.resolve(DECK, '../../frontend/package.json')].filter(Boolean)) {
 		try {
 			const req = createRequire(from);
 			return req('puppeteer').default ?? req('puppeteer');
@@ -158,7 +158,7 @@ export function loadPuppeteer() {
 	}
 	return null;
 }
-export const CHROME = ['/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome'].find((p) => existsSync(p));
+export const CHROME = [`${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`].find((p) => existsSync(p));
 
 /**
  * Wire a page to a fixture world: GETs answered in the browser, non-GETs counted (and aborted, unless

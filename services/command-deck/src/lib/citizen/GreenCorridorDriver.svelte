@@ -49,6 +49,7 @@
 	import { fixturePublicEvents, type PublicCorridorEvent } from './public-model';
 	import VehicleShot from '$lib/v3/media/VehicleShot.svelte';
 	import AgencyMark from '$lib/v3/media/AgencyMark.svelte';
+	import { markFor } from '$lib/v3/media/logos';
 	import '$lib/v3/media/packs.media';
 
 	type Phase =
@@ -495,7 +496,7 @@
 	</div>
 
 	<header class="head">
-		<span class="head-pic" aria-hidden="true"><VehicleShot cls="ambulance" {lang} width={200} decorative /><span class="head-mark"><AgencyMark role="108" {lang} size={24} decorative /></span></span>
+		<span class="head-pic" aria-hidden="true"><VehicleShot cls="ambulance" {lang} width={200} decorative />{#if markFor('108')}<span class="head-mark"><AgencyMark role="108" {lang} size={24} decorative /></span>{/if}</span>
 		{#if onBack}
 			<button class="back" onclick={onBack}>← {t(lang, 'driverBack')}</button>
 		{/if}

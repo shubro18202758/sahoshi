@@ -35,7 +35,7 @@ from typing import Any, Callable, Protocol
 import numpy as np
 
 from .audio import encode_wav, level_speech
-from .runtime import LazyModel, ModelNotProvisioned, ModelUnavailable, not_provisioned
+from .runtime import DEFAULT_MIN_FREE_GIB, LazyModel, ModelNotProvisioned, ModelUnavailable, not_provisioned
 
 log = logging.getLogger("speech.tts")
 
@@ -172,7 +172,7 @@ def redistribute(codes: list[int]) -> tuple[list[int], list[int], list[int]]:
 class SvaraTTS:
     def __init__(self, model_id: str, codec_id: str, *, device: str = "cuda",
                  style_tag: str = "<clear>", seed: int = 1847,
-                 min_free_gib: float = 12.0, idle_unload_s: float = 600) -> None:
+                 min_free_gib: float = DEFAULT_MIN_FREE_GIB, idle_unload_s: float = 600) -> None:
         self.model_id = model_id
         self.codec_id = codec_id
         self.device = device
@@ -204,13 +204,20 @@ class SvaraTTS:
     def unload(self) -> bool:
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     def _prompt_ids(self, tok, text: str, speaker: str) -> list[int]:
         return prompt_ids(tok, text, speaker, self.style_tag)
 
     def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        with self._lazy.using() as loaded:  # held: never released mid-request
+            return self._synthesize(loaded, text, lang, voice)
+
+    def _synthesize(self, loaded: Any, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
         import torch
 
-        tok, model, codec = self._lazy.get()
+        tok, model, codec = loaded
         speaker = speaker_for(lang, voice)
         pieces: list[np.ndarray] = []
         gap = np.zeros(int(0.22 * SAMPLE_RATE), dtype=np.float32)
@@ -262,7 +269,7 @@ class SvaraLlamaTTS:
 
     def __init__(self, gguf: Path, tokenizer_id: str, codec_id: str, *, server_bin: Path,
                  port: int, manage: bool = True, url: str | None = None, device: str = "cuda",
-                 style_tag: str = "<clear>", seed: int = 1847, min_free_gib: float = 12.0,
+                 style_tag: str = "<clear>", seed: int = 1847, min_free_gib: float = DEFAULT_MIN_FREE_GIB,
                  idle_unload_s: float = 600) -> None:
         from .llama import LlamaServer
 
@@ -282,6 +289,7 @@ class SvaraLlamaTTS:
             f"tts:{self.model_id}", self._load, need_gib=5.0,
             min_free_gib=min_free_gib, idle_unload_s=idle_unload_s,
         )
+        self._lazy.on_release = self.server.stop  # released to make room: the llama-server goes too
 
     def _load(self):
         from snac import SNAC
@@ -307,10 +315,17 @@ class SvaraLlamaTTS:
         self.server.stop()
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        with self._lazy.using() as loaded:  # held: never released mid-request
+            return self._synthesize(loaded, text, lang, voice)
+
+    def _synthesize(self, loaded: Any, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
         import torch
 
-        tok, codec = self._lazy.get()
+        tok, codec = loaded
         if self.server.manage and not self.server.running:
             self.server.start()  # restarted after a crash or an external kill
         speaker = speaker_for(lang, voice)
@@ -374,7 +389,7 @@ class IndicParlerTTS:
     def __init__(self, model_id: str = DEFAULT_MODEL, *, device: str = "cuda",
                  description: str = PARLER_DESCRIPTION, seed: int = 1847,
                  revision: str | None = None,
-                 min_free_gib: float = 12.0, idle_unload_s: float = 600,
+                 min_free_gib: float = DEFAULT_MIN_FREE_GIB, idle_unload_s: float = 600,
                  loader: Callable[[], Any] | None = None) -> None:
         self.model_id = model_id
         self.device = device
@@ -415,12 +430,19 @@ class IndicParlerTTS:
     def unload(self) -> bool:
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     def caption(self, lang: str, voice: str) -> str:
         return self.description.format(speaker=PARLER_SPEAKERS[(lang, voice)])
 
     def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
         # first: a gated model fails here, before torch is touched
-        tok, desc_tok, model = self._lazy.get()
+        with self._lazy.using() as loaded:  # held: never released mid-request
+            return self._synthesize(loaded, text, lang, voice)
+
+    def _synthesize(self, loaded: Any, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        tok, desc_tok, model = loaded
         import torch
 
         sr = int(model.config.sampling_rate)
@@ -464,7 +486,7 @@ class ParlerWorkerTTS:
     def __init__(self, python: Path | str, model_id: str = IndicParlerTTS.DEFAULT_MODEL, *,
                  device: str = "cuda", description: str = PARLER_DESCRIPTION, seed: int = 1847,
                  revision: str | None = None,
-                 min_free_gib: float = 12.0, idle_unload_s: float = 600,
+                 min_free_gib: float = DEFAULT_MIN_FREE_GIB, idle_unload_s: float = 600,
                  load_timeout_s: float = 900.0, synth_timeout_s: float = 300.0,
                  cmd: list[str] | None = None) -> None:
         self.python = Path(python)
@@ -482,6 +504,7 @@ class ParlerWorkerTTS:
             f"tts:{model_id} (worker)", self._load, need_gib=5.0,
             min_free_gib=min_free_gib, idle_unload_s=idle_unload_s,
         )
+        self._lazy.on_release = self._stop  # released to make room: the worker process exits
 
     def cmd(self) -> list[str]:
         if self._cmd_override is not None:
@@ -524,15 +547,15 @@ class ParlerWorkerTTS:
             proc.stdin.write(json.dumps(req, ensure_ascii=False).encode("utf-8") + b"\n")
             proc.stdin.flush()
         except (BrokenPipeError, OSError) as exc:
-            raise ModelUnavailable(f"the Parler worker exited (code {proc.poll()})") from exc
+            raise WorkerFailed(f"the Parler worker exited (code {proc.poll()})") from exc
         ready, _, _ = select.select([proc.stdout], [], [], timeout_s)
         if not ready:
             self._stop()
-            raise ModelUnavailable(f"the Parler worker did not answer within {timeout_s:.0f} s")
+            raise WorkerFailed(f"the Parler worker did not answer within {timeout_s:.0f} s")
         line = proc.stdout.readline()
         if not line:
             code = proc.wait(timeout=5)
-            raise ModelUnavailable(f"the Parler worker exited (code {code}); see the service log")
+            raise WorkerFailed(f"the Parler worker exited (code {code}); see the service log")
         head = json.loads(line)
         if not head.get("ok"):
             msg = str(head.get("error") or "the Parler worker failed")
@@ -574,36 +597,49 @@ class ParlerWorkerTTS:
         self._stop()
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
         if PARLER_SPEAKERS.get((lang, voice)) is None:
             raise ValueError(f"no Parler voice for {lang}/{voice}")
-        self._lazy.get()
-        with self._run_lock:
+        with self._lazy.using(), self._run_lock:  # held: never released mid-request
             if not self.running:  # died since it loaded: start over on the next call
                 self._lazy.unload()
                 self._lazy.get()
             head, payload = self._call({"op": "synthesize", "text": text, "lang": lang,
                                         "voice": voice}, self.synth_timeout_s)
-        self._lazy.touch()
         return np.frombuffer(payload, dtype="<f4").copy(), int(head["sr"])
+
+
+class WorkerFailed(ModelUnavailable):
+    """The preferred backend's worker process died or stopped answering (not a memory refusal): the fallback
+    answers that request, and the next request tries the preferred backend again."""
 
 
 class FallbackTTS:
     """The preferred TTS first; the fallback when it cannot be provisioned
     (gated access not granted, weights not downloaded, package missing). The
     reason is logged once and shown in ``/health``; the fallback answers until
-    the service restarts. A memory refusal stays a 503 and does not switch."""
+    the service restarts. When the preferred backend's worker dies mid-request
+    (:class:`WorkerFailed`) the fallback answers that request and the next one
+    tries the preferred backend again, so a citizen pressing Listen still hears
+    the advisory. A memory refusal stays a 503 and does not switch."""
 
     def __init__(self, preferred: TTSBackend, fallback: TTSBackend) -> None:
         self.preferred = preferred
         self.fallback = fallback
         self.preferred_error: str | None = None
+        #: the last request was answered by the fallback after a worker failure (its reason)
+        self.last_worker_failure: str | None = None
+        self._fell_back = False
 
     @property
     def model_id(self) -> str:
-        return self.fallback.model_id if self.preferred_error else self.preferred.model_id
+        return self.fallback.model_id if (self.preferred_error or self._fell_back) else self.preferred.model_id
 
     def synthesize(self, text: str, lang: str, voice: str) -> tuple[np.ndarray, int]:
+        self._fell_back = False
         if self.preferred_error is None:
             try:
                 return self.preferred.synthesize(text, lang, voice)
@@ -611,12 +647,18 @@ class FallbackTTS:
                 self.preferred_error = str(exc)
                 log.warning("TTS %s unavailable, using %s: %s", self.preferred.model_id,
                             self.fallback.model_id, exc)
+            except WorkerFailed as exc:
+                self.last_worker_failure = str(exc)
+                self._fell_back = True
+                log.warning("TTS %s failed (%s); %s answers this request", self.preferred.model_id, exc,
+                            self.fallback.model_id)
         return self.fallback.synthesize(text, lang, voice)
 
     def status(self) -> dict:
         return {"model": self.model_id,
                 "active": "fallback" if self.preferred_error else "preferred",
                 "preferred": self.preferred.status(), "preferred_error": self.preferred_error,
+                "last_worker_failure": self.last_worker_failure,
                 "fallback": self.fallback.status()}
 
     def maybe_unload_idle(self) -> bool:
@@ -628,6 +670,12 @@ class FallbackTTS:
         a = getattr(self.preferred, "unload", lambda: False)()
         b = getattr(self.fallback, "unload", lambda: False)()
         return a or b
+
+    def lazy_models(self) -> list[LazyModel]:
+        out: list[LazyModel] = []
+        for b in (self.preferred, self.fallback):
+            out += [lm for lm in getattr(b, "lazy_models", lambda: [])() if all(lm is not x for x in out)]
+        return out
 
 
 class TTSCache:

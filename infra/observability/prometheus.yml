@@ -1,4 +1,4 @@
-# VVIP Platform — Prometheus Configuration
+# Sahoshi platform — Prometheus Configuration
 # Scrapes all services for hardware-aware observability
 
 global:
@@ -45,7 +45,7 @@ scrape_configs:
     metrics_path: /metrics
     scrape_interval: 5s
 
-  # llama-server :8084 — aditi-ps18-v7h Gemma 4 12B (native /metrics)
+  # llama-server :8084 — sahoshi-tactical Gemma 4 12B (native /metrics)
   - job_name: "llama-server"
     static_configs:
       - targets: ["host.docker.internal:8084"]

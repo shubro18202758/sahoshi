@@ -1,11 +1,11 @@
-# VVIP Convoy Orchestration Platform — Full Stack Compose
+# Sahoshi city operations platform — Full Stack Compose
 # Deployed on NVIDIA GB10 (Grace-Blackwell) 121.44 GiB unified memory.
 #
 # Model stack runs ON THE HOST (see infra/scripts/serve_models.sh):
 #   :8083 model-host (pplx-decider-v1-27b)  :8084 llama-server (Gemma 4 12B)
 #   :8085 embedding-service
 # Containers reach them via host.docker.internal (extra_hosts below).
-# Full memory budget: VVIP/models/MEMORY_BUDGET.md.
+# Full memory budget: models-config/MEMORY_BUDGET.md.
 
 services:
   # ─── Storage Layer ───────────────────────────────────────────────
@@ -71,8 +71,8 @@ services:
   # Start them with: ./infra/scripts/serve_models.sh start
   #   :8083 model-host (27B decider)  :8084 llama-server (Gemma 4 12B)
   #   :8085 embedding-service (multivector + dense)
-  # ollama :11434 is externally active and untouched; gemma-vvip:12b is an
-  # optional debug side-load (models/Modelfile.gemma_vvip).
+  # ollama :11434 is externally active and untouched; gemma-sahoshi:12b is an
+  # optional debug side-load (models-config/Modelfile.gemma_sahoshi).
 
   # ─── Data Integration ───────────────────────────────────────────
   signal-ingress:

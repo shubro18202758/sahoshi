@@ -19,6 +19,7 @@ import structlog
 from forecast.bpr import speed_from_vc
 from forecast.config import Settings
 from forecast.covariates import HydroClient, gate_series
+from forecast.memroom import summarize
 from forecast.models import (
     Chronos2Forecaster,
     Forecaster,
@@ -139,6 +140,11 @@ class Engine:
 
     def reap_idle(self) -> list[str]:
         return [s.name for s in self.slots() if s.maybe_unload()]
+
+    def release_idle(self, min_idle_s: float) -> dict[str, Any]:
+        """POST /admin/release: free every slot no prediction holds and unused for ``min_idle_s``."""
+        items = [r for r in (s.release_if_idle(min_idle_s) for s in self.slots()) if r is not None]
+        return summarize("forecast", items)
 
     # ── histories ─────────────────────────────────────────────────────────
     @property

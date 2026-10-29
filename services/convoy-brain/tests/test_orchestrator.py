@@ -385,6 +385,31 @@ class TestPromptAssembly:
                  + estimate_prompt_tokens(final["user"]))
         assert total <= PROMPT_TOKEN_BUDGET
 
+    async def test_the_answer_is_asked_for_in_the_operators_language(self, fake_store):
+        for question, language in (("এখন কোন রাস্তায় জল জমেছে?", "Bengali"),
+                                   ("अभी कौन सी सड़कें सबसे ज़्यादा जाम हैं?", "Hindi"),
+                                   ("Which roads are most congested right now?", None)):
+            bridge = ScriptBridge(replies=[json.dumps({"arguments": {"segment_ids": [1]}}), json.dumps(FINAL_OK)])
+            executor = FakeExecutor(routes={"get_live_traffic": {"observations": [
+                {"segment_id": 1, "congestion_idx": 0.52, "speed_kmh": 21.0, "data_quality": "synthetic"}]}})
+            orch = Orchestrator(bridge, executor, fake_store, decider_brain=DeciderBrain(
+                ScriptDecider(["get_live_traffic", "final_answer"]), min_interval_sec=0))
+            await run_turn(orch, question)
+            finals = [c for c in bridge.calls if c["schema"] == "orchestrator_final"]
+            assert finals, question
+            if language:
+                assert f"The operator wrote in {language}" in finals[-1]["user"]
+                assert "0-9 digits" in finals[-1]["user"]  # figures stay checkable by the grounding pass
+            else:
+                assert "The operator wrote in" not in finals[-1]["user"]
+
+    def test_reply_language_is_read_from_the_script(self):
+        from convoy_brain.orchestrator import _reply_language_instruction
+
+        assert "Bengali" in _reply_language_instruction("হাওড়া ব্রিজে যানজট কেমন?")
+        assert "Hindi" in _reply_language_instruction("हावड़ा ब्रिज पर जाम कैसा है?")
+        assert _reply_language_instruction("Howrah Bridge traffic?") == ""
+
     def test_token_estimate_is_conservative_for_json(self):
         from convoy_brain.orchestrator import estimate_prompt_tokens
 

@@ -1657,9 +1657,11 @@ class TestGpuArbiter:
         assert arb.unified_budget_mb == DEFAULT_UNIFIED_BUDGET_MB
         assert arb.budget_source == "default"
 
-    def test_cuda_provider_when_memory_plenty(self):
+    def test_cuda_provider_when_memory_plenty(self, monkeypatch):
         from traffic_oracle.runtime.gpu_arbiter import GpuArbiter
 
+        # a GPU is present (a CI runner has no nvidia-smi; this test is about the memory rule, not detection)
+        monkeypatch.setattr(GpuArbiter, "_detect_gpu", lambda self: True)
         arb = GpuArbiter(
             budget_mb=121_440,
             env={},

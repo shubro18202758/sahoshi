@@ -1,10 +1,10 @@
 # =============================================================================
-# sahoshi_models.yaml — VVIP model stack configuration (models stream, C0)
+# sahoshi_models.yaml — Sahoshi model stack configuration (models stream, C0)
 # =============================================================================
 # Owner: models stream. Read by model-host (SAHOSHI_MODELS_CONFIG, exported by
 # infra/scripts/serve_models.sh), smoke_models.sh, and (documented fields) by
-# brain/adaptive/embeddings streams. Tracked home: VVIP/models-config/configs/
-# (moved out of the untracked VVIP/models symlink into the retired tree).
+# brain/adaptive/embeddings streams. Tracked home: models-config/configs/
+# (moved out of the untracked models symlink into the retired tree).
 #
 # HOST PATHS below (snapshot, llama-server binary, GGUF, bge-m3) document this
 # GB10's layout. The weights are NOT in the repo: serve_models.sh takes them
@@ -23,7 +23,7 @@
 # HARDWARE TARGET: NVIDIA GB10 (Grace-Blackwell DGX-Spark class) unified
 # memory. /proc/meminfo MemTotal = 127,533,976 kB ≈ 121.63 GiB; the planned pool below keeps 121.44 GiB (source of
 # truth on GB10 — nvidia-smi reports memory.total as N/A). See
-# VVIP/models-config/MEMORY_BUDGET.md for the full resident budget and measured RSS.
+# models-config/MEMORY_BUDGET.md for the full resident budget and measured RSS.
 
 # ─── Service endpoints (fixed; env-overridable) ────────────────────────────
 services:
@@ -42,7 +42,7 @@ decider:
   # The default decider. DECIDER_SNAPSHOT_PATH wins (sahoshi.env, then the
   # optional ~/.config/sahoshi/decider.env that
   # services/model-host/switch_decider.sh writes and removes).
-  snapshot_path: /home/sandy050405/.cache/huggingface/hub/models--perplexity-ai--pplx-decider-v1-27b/snapshots/b01a5cbaca5391f73bd55103d4f27e8982cd5e60
+  snapshot_path: ~/.cache/huggingface/hub/models--perplexity-ai--pplx-decider-v1-27b/snapshots/b01a5cbaca5391f73bd55103d4f27e8982cd5e60
   weights_bytes: 52170802640        # 48.58 GiB, 11 shards + 2.6 MB readout head
                                     # (pplx-decider-v1.2: 52173414048 = 48.59 GiB;
                                     #  pplx-decider-flash-v1.2: 9079921808 = 8.46 GiB)
@@ -73,11 +73,11 @@ decider:
   # v1.2 1.382, flash-v1.2 1.554) — never overridden.
   health_degradation_p95_ms: 3000   # p95 above this → Gemma-only fallback (brain)
 
-# ─── T4 · aditi-ps18-v7h Gemma 4 12B (llama-server :8084) ───────────────────
+# ─── T4 · sahoshi-tactical Gemma 4 12B (llama-server :8084) ───────────────────
 llama:
-  server_bin: /home/sandy050405/llama.cpp/build/bin/llama-server   # build 69bf643
-  gguf: /home/sandy050405/models/q4-stack/v7h-merged-Q4_K_M.gguf  # 7,208,382 KiB
-  alias: aditi-ps18-v7h-12b
+  server_bin: ~/llama.cpp/build/bin/llama-server   # build 69bf643; LLAMA_SERVER_BIN wins
+  gguf: ~/models/q4-stack/v7h-merged-Q4_K_M.gguf  # 7,208,382 KiB; GEMMA_GGUF wins
+  alias: sahoshi-tactical
   host: 127.0.0.1
   port: 8084
   ctx_per_slot: 8192     # 8192-token context per slot
@@ -99,12 +99,12 @@ llama:
 
 # ─── Ollama side-load (aux/standby, NOT the tactical serving path) ─────────
 # The architecture serves Gemma via llama-server :8084. The ollama import of
-# the same GGUF (Modelfile: VVIP/models-config/Modelfile.gemma_vvip → gemma-vvip:12b)
+# the same GGUF (Modelfile: models-config/Modelfile.gemma_sahoshi → gemma-sahoshi:12b)
 # exists for operator/debug tooling against the already-running ollama daemon
 # (:11434, externally active — do not restart or unload qwen3.5 there).
 ollama:
   base_url: http://127.0.0.1:11434   # env: OLLAMA_BASE_URL (legacy; brain no longer calls)
-  model: gemma-vvip:12b
+  model: gemma-sahoshi:12b
   num_ctx: 8192
   keep_alive: -1            # OLLAMA_KEEP_ALIVE=-1 → never evict (unified pool)
   parallel: 1               # ollama stays a debugging path; the parallel serving
@@ -138,7 +138,7 @@ embeddings:
     licence: MIT
     recall_k: 100             # MaxSim rerank candidate cap
     rerank_topk: 20
-    fallback: bge-m3          # EMBED_DENSE_MODEL=bge-m3 (/home/sandy050405/models/bge-m3, 1024-d, 2.4 GiB)
+    fallback: bge-m3          # EMBED_DENSE_MODEL=bge-m3 (BGE_M3_PATH, default ~/models/bge-m3, 1024-d, 2.4 GiB)
   pii:                        # POST /pii/spans, loaded on first use; OSINT calls it only with OSINT_PII_MODEL=1
     model_id: perplexity-ai/PII-Tracer
     revision: d25c16f2e57e321f6d2527715c01df9112f956f5
@@ -159,12 +159,12 @@ embeddings:
     safetensors: 0.8.0
 
 # ─── Persistent venvs (volatile /tmp venvs are forbidden) ───────────────────
-# Root: $SAHOSHI_VENV_DIR (default VVIP/.venvs; git-ignored). Built by
+# Root: $SAHOSHI_VENV_DIR (default <repo>/.venvs; git-ignored). Built by
 # `infra/scripts/serve_models.sh build`.
 venvs:
-  model_host: $SAHOSHI_VENV_DIR/model-host      # requirements: VVIP/models-config/model-host-requirements.txt
+  model_host: $SAHOSHI_VENV_DIR/model-host      # requirements: models-config/model-host-requirements.txt
   embedding: $SAHOSHI_VENV_DIR/embedding        # services/embedding-service[models]
-  migrate: $SAHOSHI_VENV_DIR/migrate            # psycopg[binary] for VVIP/scripts/migrate.py
+  migrate: $SAHOSHI_VENV_DIR/migrate            # psycopg[binary] for scripts/migrate.py
 
 # ─── GB10 unified-memory budget (planned; measured RSS in MEMORY_BUDGET.md) ─
 memory_budget_gib:

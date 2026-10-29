@@ -428,7 +428,7 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 gemma_body="$(curl -sf --max-time 240 -X POST "$LLAMA_URL/v1/chat/completions" \
     -H 'Content-Type: application/json' \
-    -d '{"model":"aditi-ps18-v7h-12b","max_tokens":80,"temperature":0.4,
+    -d '{"model":"sahoshi-tactical","max_tokens":80,"temperature":0.4,
          "messages":[{"role":"system","content":"You are the VVIP convoy tactical agent. Answer in one sentence."},
                      {"role":"user","content":"A Z-class convoy must cross a congested old-city corridor to the airport. What is the immediate tactical priority?"}]}' \
     2>/dev/null)"

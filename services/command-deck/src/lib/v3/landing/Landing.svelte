@@ -19,7 +19,7 @@
 	import '../media/packs.media';
 	import './packs.landing';
 	import Glyph from '../Glyph.svelte';
-	import AgencyMark from '../media/AgencyMark.svelte';
+	import AgencyMark, { markName } from '../media/AgencyMark.svelte';
 	import Cover from '../media/Cover.svelte';
 	import { KEY_ART } from '../media/art';
 	import LangSwitch from './LangSwitch.svelte';
@@ -196,7 +196,7 @@
 				<h3 class="marks-title">{t(lang, 'v3l_marks_heading')}</h3>
 				<ul class="mark-row">
 					{#each row as m (m.key)}
-						<li title={m.name}><AgencyMark role={m.key} mark={m} {lang} size={48} /></li>
+						<li title={markName(m.key, m, lang)}><AgencyMark role={m.key} mark={m} {lang} size={48} /></li>
 					{/each}
 				</ul>
 				<p class="marks-credit" data-testid="land-marks-credit">{t(lang, 'v3i_marks_credit')}</p>
@@ -1264,9 +1264,10 @@
 			width: auto;
 		}
 
+		/* the photo runs one gutter past each edge: its caption keeps the page's gutter, inside the screen */
 		.hero-photo :global(figure.land-cover .ref) {
 			justify-content: flex-start;
-			padding-bottom: 16px;
+			padding: 0 calc(2 * var(--gut)) 16px;
 		}
 
 		.hero-copy {

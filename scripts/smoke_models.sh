@@ -6,7 +6,7 @@
 #
 # Models covered (one line each):
 #   pplx-decider-v1-27b   — POST /decide (typed choice+noul+score) on :8083
-#   aditi-ps18-v7h 12B     — OpenAI /v1/chat/completions agent call on :8084
+#   sahoshi-tactical 12B     — OpenAI /v1/chat/completions agent call on :8084
 #   pplx-embed-v2-late-0.6b + bge-m3 — POST /embed/documents on :8085
 #
 # Endpoints are FIXED INTERNAL PLATFORM CONSTANTS (see
@@ -88,7 +88,7 @@ PY
 }
 
 # ════════════════════════════════════════════════════════════════════════
-# 2. GEMMA — aditi-ps18-v7h 12B via llama-server :8084
+# 2. GEMMA — sahoshi-tactical 12B via llama-server :8084
 # ════════════════════════════════════════════════════════════════════════
 smoke_gemma() {
     local body
@@ -97,11 +97,11 @@ smoke_gemma() {
     # warmup (tiny completion) then one REAL agent-style call
     curl -sf --max-time 120 -X POST "$LLAMA_BASE_URL/v1/chat/completions" \
         -H 'Content-Type: application/json' \
-        -d '{"model":"aditi-ps18-v7h-12b","max_tokens":4,"messages":[{"role":"user","content":"ok"}]}' \
+        -d '{"model":"sahoshi-tactical","max_tokens":4,"messages":[{"role":"user","content":"ok"}]}' \
         >/dev/null || { fail "gemma warmup call failed"; return 1; }
     body="$(curl -sf --max-time 240 -X POST "$LLAMA_BASE_URL/v1/chat/completions" \
         -H 'Content-Type: application/json' -d '{
-            "model": "aditi-ps18-v7h-12b",
+            "model": "sahoshi-tactical",
             "max_tokens": 200,
             "temperature": 0.6,
             "messages": [
@@ -118,7 +118,7 @@ u = d.get("usage", {})
 print(f"    gemma: {len(content)} chars, prompt={u.get('prompt_tokens')} completion={u.get('completion_tokens')} tokens")
 PY
     [ $? -eq 0 ] || { fail "gemma output assertion failed"; return 1; }
-    echo "PASS gemma aditi-ps18-v7h-12b Q4_K_M (agent call, :8084)"
+    echo "PASS gemma sahoshi-tactical Q4_K_M (agent call, :8084)"
 }
 
 # ════════════════════════════════════════════════════════════════════════

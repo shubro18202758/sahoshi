@@ -36,6 +36,12 @@
 		background: var(--v3-s1);
 	}
 
+	@media (max-width: 720px) {
+		.live {
+			grid-column: 1;
+		}
+	}
+
 	.live :global(.strip) {
 		padding: 0 var(--v3-gut);
 		border-bottom: 0;

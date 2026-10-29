@@ -255,7 +255,8 @@
 							<circle class="decide" cx={x + r * 0.78} cy={y - r * 0.78} r={Math.max(5, r * 0.4)} />
 						{/if}
 						{#if labels && p.label}
-							{@const left = p.labelSide === 'l'}
+							{@const est = Math.max(p.label.length, (p.sub ?? '').length) * 8}
+							{@const left = p.labelSide === 'l' || (x + r + 9 + est > w - 6 && x - r - 9 - est >= 6)}
 							<text class="lbl" x={left ? x - r - 9 : x + r + 9} y={y + (p.sub ? -1 : 5)} text-anchor={left ? 'end' : 'start'}>{p.label}</text>
 							{#if p.sub}<text class="lbl dim" x={left ? x - r - 9 : x + r + 9} y={y + 15} text-anchor={left ? 'end' : 'start'}>{p.sub}</text>{/if}
 						{/if}

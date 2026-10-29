@@ -19,26 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party material in this repository keeps its own licence and is not
-licensed under MIT:
-
-- Road network data: (c) OpenStreetMap contributors, Open Database License
-  (ODbL) 1.0. See services/corridor-store/seed/NOTICE.md and cities/kolkata/.
-- Terrain for the waterlogging susceptibility: Copernicus DEM GLO-30,
-  (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018,
-  provided under COPERNICUS by the European Union and ESA.
-- Reference photographs: Wikimedia Commons works under their own licences
-  (CC0, public domain, CC BY, CC BY-SA), each credited.
-  See services/command-deck/static/photos/NOTICE.md.
-- Agency and data-source marks belong to their owners. Sahoshi is not
-  affiliated with or endorsed by them.
-  See services/command-deck/static/logos/NOTICE.md.
-- Test photographs for the road-state vision evaluation: credited in
-  services/vision/tests/fixtures/NOTICE.md.
-- AI model weights are not in this repository. Each keeps its own licence
-  (listed in docs/ai/ and README.md); the operator downloads them.
-- Libraries and fonts carry their own licences (for example CesiumJS,
-  Apache-2.0; Noto Sans Bengali, Inter and JetBrains Mono, SIL OFL 1.1).

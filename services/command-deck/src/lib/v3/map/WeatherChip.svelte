@@ -6,6 +6,7 @@
 	 */
 	import { t } from '$lib/i18n/strings';
 	import Glyph from '../Glyph.svelte';
+	import RedactedText from '../ui/RedactedText.svelte';
 	import './packs.map3';
 
 	let { text, href, lang }: { text: string; href: string; lang: string } = $props();
@@ -13,7 +14,7 @@
 
 <a class="wx v3-glass" {href} data-testid="v3-weather" data-ge-keepout>
 	<Glyph name="verified" size={18} />
-	<span><b>{t(lang, 'v3m_wx_official')}</b> · {text}</span>
+	<span><b>{t(lang, 'v3m_wx_official')}</b> · <RedactedText {text} {lang} /></span>
 </a>
 
 <style>

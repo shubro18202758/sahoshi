@@ -9,12 +9,25 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import os
 import re
 from pathlib import Path
 
 import pytest
 
-POC = Path("/home/sandy050405/argus/sahoshi/.orchestration/osint/prototype/sahoshi_osint_poc.py")
+def _poc_root() -> Path:
+    """The OSINT prototype, read in place: OSINT_POC_ROOT, else ``.orchestration/osint/prototype`` in this checkout
+    or in the checkout whose ``.worktrees/<name>`` this is (absent in a clone, where the PoC tests skip)."""
+    if os.environ.get("OSINT_POC_ROOT"):
+        return Path(os.environ["OSINT_POC_ROOT"])
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".orchestration" / "osint" / "prototype"
+        if candidate.is_dir():
+            return candidate
+    return Path(".orchestration/osint/prototype")
+
+
+POC = _poc_root() / "sahoshi_osint_poc.py"
 PACKAGE = Path(__file__).resolve().parents[1]
 GAZETTEER = PACKAGE.parents[1] / "scripts" / "data" / "osint_gazetteer.json"
 

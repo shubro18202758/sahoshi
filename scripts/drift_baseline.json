@@ -187,7 +187,7 @@
       }
     },
     "gemma": {
-      "surface": "aditi-ps18-v7h-12b chat JSON (:8084)",
+      "surface": "sahoshi-tactical chat JSON (:8084)",
       "latency_ms_max": 45000.0,
       "observed_ms_at_baseline": 1203.7,
       "latency_floor_ms": 45000,

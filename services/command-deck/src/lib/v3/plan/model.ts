@@ -60,23 +60,25 @@ const fold = (v: string) =>
 		.normalize('NFKD')
 		.replace(/[̀-ͯ]/g, '')
 		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, ' ')
+		.replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
 		.trim();
 
 /**
  * The planner's places matching a search, best first: a name that starts with the query, then a word that does,
  * then a name containing it. An empty query lists every place. Indices into `pois` (the corridor's PLAN_POIS).
  */
-export function matchPlaces(query: string, pois: readonly { name: string }[]): number[] {
+export function matchPlaces(query: string, pois: readonly { name: string; alt?: string }[]): number[] {
 	const q = fold(query);
 	const all = pois.map((_, i) => i);
 	if (!q) return all;
-	const rank = (i: number) => {
-		const n = fold(pois[i].name);
+	const rankOf = (name: string) => {
+		const n = fold(name);
 		if (n.startsWith(q)) return 0;
 		if (n.split(' ').some((w) => w.startsWith(q))) return 1;
 		return n.includes(q) ? 2 : 3;
 	};
+	// the page's spelling first; the English one (a Bengali or Hindi page) still finds the place
+	const rank = (i: number) => Math.min(rankOf(pois[i].name), pois[i].alt ? rankOf(pois[i].alt!) : 3);
 	return all.filter((i) => rank(i) < 3).sort((a, b) => rank(a) - rank(b) || a - b);
 }
 

@@ -48,7 +48,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DECK = path.resolve(HERE, '..');
 const LIVE_PORTS = new Set(['5273', '8090', '8091', '8092']);
 
-const PUPPETEER_CANDIDATES = [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json'].filter(Boolean);
+const PUPPETEER_CANDIDATES = [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json')].filter(Boolean);
 let puppeteer = null;
 for (const from of PUPPETEER_CANDIDATES) {
 	try {

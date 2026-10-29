@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,11 @@ from speech_service.config import default_city_dir
 from speech_service.places import Gazetteer, load_gazetteer
 
 EVAL = Path(__file__).resolve().parents[1] / "eval"
+
+# A test never asks the live services on this box to release their models: no make-room peers unless a
+# test names its own (fake) ones.
+os.environ["SPEECH_PEER_FORECAST_PORT"] = "0"
+os.environ["SPEECH_PEER_VISION_PORT"] = "0"
 
 
 @pytest.fixture(scope="session")

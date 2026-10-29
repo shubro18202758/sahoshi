@@ -167,9 +167,22 @@ def _parse(d: dict, source: str) -> Network:
                    attribution=str(d.get("attribution") or "© OpenStreetMap contributors, ODbL 1.0"))
 
 
+def display_source(path: Path) -> str:
+    """The network file as an answer names it: ``cities/kolkata/network.json``.
+
+    Never the absolute path — it went out in public, unauthenticated answers
+    (``/hydro/nowcast``, ``/forecast/segments``) carrying the host's user name.
+    """
+    parts = Path(path).parts
+    if "cities" in parts:
+        i = len(parts) - 1 - parts[::-1].index("cities")
+        return "/".join(parts[i:])
+    return Path(path).name
+
+
 def load_network(city_dir: Path | None = None) -> Network:
     if city_dir is not None and (city_dir / "network.json").is_file():
         path = city_dir / "network.json"
-        return _parse(json.loads(path.read_text(encoding="utf-8")), source=str(path))
+        return _parse(json.loads(path.read_text(encoding="utf-8")), source=display_source(path))
     d = json.loads(_BUNDLED.read_text(encoding="utf-8"))
     return _parse(d, source=f"bundled snapshot: {d.get('source', _BUNDLED.name)}")

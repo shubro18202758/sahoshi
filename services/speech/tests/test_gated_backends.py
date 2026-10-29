@@ -478,3 +478,35 @@ def test_conformer_with_pinned_assets_loads(monkeypatch) -> None:
     c = IndicConformerASR(CONFORMER, revision=PINNED, min_free_gib=0)
     c._lazy._probe = lambda: 999.0
     assert c._lazy.get().config.ts_folder.endswith(PINNED)
+
+
+def test_a_dead_parler_worker_hands_that_request_to_the_fallback(tmp_path: Path) -> None:
+    from speech_service.tts import WorkerFailed
+
+    class Flaky:
+        model_id = PARLER
+
+        def __init__(self) -> None:
+            self.fail = True
+
+        def synthesize(self, text, lang, voice):
+            if self.fail:
+                raise WorkerFailed("the Parler worker exited (code 1); see the service log")
+            t = np.linspace(0, 0.5, 12000, endpoint=False)
+            return (0.2 * np.sin(2 * np.pi * 330 * t)).astype(np.float32), 24000
+
+        def status(self):
+            return {"model": PARLER}
+
+        def maybe_unload_idle(self):
+            return False
+
+    flaky, fake = Flaky(), FakeTTS()
+    tts = FallbackTTS(flaky, fake)
+    cache = TTSCache(tmp_path)
+    first = speak(tts, cache, "গড়িয়াহাটে জল।", "bn", "female", "<clear>")
+    assert first.model == "fake-tts" and len(fake.calls) == 1  # the citizen still hears it, labelled honestly
+    assert "exited" in tts.status()["last_worker_failure"] and tts.status()["preferred_error"] is None
+    flaky.fail = False  # the worker comes back: the next request is the preferred voice again
+    second = speak(tts, cache, "শিয়ালদহে যানজট।", "bn", "female", "<clear>")
+    assert second.model == PARLER and len(fake.calls) == 1

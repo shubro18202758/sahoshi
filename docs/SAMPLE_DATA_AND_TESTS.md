@@ -1,7 +1,7 @@
 # Sahoshi — sample data and tests
 
 This page lists the data Sahoshi ships with, the sample files in [`samples/`](samples/), every test suite with the
-command that runs it and its measured total, and 45 representative test cases with what each one proves.
+command that runs it and its measured total, and 48 representative test cases with what each one proves.
 
 Everything here was measured on 28 Oct 2026 on the repository as it stood then (the Kolkata City Pack, the five AI
 services and the platform services). Totals change as the code grows; the commands below reproduce them.
@@ -207,31 +207,30 @@ Measured on 29 Oct 2026 with every suite run once, offline, in parallel (about 4
 | Suite | Passed | Skipped | Notes |
 |---|---:|---:|---|
 | traffic-oracle | 2,106 | 104 | Skips need a database sandbox |
-| convoy-brain | 753 | 1 | |
-| corridor-store | 147 | 30 | Skips need a database sandbox |
+| convoy-brain | 800 | 1 | |
+| corridor-store | 153 | 30 | Skips need a database sandbox |
 | event-emulator | 367 | 13 | |
 | embedding-service | 191 | 4 | |
-| forecast | 37 | 0 | 2 real-model tests deselected (`-m model`) |
-| hydro | 23 | 0 | Open-Meteo mocked |
-| speech | 157 | 4 | real-model tests skipped |
-| vision | 75 | 3 | 3 real-model tests skipped |
-| twin | 48 | 0 | |
-| cityfeeds | 108 | 0 | every outside source mocked or replayed from a recording |
+| forecast | 46 | 0 | 2 real-model tests deselected (`-m model`) |
+| hydro | 26 | 0 | Open-Meteo mocked |
+| speech | 219 | 4 | real-model tests skipped |
+| vision | 102 | 3 | 3 real-model tests skipped |
+| twin | 50 | 0 | |
+| cityfeeds | 113 | 0 | every outside source mocked or replayed from a recording |
 | osint-common | 449 | 0 | |
-| osint-ingress | 498 | 1 | |
+| osint-ingress | 519 | 1 | |
 | osint-geo | 586 | 0 | |
 | osint-analysis | 478 | 0 | |
 | deck proxy guard (pytest) | 7 | 0 | |
-| **Python total** | **6,030** | **160** | |
+| **Python total** | **6,212** | **160** | |
 | signal-ingress (cargo) | 121 | 0 | four test binaries: 50 + 45 + 7 + 19 |
 | deck unit suites | 45 of 45 files | — | |
-| deck lints | design tokens, copy (4,263 English strings), Bengali script | — | all pass |
+| deck lints | design tokens, copy (4,908 English strings), Bengali script | — | all pass |
 | `svelte-check` | 0 errors | — | |
-| OSINT offline smoke | PASS | — | 28 signals, 24 geo-tagged, 3 situations surfaced |
-| contract replay | 1 check pending | — | the deck's use-case route spines were being moved to the Kolkata library |
+| OSINT offline smoke | PASS | — | 32 signals, 26 geo-tagged, 4 situations surfaced |
+| contract replay | PASS | — | 0 failures |
 
-The two OSINT rows and the contract row reflect work in progress on the day: fixtures from the platform's first
-city were being replaced with Kolkata ones. None of them is a weakened rule.
+Every one of the 68 gates passed in that run.
 
 ## 2.3 Python suites
 

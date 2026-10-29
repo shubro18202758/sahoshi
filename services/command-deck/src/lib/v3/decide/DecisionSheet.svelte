@@ -48,7 +48,7 @@
 	import V3Tag from '../ui/V3Tag.svelte';
 	import PlateChip from '../ui/PlateChip.svelte';
 	import RedactedText from '../ui/RedactedText.svelte';
-	import { decisionVM, type TagVM } from '../home/view';
+	import { decisionVM, echallanWhy, type TagVM } from '../home/view';
 	import { keyArt } from '../media/art';
 	import VehicleShot from '../media/VehicleShot.svelte';
 	import AgencyMark from '../media/AgencyMark.svelte';
@@ -333,7 +333,7 @@
 			case 'dss':
 				return dssOf(unit).situationSummary ? ops.text(dssOf(unit).situationSummary!) : vm.why;
 			case 'echallan':
-				return ops.text(echallanOf(unit).rec.recommendation) || vm.why;
+				return echallanWhy(ops.text(echallanOf(unit).rec.recommendation), lang) || vm.why;
 			case 'stolen-sighting': {
 				// HON-4: an emulated vehicle's FIR sentence is the demo one (dec_why_stolen_fir_demo). The shared view
 				// model says it once main's key is present; until then (or if it ever is not) the sentence is swapped here.
@@ -360,7 +360,7 @@
 		}
 		if (unit.kind === 'corridor-request') {
 			const ds = corridorOf(unit).dispatch;
-			const wp = ds.waypointJunction != null ? ops.junctionName(ds.waypointJunction) : null;
+			const wp = ds.waypointJunction != null ? ops.junctionName(ds.waypointJunction, lang) : null;
 			if (wp) out.push({ value: wp, label: L('v3d_fact_waypoint') });
 			if (leftSec != null && leftSec > 0) out.push({ value: fmtDuration(leftSec, lang), label: L('v3_fact_golden') });
 		}
@@ -523,7 +523,7 @@
 				<VehicleShot cls="ambulance" {lang} width={132} decorative />
 				<div>
 					<p class="v-t a-row"><AgencyMark role="108" {lang} size={22} decorative />{L('v3i_agency_ems')}</p>
-					<p class="v-s">{[corridorAgency.agencyLabel ?? corridorAgency.agency, corridorAgency.unitId].filter(Boolean).join(' · ')}</p>
+					<p class="v-s">{[lang === 'en' ? (corridorAgency.agencyLabel ?? corridorAgency.agency) : L('v3_fact_unit'), corridorAgency.unitId].filter(Boolean).join(' · ')}</p>
 				</div>
 			</div>
 		{/if}
@@ -560,7 +560,7 @@
 		{#if facts.length}
 			<div class="facts3" style:--n={facts.length}>
 				{#each facts as f, i (i)}
-					<div><b>{f.value}</b><span>{f.label}</span></div>
+					<div><b class:long={String(f.value).length > 9}>{f.value}</b><span>{f.label}</span></div>
 				{/each}
 			</div>
 		{/if}
@@ -849,12 +849,22 @@
 
 	.facts3 b {
 		display: block;
-		font-size: 20px;
-		line-height: 26px;
+		font-size: 18px;
+		line-height: 24px;
 		font-weight: 650;
 		color: var(--v3-t1);
 		font-variant-numeric: tabular-nums;
-		overflow-wrap: anywhere;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* a place name or a long figure: smaller, wrapping between words (never inside one) */
+	.facts3 b.long {
+		font-size: 15px;
+		line-height: 20px;
+		white-space: normal;
+		overflow-wrap: break-word;
 	}
 
 	.facts3 span {

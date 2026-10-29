@@ -5,7 +5,7 @@
 #   1. decider   pplx-decider-v1-27b  :8083  — tokens/sec + p99 latency
 #              over 12 identical representative /decide calls
 #              (choice + noul + score questions, smoke_models.sh shape).
-#   2. gemma     aditi-ps18-v7h 12B    :8084  — generation tokens/sec on an
+#   2. gemma     sahoshi-tactical 12B    :8084  — generation tokens/sec on an
 #              agent chat call (median of 3 runs of llama.cpp's own
 #              `timings.predicted_per_second`, which excludes prompt eval).
 #   3. embedding :8085 /embed/documents — median client wall latency (ms)
@@ -140,7 +140,7 @@ except Exception as e:
 
 # ── gemma: health warm, then agent chat calls (smoke_models.sh shape) ──
 GEMMA_PAYLOAD = {
-    "model": "aditi-ps18-v7h-12b",
+    "model": "sahoshi-tactical",
     "max_tokens": 200,
     "temperature": 0.6,
     "messages": [
@@ -150,7 +150,7 @@ GEMMA_PAYLOAD = {
 }
 try:
     post(f"{llama_base}/v1/chat/completions",
-         {"model": "aditi-ps18-v7h-12b", "max_tokens": 4,
+         {"model": "sahoshi-tactical", "max_tokens": 4,
           "messages": [{"role": "user", "content": "ok"}]}, 120)   # warm
     rates = []
     for _ in range(n_gemma):

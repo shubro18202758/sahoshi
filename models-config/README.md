@@ -11,7 +11,7 @@ symlink into a retired tree, which used to be load-bearing.
 | `embedding_launcher.py` | `serve_models.sh` boots the embedding-service (:8205, `EMBEDDING_PORT`) through it: `embedding_service.service.build_lazy_app()`, models from the registry (`EMBED_DENSE_MODEL`, `EMBED_LATE_MODEL`; see `docs/ai/embeddings.md`) |
 | `model-host-requirements.txt` | `serve_models.sh build` → `$SAHOSHI_VENV_DIR/model-host` |
 | `MEMORY_BUDGET.md` | GB10 unified-memory budget (planned + measured) |
-| `Modelfile.gemma_vvip` | optional ollama debug side-load of the Gemma GGUF |
+| `Modelfile.gemma_sahoshi` | optional ollama debug side-load of the Gemma GGUF |
 
 The Tier-1 anomaly thresholds that used to sit in `models/configs/
 anomaly_detector.yaml` now ship with the service that applies them:
@@ -29,9 +29,9 @@ from environment variables, normally written once by
 |---|---|
 | `DECIDER_SNAPSHOT_PATH` | the decider's HF snapshot dir (48.6 GiB, never copied); `decider.env` (from `services/model-host/switch_decider.sh`) overrides it — the live box serves pplx-decider-v1.2 |
 | `LLAMA_SERVER_BIN` | llama.cpp `llama-server` binary |
-| `GEMMA_GGUF` | aditi-ps18-v7h Gemma 4 12B Q4_K_M GGUF |
+| `GEMMA_GGUF` | sahoshi-tactical Gemma 4 12B Q4_K_M GGUF |
 | `BGE_M3_PATH` | bge-m3 snapshot (the fallback dense model; the deployed dense and late models load from the HF cache at pinned revisions) |
-| `SAHOSHI_VENV_DIR` | root of the `model-host`, `embedding`, `migrate` venvs (default `VVIP/.venvs`; build with `serve_models.sh build`) |
+| `SAHOSHI_VENV_DIR` | root of the `model-host`, `embedding`, `migrate` venvs (default `<repo>/.venvs`; build with `serve_models.sh build`) |
 
 `scripts/sahoshi_up.sh` refuses to start the model units when any of these
 paths is missing, naming the variable to fix.

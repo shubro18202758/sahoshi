@@ -29,7 +29,7 @@ check_cmd nvidia-smi    || MISSING=1
 # ollama is OPTIONAL since the qwen pull orchestration was retired: the
 # tactical tier serves from llama-server :8084 (see serve_models.sh).
 command -v ollama &>/dev/null && echo "  [OK] ollama (optional debug side-load)" \
-    || echo "  [OPTIONAL] ollama not found — debug side-load gemma-vvip unavailable"
+    || echo "  [OPTIONAL] ollama not found — debug side-load gemma-sahoshi unavailable"
 
 if [ "$MISSING" -eq 1 ]; then
     echo ""
@@ -73,8 +73,8 @@ echo "Installing frontend dependencies (command-deck)..."
 # ─── Model Hosts (GB10 unified-memory stack) ──────────────────────
 # Replaces the retired `ollama pull qwen3.5:9b-q4_K_M` orchestration.
 # T5 decider + T4 Gemma are served by models-owned hosts; ollama :11434 is
-# externally active and left untouched (gemma-vvip:12b is an optional debug
-# side-load: ollama create gemma-vvip:12b -f models/Modelfile.gemma_vvip).
+# externally active and left untouched (gemma-sahoshi:12b is an optional debug
+# side-load: ollama create gemma-sahoshi:12b -f models-config/Modelfile.gemma_sahoshi).
 echo ""
 echo "Building persistent model venvs (torch stack, from pip cache)..."
 ./infra/scripts/serve_models.sh build

@@ -1,4 +1,4 @@
-# VVIP Model Stack — Resident Memory Budget (GB10 unified pool)
+# Sahoshi Model Stack — Resident Memory Budget (GB10 unified pool)
 
 Owner: models stream. Source of truth for "what may be resident and how much
 it costs". Update the **Measured** column whenever a host or quantization
@@ -19,7 +19,7 @@ interfaces.
 | # | Resident process | Weights | Process budget (planned) | Measured (this session, 2026-10-12) |
 |---|---|---|---|---|
 | 1 | model-host: pplx-decider-v1-27b BF16 (11 shards, 52,170,802,640 B + 2.6 MB readout) | 48.58 GiB | 55 GiB (weights + ≤8k-state activations — estimate) | **measured 2026-10-12**: `cuda_reserved_gib` **48.99**, VmRSS 1.66 / VmHWM 5.92 GiB (weights migrate to the GPU side of the pool), cold load ≈5 min, warm decide **460–477 ms @ 138-token state / 1 question** (3 probes; first-ever call pays ≈4.7 s CUDA warmup — keep warmup in smoke), 19 decides / 0 failed |
-| 2 | llama-server: aditi-ps18-v7h Gemma 4 12B Q4_K_M (GGUF 7,208,382 KiB), `-c 16384 -np 2` (2 slots × 8192) | 6.87 GiB | 9.5 GiB (weights + KV/compute for 2×8192) | **VmHWM 7,602,840 kB = 7.25 GiB** peak after first completion (llama.cpp migrates weights into the GPU side of the pool; idle VmRSS reads far lower) |
+| 2 | llama-server: sahoshi-tactical Gemma 4 12B Q4_K_M (GGUF 7,208,382 KiB), `-c 16384 -np 2` (2 slots × 8192) | 6.87 GiB | 9.5 GiB (weights + KV/compute for 2×8192) | **VmHWM 7,602,840 kB = 7.25 GiB** peak after first completion (llama.cpp migrates weights into the GPU side of the pool; idle VmRSS reads far lower) |
 | 3 | embedding-service: pplx-embed-v2-late-0.6b fp32 (multivector MaxSim) | 2.22 GiB | 3.5 GiB incl. torch CUDA ctx | **measured 2026-10-28** (eval process): peak 3.16 GiB, load 17 s, query p50 17 ms |
 | 4 | embedding-service: pplx-embed-context-v1-4b bf16 (dense ANN, 2,560-d cut to 1,024, unit-norm) — fallback bge-m3 (2.4 GiB) | 7.55 GiB | 9.5 GiB | **measured 2026-10-28**: peak 8.75 GiB, load 27 s, query p50 48 ms; live service (late + dense + PII loaded) 11.0 GiB CUDA reserved + 0.5 GiB RSS (`/health` → `gpu`); PII-Tracer (1.1 GiB) loads on the first `/pii/spans`. Eval: `docs/ai/embeddings.md` |
 | 5 | traffic-oracle: DSTGAT ONNX (CPU fallback kept) | — | 0.4 GiB | unchanged from v1 budget |
@@ -50,7 +50,7 @@ at the 8 GiB floor it starts and leaves ≥ 8 GiB.
 
 - **ollama :11434** runs externally (not ours, never restarted by us) and
   currently hosts `qwen3.5:9b-q4_K_M` (6.6 GB) plus our debug side-load
-  `gemma-vvip:12b` (7.4 GB, `models-config/Modelfile.gemma_vvip`). If the ollama
+  `gemma-sahoshi:12b` (7.4 GB, `models-config/Modelfile.gemma_sahoshi`). If the ollama
   daemon loads either on this machine, subtract its runner RSS from headroom.
 - The `sahoshi-*` throwaway migration-test containers other streams create are
   transient.
@@ -62,7 +62,7 @@ at the 8 GiB floor it starts and leaves ≥ 8 GiB.
 | model-host :8083 | Loads once at boot (≈285 s cold; ~5 min observed this session) into a supervised process; no eviction path exists; restart-on-exit via `serve_models.sh` |
 | llama-server :8084 | llama.cpp has **no model eviction** — residency == process lifetime; supervised restart-on-exit. 2 parallel slots (`-np 2`), 8192 ctx per slot (`-c 16384` total) |
 | embedding-service :8205 | Encoders resident in the service process (embeddings stream); supervised restart-on-exit |
-| ollama :11434 (debug side-load only) | `OLLAMA_KEEP_ALIVE=-1` required so `gemma-vvip:12b` is never evicted (recorded in `sahoshi_models.yaml → ollama`) |
+| ollama :11434 (debug side-load only) | `OLLAMA_KEEP_ALIVE=-1` required so `gemma-sahoshi:12b` is never evicted (recorded in `sahoshi_models.yaml → ollama`) |
 
 The v1 asyncio.Lock VRAM-serialization regime is retired: compute-only
 serialization replaces it (decider compute lock + queue 8 in model-host,

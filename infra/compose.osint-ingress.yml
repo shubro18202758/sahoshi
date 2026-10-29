@@ -5,7 +5,7 @@
 # ~/.config/sahoshi/sahoshi.env: scripts/sahoshi_env.sh --set SAHOSHI_OSINT 1), so with
 # the flag at 0 — the default — a boot never reads it and scripts/sahoshi_up.sh
 # removes a stale sahoshi-osint-ingress container left by an earlier
-# flag-1 boot. By hand (from VVIP/):
+# flag-1 boot. By hand (from the repository root):
 #   docker compose -p sahoshi -f infra/compose.yml \
 #     -f infra/compose.gb10-override.yml -f infra/compose.argus-override.yml \
 #     -f infra/compose.osint-ingress.yml up -d osint-ingress

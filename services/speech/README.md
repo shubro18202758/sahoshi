@@ -222,7 +222,8 @@ utilisation), so latencies vary by about 2× between runs.
 
 Both models load on first use and unload after `SPEECH_IDLE_UNLOAD_S`
 (600 s) idle. Before a load the service checks MemAvailable and refuses (503)
-when the load would leave less than `SPEECH_MIN_FREE_GIB` (12 GiB).
+when the load would leave less than `SPEECH_MIN_FREE_GIB` (8 GiB: the host memory
+guard evicts llama servers under 6 GiB available, so 2 GiB stay clear of it).
 
 ## Privacy
 

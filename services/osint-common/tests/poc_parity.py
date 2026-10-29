@@ -30,7 +30,19 @@ from pydantic import ValidationError
 from osint_common.kinds import ALL_EVENT_KINDS
 from osint_common.types import DecisionSupport, RawOsintSignal, signal_rejection_reason
 
-POC_OUT_DEFAULT = Path("/home/sandy050405/argus/sahoshi/.orchestration/osint/prototype/out")
+def _poc_root() -> Path:
+    """The OSINT prototype, read in place: OSINT_POC_ROOT, else ``.orchestration/osint/prototype`` in this checkout
+    or in the checkout whose ``.worktrees/<name>`` this is (absent in a clone, where the PoC tests skip)."""
+    if os.environ.get("OSINT_POC_ROOT"):
+        return Path(os.environ["OSINT_POC_ROOT"])
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".orchestration" / "osint" / "prototype"
+        if candidate.is_dir():
+            return candidate
+    return Path(".orchestration/osint/prototype")
+
+
+POC_OUT_DEFAULT = _poc_root() / "out"
 
 
 def poc_out_dir(arg: str | None = None) -> Path:

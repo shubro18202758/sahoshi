@@ -165,6 +165,7 @@ class CityFeeds:
                     None)
         ranked = {sid: x[prov] for sid, x in o["sites"].items() if prov and (x.get(prov) or {}).get("naqi")}
         worst = max(ranked.items(), key=lambda kv: kv[1]["naqi"]["aqi"], default=None)
+        names = {st["id"]: (st.get("name") or "", st.get("name_bn") or "") for st in v.get("stations") or []}
         v["observed"] = {
             "label": "OBSERVED" if o["sites"] else "NONE",
             "what": "the stations' own measurements from the keyed services (CPCB via data.gov.in, WAQI, OpenAQ); "
@@ -173,7 +174,9 @@ class CityFeeds:
             "sites_observed": len(o["sites"]),
             "city_naqi": ({"aqi": worst[1]["naqi"]["aqi"], "band": worst[1]["naqi"]["band"], "site": worst[0],
                            "prominent": worst[1]["naqi"]["prominent"], "at": worst[1]["at"], "label": "OBSERVED",
-                           "sub_label": "INDICATIVE", "provider": prov, "source": self._NAQI_FROM[prov]}
+                           "sub_label": "INDICATIVE", "provider": prov, "source": self._NAQI_FROM[prov],
+                           "site_name": names.get(worst[0], ("", ""))[0] or None,
+                           "site_bn": names.get(worst[0], ("", ""))[1] or None}
                           if worst else None),
         }
         return v

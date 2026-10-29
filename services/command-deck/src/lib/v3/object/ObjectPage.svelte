@@ -112,6 +112,11 @@
 
 	// ── the record ──────────────────────────────────────────────────────────
 	const officer = $derived(ops.officerOn);
+	// the traffic feed's honest label rides every road record: anything but a live feed reads SIMULATED
+	const simulatedFeed = $derived(ops.trafficFeed?.label !== 'live');
+	$effect(() => {
+		liveWorld.simulatedFeed = simulatedFeed;
+	});
 	const graph = $derived(liveWorld.graph());
 	const current = $derived(!!urn && dossier.urn === urn);
 	const data = $derived(current ? dossier.data : null);
@@ -120,7 +125,7 @@
 		if (!urn) return null;
 		const g = graph.get(urn);
 		if (g) return g;
-		return data?.entity && data.entity.urn === urn ? rowOf(data.entity) : null;
+		return data?.entity && data.entity.urn === urn ? rowOf(data.entity, { simulatedFeed }) : null;
 	});
 	const kind = $derived(row?.kind ?? parseUrn(urn)?.kind ?? 'other');
 	const links = $derived(row ? graph.links(row.urn) : []);

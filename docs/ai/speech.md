@@ -25,7 +25,7 @@ port **8194** (loopback) · dev port 9161.
 | Kind / severity | keyword rules (bn/en/romanised) with the deciding words returned | explainable to the officer; no extra model |
 | Report state | always `UNVERIFIED-FIELD`, `requires_confirmation: true` | the AI proposes, a named officer decides |
 | Privacy | audio decoded in memory and dropped; no speaker identification; no voice storage | only the transcript is needed |
-| Lifecycle | lazy load, unload after 10 idle minutes, refuse below a 12 GiB floor | the GB10 is shared with live models |
+| Lifecycle | lazy load, unload after 10 idle minutes, refuse below an 8 GiB floor | the GB10 is shared with live models |
 
 ## Integration contract
 
@@ -38,6 +38,36 @@ port **8194** (loopback) · dev port 9161.
 - `POST /speech/speak` returns `audio/wav`; the public page plays it with a
   "synthetic voice" note (`X-Speech-Label: synthetic-voice`).
 - `503` = the model cannot load right now (memory); retry later.
+
+## Making room
+
+The voice models load on demand and share the box's memory with the resident models, so a load
+that would leave MemAvailable under the 8 GiB floor is refused. Before refusing, the service makes
+room (`memroom.py`): it first releases its own other model (the Parler worker while the ASR loads,
+or the reverse), then asks forecast and vision on loopback (`POST /admin/release?idle_s=0`, 2 s
+each) to release theirs, polls MemAvailable for up to 5 s and checks the same floor again; the
+floor never moves. A waiting load has priority: any of these on-demand models that is not serving
+a request right now may be released, however recently it was used (`SPEECH_MAKE_ROOM_IDLE_S`,
+default 0); one serving a request never is, and nothing else on the box is touched.
+
+A load that passed the floor check can still run out of GPU memory, even when creating the CUDA
+context (`cuDevicePrimaryCtxRetain`): on this unified-memory box MemAvailable counts page cache and
+swap that a GPU allocation cannot use (seen live on 29 Oct with 20.7 GiB available and about 3 GiB
+free). Such a load makes room for its own size the same way and is tried once more; `/health`
+records MemFree beside MemAvailable. Because creating the service's CUDA context at the first ASR
+load is where it failed, the service now creates that context at start, while memory allows
+(`SPEECH_CUDA_CONTEXT_AT_START`; torch keeps it for the life of the process anyway once a model has
+run). The service loads one model at a time (an ASR load beside a
+loading Parler worker ran the GPU out of memory), and a load that waits checks memory after the
+other has finished.
+
+Released models are not restarted afterwards: each reloads on its own next use. `/health` →
+`make_room` shows the last attempt (why, what was asked and freed, MemAvailable and MemFree before
+and after, whether the load then succeeded) and the last release this service was asked for; a 503
+that follows an attempt says what it found. `POST /admin/release` called by hand keeps a 20 s
+default (`SPEECH_RELEASE_IDLE_S`); `SPEECH_MAKE_ROOM=0` turns making room off. Before a demo
+segment, `scripts/ai_warm.sh speech` releases the other idle models and loads the voice and the
+Bengali ASR ahead of time.
 
 ## Evaluation
 
@@ -293,7 +323,7 @@ and step 4 (TTS) was applied the same day. Commands run from `services/speech`;
    service. TTS, recommended on 29 Oct:
    ```bash
    SPEECH_TTS_BACKEND=indic_parler
-   SPEECH_TTS_PARLER_PYTHON=/home/sandy050405/argus/sahoshi/.venvs/speech-parler/bin/python
+   SPEECH_TTS_PARLER_PYTHON=/home/<user>/sahoshi/.venvs/speech-parler/bin/python
    SPEECH_TTS_PARLER_REVISION=660bc53c64ae83150613264111708a0465211237
    ```
    ASR, not recommended on 29 Oct (it also needs onnxruntime in the service

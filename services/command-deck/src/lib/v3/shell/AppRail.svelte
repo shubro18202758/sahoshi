@@ -173,4 +173,70 @@
 			transition: none;
 		}
 	}
+
+	/* a phone: the five jobs and Analyst as a tab bar along the bottom (icon + label, never icon-only) */
+	@media (max-width: 720px) {
+		.rail {
+			grid-row: 4;
+			grid-column: 1;
+			flex-direction: row;
+			align-items: stretch;
+			justify-content: space-between;
+			gap: 0;
+			width: auto;
+			padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+			border-right: 0;
+			border-top: 1px solid var(--v3-line-1);
+		}
+
+		.logo,
+		.grow,
+		.sep {
+			display: none;
+		}
+
+		.nav {
+			flex: 1 1 0;
+			min-width: 0;
+			width: auto;
+			gap: 3px;
+			padding: 7px 0 6px;
+			border-radius: 12px;
+			font-size: 11px;
+			line-height: 13px;
+		}
+
+		.nav:lang(hi) .lbl,
+		.nav:lang(bn) .lbl {
+			font-size: 11px;
+			line-height: 1.3;
+		}
+
+		.lbl {
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.nav.is-pressed::before {
+			left: 30%;
+			right: 30%;
+			top: -4px;
+			bottom: auto;
+			width: auto;
+			height: 3px;
+			border-radius: 0 0 3px 3px;
+		}
+
+		.badge {
+			top: 1px;
+			right: calc(50% - 30px);
+			min-width: 18px;
+			height: 18px;
+			padding: 0 5px;
+			font-size: 11px;
+			line-height: 18px;
+		}
+	}
 </style>

@@ -106,7 +106,7 @@
 									{#if i.right}
 										<span class={['rt', `tone-${i.right.tone}`]}>{i.right.text}</span>
 									{:else if tm}
-										<span class="rt tone-decide timer">{tm}</span>
+										<span class={['rt', 'tone-decide', 'timer', i.deadline == null || i.deadline <= now ? 'waited' : null]}>{tm}</span>
 									{:else if i.decisions > 0}
 										<span class="rt tone-decide"><Glyph name="clock" size={14} /></span>
 									{/if}
@@ -333,6 +333,13 @@
 		text-align: right;
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* "waiting 10 h 35 min" (in Bengali, a long phrase) wraps in its own narrow column: the title keeps its width */
+	.rt.waited {
+		max-width: 7.5em;
+		white-space: normal;
+		line-height: 15px;
 	}
 
 	.tone-route {

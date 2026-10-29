@@ -201,7 +201,14 @@ sync_compose_ports() {
 sync_compose_ports
 
 PG_DSN="postgresql://corridor_admin:${POSTGIS_PASSWORD:-dev_changeme}@127.0.0.1:${POSTGIS_HOST_PORT}/corridor_db"
-UNITS=(sahoshi-llama.service sahoshi-decider.service sahoshi-embed.service sahoshi-models.target sahoshi-up.service sahoshi.target)
+# Every unit file in infra/systemd (a unit left out here is never linked, and
+# sahoshi.target's Wants= on it does nothing on a fresh machine): the model
+# hosts, the AI tier (forecast, hydro, twin, speech, vision, city feeds) and
+# the targets that pull them in.
+UNITS=(sahoshi-llama.service sahoshi-decider.service sahoshi-embed.service sahoshi-models.target
+       sahoshi-ai-forecast.service sahoshi-ai-hydro.service sahoshi-ai-twin.service
+       sahoshi-ai-speech.service sahoshi-ai-vision.service sahoshi-feeds.service sahoshi-ai.target
+       sahoshi-up.service sahoshi.target)
 # The user manager's default unit directory and the EnvironmentFile= the
 # units load (%h/.config/sahoshi/sahoshi.env): both under $HOME/.config, whatever
 # this shell's XDG_CONFIG_HOME says.
@@ -1150,7 +1157,12 @@ install_units() {
     fi
     bash "$SAHOSHI_ROOT/scripts/sahoshi_env.sh" --write
     mkdir -p "$SYSTEMD_USER_DIR"
-    local u
+    local u f
+    for f in "$SAHOSHI_ROOT"/infra/systemd/*.service "$SAHOSHI_ROOT"/infra/systemd/*.target; do
+        [ -e "$f" ] || continue
+        [[ " ${UNITS[*]} " == *" $(basename "$f") "* ]] \
+            || die "infra/systemd/$(basename "$f") is not in UNITS (scripts/sahoshi_up.sh): it would never be linked"
+    done
     for u in "${UNITS[@]}"; do
         [ -f "$SAHOSHI_ROOT/infra/systemd/$u" ] || die "missing unit file infra/systemd/$u"
         ln -sfn "$SAHOSHI_ROOT/infra/systemd/$u" "$SYSTEMD_USER_DIR/$u"

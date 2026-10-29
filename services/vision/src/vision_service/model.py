@@ -23,6 +23,7 @@ from typing import Any, Protocol
 import httpx
 
 from .config import Settings
+from .memroom import RELOAD_NOTE, RoomMaker, idle_verdict, looks_out_of_memory, summarize
 
 __all__ = [
     "STATES",
@@ -132,6 +133,21 @@ class LlamaServerManager:
         self.started_at: float | None = None
         self.start_seconds: float | None = None
         self.last_error: str | None = None
+        #: ``memroom.RoomMaker`` (set by LlamaVisionModel): asked before a start is refused for memory
+        self.room: RoomMaker | None = None
+
+    @property
+    def lock(self) -> asyncio.Lock:
+        """Held while the server starts or stops."""
+        return self._lock
+
+    def _short_of_memory(self, free: float | None) -> bool:
+        return free is not None and free - self.s.need_gib < self.s.min_free_gib
+
+    def _room_outcome(self, room: RoomMaker | None, ok: bool, detail: str | None = None) -> None:
+        if room is not None:
+            with contextlib.suppress(Exception):
+                room.outcome(ok, detail)
 
     @property
     def url(self) -> str:
@@ -153,15 +169,30 @@ class LlamaServerManager:
         async with self._lock:
             if self.running:
                 return self.url
-            for p in (self.s.llama_server_bin, self.s.model_path, self.s.mmproj_path):
-                if not Path(p).exists():
-                    self.last_error = f"missing: {p}"
-                    raise ModelUnavailable(self.last_error)
+            missing = self._missing()
+            if missing:
+                self.last_error = f"missing: {missing}"
+                log.warning("vision model unavailable: %s", self.last_error)
+                raise ModelUnavailable(self.last_error)
             free = _mem_available_gib()
-            if free is not None and free - self.s.need_gib < self.s.min_free_gib:
+            room = self.room if self._short_of_memory(free) else None
+            made: str | None = None
+            if room is not None:
+                # make room first: the other on-demand services release their idle models (the floor stays)
+                try:
+                    free = await asyncio.to_thread(room, f"vision:{self.s.model_name}", self.s.need_gib,
+                                                   self.s.min_free_gib, free)
+                except Exception:  # noqa: BLE001 - best effort; the floor still decides
+                    log.warning("making room for the vision model failed", exc_info=True)
+                made = room.summary()
+            if self._short_of_memory(free):
                 self.last_error = (f"refused to start the vision model: {free:.1f} GiB available, "
                                    f"needs ~{self.s.need_gib:.0f} GiB plus a "
-                                   f"{self.s.min_free_gib:.0f} GiB floor")
+                                   f"{self.s.min_free_gib:.0f} GiB floor" + (f"; {made}" if made else ""))
+                # the 503 carries the reason; the journal must too (audit, 29 Oct:
+                # four 503s on 28 Oct left no trace of why)
+                log.warning("%s", self.last_error)
+                self._room_outcome(room, False, "still short of memory")
                 raise ModelUnavailable(self.last_error)
             t0 = time.perf_counter()
             attempts = max(1, self.s.llm_start_attempts)
@@ -170,17 +201,60 @@ class LlamaServerManager:
                     self.start_seconds = round(time.perf_counter() - t0, 1)
                     self.started_at = time.time()
                     self.last_error = None
+                    self._room_outcome(room, True)
                     return self.url
                 if self._proc is not None:  # alive but never healthy: give up, do not stack a second server
                     break
                 if attempt < attempts:
                     log.warning("llama-server start %d/%d failed (%s); retrying", attempt, attempts, self.last_error)
+                    if self.room is not None and looks_out_of_memory(self.last_error or ""):
+                        # the floor check passed but the GPU allocation failed (unified memory: MemAvailable
+                        # counts page cache): make room for the model's size on top of what is free now
+                        room = self.room
+                        now = _mem_available_gib() or 0.0
+                        try:
+                            await asyncio.to_thread(room, f"vision:{self.s.model_name}", self.s.need_gib, now, now,
+                                                    "the server ran out of GPU memory while starting")
+                        except Exception:  # noqa: BLE001 - best effort
+                            log.warning("making room for the vision model failed", exc_info=True)
                     await asyncio.sleep(3.0)
                     free = _mem_available_gib()
                     if free is not None and free - self.s.need_gib < self.s.min_free_gib:
+                        log.warning("llama-server retry skipped: %.1f GiB available", free)
                         break
             await self.stop()
+            self._room_outcome(room, False, self.last_error or "llama-server did not start")
             raise ModelUnavailable(self.last_error or "llama-server did not start")
+
+    def _missing(self) -> str | None:
+        for p in (self.s.llama_server_bin, self.s.model_path, self.s.mmproj_path):
+            if not Path(p).exists():
+                return str(p)
+        return None
+
+    def readiness(self) -> dict[str, Any]:
+        """Can a road-state request be served now? (read-only: nothing is started)
+
+        ``ready`` is True while the server runs, or when a start would pass the
+        file and memory checks ``ensure()`` applies; otherwise False with the
+        reason a request would get as its 503.
+        """
+        needs = round(self.s.need_gib + self.s.min_free_gib, 1)
+        free = _mem_available_gib()
+        out: dict[str, Any] = {"ready": True, "reason": None, "start_needs_gib": needs,
+                               "mem_available_gib": round(free, 1) if free is not None else None}
+        if self.running:
+            return out
+        missing = self._missing()
+        if missing:
+            out.update(ready=False, reason=f"missing: {missing}")
+        elif free is not None and free - self.s.need_gib < self.s.min_free_gib:
+            out.update(ready=False, reason=(
+                f"a start would be refused now: {free:.1f} GiB available, needs ~{needs:.0f} GiB "
+                f"({self.s.need_gib:.0f} for the model plus a {self.s.min_free_gib:.0f} GiB floor)"
+                + ("; a request first asks the other on-demand services to release idle models"
+                   if self.room is not None else "")))
+        return out
 
     def _log_tail(self, limit: int = 300) -> str:
         try:
@@ -252,6 +326,12 @@ class LlamaVisionModel:
         self.manager = LlamaServerManager(s) if s.llm_manage else None
         self._last_used = 0.0
         self._busy = 0
+        if self.manager is not None and s.make_room:
+            # forecast first (≈2 GiB, reloads in seconds), then speech; the probe is looked up at call time
+            self.manager.room = RoomMaker(
+                "vision", [("forecast", s.peer_forecast_port), ("speech", s.peer_speech_port)],
+                timeout_s=s.make_room_timeout_s, wait_s=s.make_room_wait_s, release_idle_s=s.make_room_idle_s,
+                probe=lambda: _mem_available_gib())
 
     async def _base_url(self) -> str:
         if self.manager is not None:
@@ -314,14 +394,51 @@ class LlamaVisionModel:
             "url": m.url if m else self.s.llm_url,
             "start_seconds": m.start_seconds if m else None,
             "last_error": m.last_error if m else None,
+            # an external server (VISION_LLM_MANAGE=0) is not probed here
+            "readiness": m.readiness() if m else None,
         }
 
     async def maybe_stop_idle(self) -> bool:
-        if self.manager is None or not self.manager.running or self._busy:
+        m = self.manager
+        if m is None or not m.running or self._busy or m.lock.locked():
             return False
         if time.monotonic() - self._last_used < self.s.idle_unload_s:
             return False
-        return await self.manager.stop()
+        async with m.lock:  # a request that is starting the server waits on this lock: re-check
+            if self._busy or not m.running:
+                return False
+            return await m.stop()
+
+    async def release_idle(self, min_idle_s: float) -> dict[str, Any]:
+        """Stop the llama-server when it is not serving a request and unused for ``min_idle_s`` s.
+
+        The answer of ``POST /admin/release``. A server this service does not manage
+        (``VISION_LLM_MANAGE=0``) is never touched. The model reloads on its next request."""
+        m = self.manager
+        items: list[dict[str, Any]] = []
+        if m is not None and (m.running or self._busy):
+            why = idle_verdict(self._busy, self._last_used, time.monotonic(), min_idle_s)
+            if why is None and m.lock.locked():
+                why = "in use"  # starting (or stopping) right now
+            stopped = False
+            if why is None:
+                async with m.lock:
+                    why = idle_verdict(self._busy, self._last_used, time.monotonic(), min_idle_s)
+                    if why is None:
+                        stopped = await m.stop()
+            if stopped:
+                log.info("released the vision model (idle; reloads on its next request)")
+                items.append({"model": self.name, "released": True, "why": None, "freed_gib": self.s.need_gib})
+            elif why is not None:
+                items.append({"model": self.name, "released": False, "why": why, "freed_gib": 0.0})
+        return summarize("vision", items)
+
+    def make_room_status(self) -> dict[str, Any]:
+        room = self.manager.room if self.manager is not None else None
+        return {**(room.config() if room is not None else {"enabled": False}),
+                "release_idle_s": self.s.release_idle_s,
+                "last_event": room.last_event if room is not None else None,
+                "note": RELOAD_NOTE}
 
     async def aclose(self) -> None:
         if self.manager is not None:

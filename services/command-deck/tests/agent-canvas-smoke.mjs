@@ -22,7 +22,7 @@
  *   AGENT_SMOKE_ONLY=palette,cameras                 # subset (chip, apply,
  *                                                    # dismiss, palette, explain, cameras)
  *   AGENT_SMOKE_PLATE=WB06EM9001                     # the stolen-vehicle plate
- *   AGENT_SMOKE_SHOTS=/tmp/claude-1000/sahoshi-wp14     # screenshot directory
+ *   AGENT_SMOKE_SHOTS=/tmp/sahoshi-wp14                 # screenshot directory
  *   PUPPETEER_FROM=…/package.json, CHROME_PATH=…     # tool resolution overrides
  *
  * Final pins (UI-S7B): the chip's copy is MapProposals' 'Proposed on the
@@ -66,7 +66,6 @@ const STREAM_BUDGET_MS = 180_000;
 const PUPPETEER_CANDIDATES = [
 	process.env.PUPPETEER_FROM,
 	path.resolve(DECK, '../../frontend/package.json'),
-	'/home/sandy050405/argus/sahoshi/frontend/package.json',
 ].filter(Boolean);
 let puppeteer = null;
 for (const from of PUPPETEER_CANDIDATES) {

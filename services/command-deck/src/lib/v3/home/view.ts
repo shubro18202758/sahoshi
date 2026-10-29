@@ -38,6 +38,7 @@ import { objectHref } from '../object/model';
 import { keyArt, keyArtKind } from '../media/art';
 import '../media/packs.media';
 import { photoForText, photoNear, type PlacePhoto } from '../media/photos';
+import { HUMAN } from '$lib/workspace/vocabulary';
 
 export type Tone = 'decide' | 'ai' | 'alert' | 'ok' | 'route' | 'neutral' | 'dashed' | 'ghost' | 'brand';
 
@@ -418,7 +419,7 @@ function decisionCore(u: Unit, lang: string, now: number, segs: Map<number, LonL
 				...base,
 				title: t(lang, d.stolen ? 'v3_title_echallan_stolen' : 'v3_title_echallan'),
 				plate: plateVM(d.plate),
-				why: ops.text(d.rec.recommendation) || t(lang, 'dec_why_echallan'),
+				why: echallanWhy(ops.text(d.rec.recommendation), lang) || t(lang, 'dec_why_echallan'),
 				by: { text: t(lang, 'v3_by_rules'), ai: false },
 				art: artFor('crime_incident'),
 				prov: provTag(lang, d.emulated ? 'emulated' : null),
@@ -433,13 +434,13 @@ function decisionCore(u: Unit, lang: string, now: number, segs: Map<number, LonL
 			const jn = ds.waypointJunction != null ? ops.junctions.find((j) => j.junctionId === ds.waypointJunction) : null;
 			const at = pos(ent) ?? (jn ? ([jn.lon, jn.lat] as LonLat) : null);
 			const by = ds.requestedBy === '108-driver' ? t(lang, 'v3_by_108') : t(lang, 'v3_by_officer');
-			const wp = ds.waypointJunction != null ? ops.junctionName(ds.waypointJunction) : null;
+			const wp = ds.waypointJunction != null ? ops.junctionName(ds.waypointJunction, lang) : null;
 			return {
 				...base,
 				title: unitTitle(u, lang),
 				plate: null,
 				why: [
-					t(lang, 'dec_why_corridor', ds.agencyLabel ?? ds.agency, ds.unitId ?? '—', ds.requestedBy === '108-driver' ? tOps(lang, 'dispatch108') : ops.text(ds.requestedBy) || '—', ds.createdAt ? fmtStamp(ds.createdAt, now) : '—'),
+					t(lang, 'dec_why_corridor', agencyIn(ds.agency, ds.agencyLabel, lang), ds.unitId ?? '—', ds.requestedBy === '108-driver' ? tOps(lang, 'dispatch108') : requesterIn(ops.text(ds.requestedBy), lang) || '—', ds.createdAt ? fmtStamp(ds.createdAt, now) : '—'),
 					wp ? t(lang, 'dec_why_corridor_waypoint', wp) : null,
 				]
 					.filter(Boolean)
@@ -499,7 +500,7 @@ function opCore(ev: CorridorEvent, lang: string, now: number, units: readonly Un
 	const decisions = units.filter((u) => u.subjectUrn === `event:${ev.eventId}` || (u.kind === 'escort-proposal' && escortOf(u).proposal.eventId === ev.eventId)).length;
 	const href = objectHref(`event:${ev.eventId}`) ?? `/ops#evt=${encodeURIComponent(safePathId(ev.eventId) ?? '')}`;
 	const since = ev.windowStart ? t(lang, 'v3_op_since', fmtStamp(ev.windowStart, now)) : '';
-	const name = splitLabel(ops.text(ev.name));
+	const name = eventLabel(ev, lang);
 	const title = ev.eventKind === 'vehicle_pursuit' ? ops.text(ev.name) : upFirst(name.title);
 	if (ev.eventKind === 'protected_movement') {
 		const convoy = convoyFor(ev, ev.movementId ?? null);
@@ -561,7 +562,7 @@ function opCore(ev: CorridorEvent, lang: string, now: number, units: readonly Un
 		state: { text: t(lang, 'v3_op_active'), tone: 'neutral' },
 		meta: ev.windowStart && ev.windowEnd ? `${fmtRange(ev.windowStart, ev.windowEnd, now)} IST` : since,
 		progress: null,
-		next: decisions ? t(lang, 'v3_op_decision_waits', decisions) : ops.text(ev.description) || '',
+		next: decisions ? t(lang, 'v3_op_decision_waits', decisions) : eventNote(ev, lang),
 		art: artFor(ev.eventKind),
 		href,
 		prov: eventProv(ev, lang),
@@ -592,6 +593,9 @@ function firstPublisher(e: CityEntity): string | null {
 	return null;
 }
 
+/** Report classes whose news text is about people (who did what to whom): never headlined on a card. */
+const PERSON_STORY: ReadonlySet<string> = new Set(['reported_crime', 'crime_incident', 'public_conflict', 'public_disorder', 'unrest']);
+
 export function reportVM(e: CityEntity, lang: string, now: number, units: readonly Unit[]): ReportVM {
 	const v = e.verificationState;
 	const verif: TagVM =
@@ -603,12 +607,16 @@ export function reportVM(e: CityEntity, lang: string, now: number, units: readon
 					? { text: t(lang, 'v3_rep_news'), tone: 'ghost', glyph: 'news' }
 					: { text: t(lang, 'v3_rep_unverified'), tone: 'dashed', glyph: 'unverified' };
 	const cls = str(e.props.sahoshi_event_kind) ?? str(e.props.event_class);
-	const { kind, title } = splitLabel(ops.text(e.label));
+	const label = splitLabel(ops.text(e.label));
+	const kind = localKind(label.kind, cls, lang);
+	const title = label.title;
 	const proposed = units.some((u) => u.kind === 'dss' && u.subjectUrn === e.urn);
 	const at = pos(e);
 	const official = v === 'OFFICIAL-VERIFIED' || v === 'CONFIRMED';
 	const reported = e.t != null ? fmtAgo(e.t, now, lang) : null;
-	const summary = str(e.props.summary);
+	// a news story about people (a crime, a conflict) is shown by its place and kind, never by its headline (events are
+	// about places, not people); its object page carries the source for the officer who opens it
+	const summary = cls && PERSON_STORY.has(cls) && !official ? t(lang, 'v3_rep_news_withheld') : str(e.props.summary);
 	return {
 		key: e.urn,
 		kindLine: kind ?? t(lang, 'v3_rep_kind'),
@@ -653,7 +661,7 @@ function plannedCore(ev: CorridorEvent, lang: string, now: number, segs: Map<num
 					: fmtStamp(start, now);
 	const route = chain(ev.routeSegmentIds, segs);
 	const at = eventPos(ev, segs);
-	const name = splitLabel(ops.text(ev.name));
+	const name = eventLabel(ev, lang);
 	const title = upFirst(name.title);
 	const approved = (ev.status ?? '').toLowerCase() === 'approved';
 	return {
@@ -674,6 +682,92 @@ function plannedCore(ev: CorridorEvent, lang: string, now: number, segs: Map<num
 }
 
 const upFirst = (x: string) => (x ? x.charAt(0).toLocaleUpperCase() + x.slice(1) : x);
+
+/** English kind words (HUMAN's, the field report's) → their code, for a label that arrives as "<Kind> · <place>". */
+let KIND_CODE: Map<string, string> | null = null;
+function kindCodeOf(word: string): string | null {
+	if (!KIND_CODE) {
+		KIND_CODE = new Map();
+		for (const [code, w] of Object.entries(HUMAN)) KIND_CODE.set(w.toLowerCase(), code);
+	}
+	const w = word.trim().toLowerCase();
+	return KIND_CODE.get(w) ?? (/^[a-z][a-z -]*$/.test(w) ? w.replace(/[\s-]+/g, '_') : null);
+}
+
+/**
+ * A label's kind word in the reader's language (V3 pack `v3_k_<code>`): the class code when the record carries one,
+ * else the code behind the English word the server's label carries. English, or a word with no translation, stays as
+ * it arrived.
+ */
+export function localKind(word: string | null, code: string | null | undefined, lang: string): string | null {
+	if (lang === 'en') return word;
+	for (const c of [word ? kindCodeOf(word) : null, code]) {
+		if (!c) continue;
+		const key = `v3_k_${c}`;
+		const v = t(lang, key);
+		if (v !== key) return v;
+	}
+	return word;
+}
+
+/**
+ * An event's kind and title in the reader's language. The living city's rows carry their own Bengali title
+ * (metadata.title_bn) and their cause; everything else splits the server's English "<Kind> · <title>" and translates
+ * the kind word.
+ */
+export function eventLabel(ev: CorridorEvent, lang: string): { kind: string | null; title: string } {
+	const cause = ev.metadata?.cause ?? null;
+	if (lang === 'bn' && ev.metadata?.titleBn) {
+		const bn = splitLabel(ev.metadata.titleBn);
+		if (bn.title) return bn;
+	}
+	const name = splitLabel(ops.text(ev.name));
+	if (lang !== 'en' && cause) {
+		const key = `v3_cause_k_${cause}`;
+		const v = t(lang, key);
+		if (v !== key) return { kind: v, title: name.title };
+	}
+	return { kind: localKind(name.kind, null, lang), title: name.title };
+}
+
+/**
+ * The rules engine's e-challan line in the reader's language. The oracle writes it in English from two templates
+ * ("<mark> read at <v> km/h in a <limit> km/h segment", "<mark> crossed junction <n> on red (movement …)"); the
+ * mark arrives as the page already masked it. Anything else stays verbatim.
+ */
+export function echallanWhy(text: string, lang: string): string {
+	if (lang === 'en' || !text) return text;
+	const body = text.replace(/^e-challan recommended:\s*/i, '');
+	const sp = /^(.+?)\s+read at (\d+(?:\.\d+)?) km\/h in a (\d+(?:\.\d+)?) km\/h segment\.?$/i.exec(body);
+	if (sp) return t(lang, 'v3_ech_speed', sp[1], sp[2], sp[3]);
+	const red = /^(.+?)\s+crossed junction (\d+) on red(?:\s*\(movement \w+\))?\.?$/i.exec(body);
+	if (red) return t(lang, 'v3_ech_red', red[1], red[2]);
+	return text;
+}
+
+/** A dispatch's agency in the reader's language (the DSS pack's word for a known agency), else the server's label. */
+export function agencyIn(code: string, label: string | null, lang: string): string {
+	const key = `dss_agency_${code}`;
+	const v = t(lang, key);
+	return lang !== 'en' && v !== key ? v : (label ?? code);
+}
+
+/** Who asked for a corridor: the emulated 108 control room in the reader's language, anyone else as named. */
+export function requesterIn(who: string, lang: string): string {
+	if (lang !== 'en' && /^108 control\b/i.test(who)) return t(lang, /emulated/i.test(who) ? 'v3_req_108_control_emu' : 'v3_req_108_control');
+	return who;
+}
+
+/** An event's description line: the living city's cause in the reader's language, else the server's own words. */
+export function eventNote(ev: CorridorEvent, lang: string): string {
+	const cause = ev.metadata?.cause ?? null;
+	if (lang !== 'en' && cause) {
+		const key = `v3_cause_${cause}`;
+		const v = t(lang, key);
+		if (v !== key) return t(lang, 'v3_op_cause', v);
+	}
+	return ops.text(ev.description) || '';
+}
 
 /** The event kind in words (the deck's own kind labels). */
 export function kindWord(kind: string, lang: string): string {

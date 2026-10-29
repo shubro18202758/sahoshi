@@ -72,10 +72,14 @@ export const segmentAdapter: KindAdapter = {
 		const speed = num(p.speed_kmh);
 		const cong = num(p.congestion_idx);
 		const len = num(p.length_m);
+		// the road class in the reader's language (the V3 pack's word, where the page loaded it), else the English one
+		const code = str(p.road_class);
+		const local = code && ctx.lang !== 'en' ? L(ctx, `v3_road_${code}`) : null;
+		const cls = local && local !== `v3_road_${code}` ? local : row.sublabel;
 		return {
 			title: [{ text: row.label }],
 			plateTitle: false,
-			subtitle: [[{ text: kindOne('segment', ctx.lang) }], ...(row.sublabel ? [[{ text: row.sublabel }]] : [])],
+			subtitle: [[{ text: kindOne('segment', ctx.lang) }], ...(cls ? [[{ text: cls }]] : [])],
 			alert: false,
 			tags: [],
 			figures: keyFigures([
@@ -89,7 +93,7 @@ export const segmentAdapter: KindAdapter = {
 				{
 					title: L(ctx, 'ws_grp_road'),
 					rows: [
-						textRow(L(ctx, 'ws_p_class'), row.sublabel),
+						textRow(L(ctx, 'ws_p_class'), cls),
 						textRow(L(ctx, 'ws_p_oneway'), p.oneway === true ? L(ctx, 'ws_v_yes') : p.oneway === false ? L(ctx, 'ws_v_no') : null),
 						textRow(L(ctx, 'ws_p_length'), len != null ? `${Math.round(len)} m` : null),
 					],

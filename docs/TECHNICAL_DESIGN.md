@@ -285,7 +285,7 @@ flowchart LR
     b -->|yes| build["compose build"]
     b -->|no| pg
     build --> pg["PostGIS alone<br/>up -d, healthy"]
-    pg --> mig["migrate<br/>001–025"]
+    pg --> mig["migrate<br/>001–026"]
     mig --> seed["seed if empty<br/>+ network step when changed"]
     seed --> up["every service up -d"]
     up --> rs["restart network readers<br/>after a network step"]
@@ -437,7 +437,7 @@ IPC → NATS `corridor.traffic.live`; anomalies to `corridor.traffic.anomaly` wi
 
 ### 4.6 corridor-store
 
-PostgreSQL 16 with PostGIS, pgRouting, pgvector and pg_trgm. `scripts/migrate.py` applies `migrations/001–025` in
+PostgreSQL 16 with PostGIS, pgRouting, pgvector and pg_trgm. `scripts/migrate.py` applies `migrations/001–026` in
 order and ledgers each (name, checksum, applied time). The seed is generated from the City Pack (§6) and applied in
 a fixed order: `sample_corridor.sql` (empty store only) → `reanchor_osm_network.sql` (idempotent, ids preserved) →
 `post_seed_derivations.sql` → `display_geometry_osm.sql`.
@@ -1142,6 +1142,10 @@ says so.
 | Chronos-2 (on demand) | 1.6 GiB peak |
 
 The on-demand models load lazily and unload when idle, so the box keeps headroom for the resident ones.
+When a speech or vision load would break its 8 GiB floor, the service first asks the other on-demand services
+to release every model not serving a request (`POST /admin/release`, loopback), waits up to 5 s and re-checks the
+same floor (a load that passed the floor but ran out of GPU memory makes room the same way and is tried once more);
+released models reload on their next use, and the resident models are never touched.
 
 ### 15.3 Scaling
 
@@ -1154,12 +1158,12 @@ The on-demand models load lazily and unload when idle, so the box keeps headroom
 
 ## 16. Testing strategy
 
-| Level | What | Count (28 Oct 2026) |
+| Level | What | Count (29 Oct 2026) |
 |---|---|---|
-| Unit and API (Python) | Every service, offline, outbound calls mocked | 6,030 passed |
+| Unit and API (Python) | Every service, offline, outbound calls mocked | 6,212 passed |
 | Real-model (opt-in) | forecast `-m model`, speech and vision `-m slow` | run on the box with weights |
 | Rust | signal-ingress | 121 passed |
-| Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 42 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |
+| Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 45 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |
 | City Pack | `city_build.py --check`; a test builds two cities | pass |
 | Browser smokes and journeys | Screens against a running stack | on demand |
 | Acceptance ladder | `scripts/verify_all.sh` (offline) and `--live` | on demand |
@@ -1271,7 +1275,7 @@ Each record states the context, the decision and its consequences.
 
 - **Context.** The first-choice Bengali models (IndicConformer, Indic Parler-TTS) are gated.
 - **Decision.** Measure open checkpoints on the same audio and pick the best (a Bengali Whisper-medium fine-tune,
-  CER 2.6 %); Svara-TTS for bn/hi/en; keep the gated models as preferred once access is granted, behind the same
+  CER 2.5 %); Svara-TTS for bn/hi/en; keep the gated models as preferred once access is granted, behind the same
   interfaces.
 - **Consequences.** Working Bengali voice now, with an upgrade path that changes no API. Access was granted on
   29 Oct 2026 and both were measured on the same audio: Indic Parler-TTS beat Svara (round-trip WER 8.2 % against

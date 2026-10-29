@@ -30,6 +30,7 @@
 	import { commandBar } from '$lib/shell/command-bar.svelte';
 	import { selection } from '$lib/gods-eye/entities/selection.svelte';
 	import { kindLabel, t } from '$lib/i18n/strings';
+	import '$lib/i18n/packs.agent';
 	import { stateWord } from '$lib/workspace/kinds/generic';
 	import '$lib/i18n/packs.corridor';
 	import { TEST_TEXT, activeEventRows, eventProvenance, eventTestLabel, eventVerification } from './events';
@@ -101,7 +102,7 @@
 									class="ev-test"
 									data-testid="liverail-test"
 									title={L('cor_events_test_tip', displayText(testLabel, false))}
-								>{TEST_TEXT}</span>
+								>{lang === 'en' ? TEST_TEXT : t(lang, 'dossier_test')}</span>
 							{/if}
 							{#if fs}
 								<span

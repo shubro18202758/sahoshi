@@ -65,7 +65,7 @@ export async function main() {
 	const SHOTS = process.env.V3_SHOTS ? path.resolve(process.env.V3_SHOTS) : null;
 	if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 	let puppeteer = null;
-	for (const from of [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json'].filter(Boolean)) {
+	for (const from of [process.env.PUPPETEER_FROM, path.resolve(DECK, '../../frontend/package.json')].filter(Boolean)) {
 		try {
 			const req = createRequire(from);
 			puppeteer = req('puppeteer').default ?? req('puppeteer');
@@ -78,7 +78,7 @@ export async function main() {
 		console.error('puppeteer not found');
 		process.exit(1);
 	}
-	const CHROME = ['/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome'].find((p) => existsSync(p));
+	const CHROME = [`${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`].find((p) => existsSync(p));
 	let failures = 0;
 	const ok = (name, cond, detail = '') => {
 		if (cond) console.log(`ok   ${name}${detail ? ` — ${detail}` : ''}`);

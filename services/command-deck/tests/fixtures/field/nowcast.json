@@ -72,7 +72,7 @@
   ]
  },
  "network": {
-  "source": "/home/sandy050405/argus/sahoshi/.worktrees/int-ops/cities/kolkata/network.json",
+  "source": "cities/kolkata/network.json",
   "attribution": "(c) OpenStreetMap contributors, ODbL 1.0 — https://www.openstreetmap.org/copyright"
  },
  "segments": [

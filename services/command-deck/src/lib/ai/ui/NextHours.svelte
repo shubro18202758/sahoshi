@@ -277,4 +277,16 @@
 		color: var(--v3-t2);
 		font-size: var(--v3-text-micro);
 	}
+
+	/* a phone: the provenance tags go under the line they label (the words keep the width) */
+	@media (max-width: 720px) {
+		.lines li {
+			grid-template-columns: 18px minmax(0, 1fr);
+		}
+
+		.pv {
+			grid-column: 2;
+			flex-wrap: wrap;
+		}
+	}
 </style>

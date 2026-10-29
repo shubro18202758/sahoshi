@@ -31,7 +31,8 @@
 	import { registerProviders } from '$lib/workspace/providers';
 	import { workspace } from '$lib/workspace/workspace.svelte';
 	import { decisionUnits, type Unit } from '$lib/decisions/units';
-	import { PLAN_POIS, escortLifecycle } from '$lib/corridor/escort-state.svelte';
+	import { PLAN_POIS as POIS_EN, escortLifecycle } from '$lib/corridor/escort-state.svelte';
+	import { landmarkName } from '$lib/city';
 	import { cityName } from '$lib/city';
 	import { addsText, candidateAdds, launchGate, planViolations, routeCandidates } from '$lib/corridor/plan';
 	import { t } from '$lib/i18n/strings';
@@ -80,6 +81,8 @@
 	provideUiLang(() => ops.lang);
 	const lang = $derived(ops.lang);
 	const L = (key: string, ...args: unknown[]) => t(lang, key, ...args);
+	/** The planner's places in the page's language (landmarks.json spellings); `alt` keeps the English name searchable. */
+	const PLAN_POIS = $derived(POIS_EN.map((p) => ({ ...p, name: landmarkName(p.id, lang), alt: p.name })));
 	// V3-P7: the destination as a place — a credited reference photo when one is on file (never the place now)
 	const planHour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Kolkata' }).format(Date.now()));
 
@@ -407,11 +410,11 @@
 					{#if originIdx === destIdx}<p class="warn-line" role="status">{L('v3p_same')}</p>{/if}
 					{#if destIdx != null && PLAN_POIS[destIdx]}
 						{@const poi = PLAN_POIS[destIdx]}
-						{@const destPhoto = photoNear(poi.coord[0], poi.coord[1], 900, planHour) ?? photoForText(poi.name, planHour)}
+						{@const destPhoto = photoNear(poi.coord[0], poi.coord[1], 900, planHour) ?? photoForText(poi.alt, planHour)}
 						{#if destPhoto}
 							<div class="dest" data-testid="v3-plan-dest-photo" data-photo={destPhoto.slug}>
 								<Cover art={keyArt('advisory')} photo={destPhoto} alt="" {lang} compact sizes="480px" />
-								<span class="dest-name">{poi.name}{#if destPhoto.title !== poi.name}<small>{destPhoto.title}</small>{/if}</span>
+								<span class="dest-name">{poi.name}{#if destPhoto.title !== poi.name && destPhoto.title !== poi.alt}<small>{destPhoto.title}</small>{/if}</span>
 							</div>
 						{/if}
 					{/if}
@@ -1697,6 +1700,35 @@
 	@media (prefers-reduced-motion: reduce) {
 		.live-dot {
 			animation: none;
+		}
+	}
+
+	/* a phone: the sheet over a short map, one column, in the page's own scroll */
+	@media (max-width: 720px) {
+		.plan {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto 220px;
+			height: auto;
+			gap: 12px;
+			padding: 12px var(--v3-gut) 16px;
+		}
+
+		.sheet {
+			overflow: visible;
+		}
+
+		.classes {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.steps {
+			padding: 14px 16px 10px;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.mapcol {
+			min-height: 220px;
 		}
 	}
 </style>

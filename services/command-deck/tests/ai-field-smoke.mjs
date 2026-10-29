@@ -76,9 +76,9 @@ if (!wav) {
 	if (ff.status !== 0) wav = raw;
 }
 
-const require = createRequire('/home/sandy050405/argus/sahoshi/frontend/package.json');
+const require = createRequire(process.env.PUPPETEER_FROM ?? new URL('../../../frontend/package.json', import.meta.url));
 const puppeteer = require('puppeteer');
-const CHROME = ['/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome'].find((p) => existsSync(p));
+const CHROME = [`${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`].find((p) => existsSync(p));
 const browser = await puppeteer.launch({
 	executablePath: CHROME,
 	headless: 'new',

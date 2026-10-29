@@ -9,7 +9,12 @@ runs in a llama.cpp ``llama-server`` with the Qwen3-VL projector loaded:
 * ``VISION_LLM_MANAGE=0``: it talks to an already-running server at
   ``VISION_LLM_URL`` (the compose layout, where the host runs the model).
 
-Weights live in ``/home/sandy050405/models/qwen3-vl-8b/`` on the GB10 host.
+Weights live in ``~/models/qwen3-vl-8b/`` on the GB10 host.
+
+A start that would break the memory floor first makes room (``memroom.py``):
+the other on-demand services (forecast, then speech) are asked on loopback to
+release their idle models, and the same floor is checked again. Released
+models reload on their next use.
 """
 
 from __future__ import annotations
@@ -53,6 +58,20 @@ class Settings(BaseSettings):
     # guard evicts llama servers under 6 GiB available, so 8 GiB left after the load keeps 2 GiB clear.
     need_gib: float = 8.0
     min_free_gib: float = 8.0
+
+    # making room (memroom.py; docs/ai/vision.md "Making room"): before refusing a start, ask the
+    # other on-demand services on loopback to release their idle models. Port 0 skips a peer.
+    make_room: bool = True
+    peer_forecast_port: int = 8195
+    peer_speech_port: int = 8194
+    # POST /admin/release called by hand keeps a model used within this many seconds (and one serving
+    # a request)
+    release_idle_s: float = 20.0
+    # making room for a waiting start has priority: the peers release every model not serving a
+    # request right now, however recently used; it reloads on its next use
+    make_room_idle_s: float = 0.0
+    make_room_timeout_s: float = 2.0   # per peer call
+    make_room_wait_s: float = 5.0      # MemAvailable is polled this long after a release
 
     max_image_bytes: int = 12 * 1024 * 1024
     max_side: int = 1024

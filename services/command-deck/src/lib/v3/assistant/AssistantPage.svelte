@@ -505,4 +505,27 @@
 			padding: 0 24px;
 		}
 	}
+
+	/* a phone: the conversation alone (the context column is a desktop aside) */
+	@media (max-width: 720px) {
+		.as {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.as > :global(.ctx) {
+			display: none;
+		}
+
+		.conv {
+			border-right: 0;
+		}
+
+		.dcol {
+			padding: 0 14px;
+		}
+
+		.thread {
+			padding-top: 16px;
+		}
+	}
 </style>

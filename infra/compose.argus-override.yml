@@ -1,4 +1,4 @@
-# VVIP compose override — ARGUS STACK (project sahoshi, the live system).
+# Sahoshi compose override — ARGUS STACK (project sahoshi, the live system).
 #
 # The argus stack at ~/argus/sahoshi is THE system (the original `vvip` fleet was
 # retired 2026-10-19). One command brings it up and keeps it up across host
@@ -37,7 +37,7 @@
 #                               src/hooks.server.ts in this tree)
 #   event-emulator 8190        (host-net, loopback)
 #
-# Usage (from VVIP/):
+# Usage (from the repository root):
 #   scripts/sahoshi_up.sh                 # bring-up, migrate, seed, converge
 #   scripts/sahoshi_up.sh --status        # read-only readiness table
 #   scripts/sahoshi_up.sh --demo          # + city signal writer and living city

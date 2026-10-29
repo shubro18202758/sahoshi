@@ -53,7 +53,7 @@ class Settings:
         snapshot = os.environ.get("DECIDER_SNAPSHOT_PATH", dec.get("snapshot_path", ""))
         if not str(snapshot or "").strip():
             raise ValueError("decider.snapshot_path missing in sahoshi_models.yaml")
-        self.snapshot_path = Path(snapshot)
+        self.snapshot_path = Path(snapshot).expanduser()  # the yaml may write the HF cache as ~/.cache/…
         # Backend: auto (from the snapshot layout) | autojev (protocol v1,
         # pplx-decider-v1-27b) | pplx_decider (protocol v3 joint checkpoints).
         self.runtime = str(_env_or("DECIDER_RUNTIME", dec.get("runtime") or "auto")).strip().lower()

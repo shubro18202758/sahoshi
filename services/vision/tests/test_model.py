@@ -153,3 +153,43 @@ def test_manager_does_not_retry_when_memory_has_gone(tmp_path: Path, monkeypatch
     with pytest.raises(ModelUnavailable, match="exited with 1"):
         asyncio.run(LlamaServerManager(s).ensure())
     assert count.read_text().count("x") == 1
+
+
+def test_refusal_is_logged_with_its_reason(tmp_path: Path, monkeypatch, caplog) -> None:
+    """Audit 29 Oct: the 503s of 28 Oct left nothing in the journal."""
+    monkeypatch.setattr(model_mod, "_mem_available_gib", lambda: 15.0)
+    monkeypatch.setattr(model_mod.subprocess, "Popen", lambda *a, **k: None)
+    mgr = LlamaServerManager(_files(tmp_path))
+    with caplog.at_level("WARNING", logger="vision.model"), pytest.raises(ModelUnavailable):
+        asyncio.run(mgr.ensure())
+    assert any("15.0 GiB available" in r.getMessage() for r in caplog.records)
+
+
+def test_missing_weights_are_logged(tmp_path: Path, caplog) -> None:
+    s = Settings(model_path=tmp_path / "absent.gguf")
+    with caplog.at_level("WARNING", logger="vision.model"), pytest.raises(ModelUnavailable):
+        asyncio.run(LlamaServerManager(s).ensure())
+    assert any("absent.gguf" in r.getMessage() for r in caplog.records)
+
+
+def test_readiness_says_when_a_start_would_be_refused(tmp_path: Path, monkeypatch) -> None:
+    started = []
+    monkeypatch.setattr(model_mod.subprocess, "Popen", lambda *a, **k: started.append(a))
+    mgr = LlamaServerManager(_files(tmp_path))  # need 8 + floor 12 = 20 GiB
+    monkeypatch.setattr(model_mod, "_mem_available_gib", lambda: 15.0)
+    r = mgr.readiness()
+    assert r["ready"] is False and "15.0 GiB available" in r["reason"]
+    assert r["start_needs_gib"] == 20.0 and r["mem_available_gib"] == 15.0
+    monkeypatch.setattr(model_mod, "_mem_available_gib", lambda: 40.0)
+    assert mgr.readiness() == {"ready": True, "reason": None, "start_needs_gib": 20.0,
+                               "mem_available_gib": 40.0}
+    assert started == []  # readiness never starts anything
+
+
+def test_readiness_reports_missing_files(tmp_path: Path) -> None:
+    r = LlamaServerManager(Settings(model_path=tmp_path / "absent.gguf")).readiness()
+    assert r["ready"] is False and "absent.gguf" in r["reason"]
+
+
+def test_unmanaged_model_has_no_readiness_probe() -> None:
+    assert LlamaVisionModel(Settings(llm_manage=False)).status()["readiness"] is None

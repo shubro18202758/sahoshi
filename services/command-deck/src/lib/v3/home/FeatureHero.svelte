@@ -244,12 +244,13 @@
 		color: var(--v3-decide-text);
 	}
 
+	/* the call to action follows the facts: the hero stretches to the pulse column's height (often past the fold),
+	   and a button pinned to its bottom edge would sit below the first screen */
 	.actions {
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		margin-top: auto;
-		padding-top: 6px;
+		padding-top: 10px;
 	}
 
 	.btn-primary {
@@ -414,6 +415,30 @@
 
 		.facts {
 			gap: 10px 22px;
+		}
+	}
+
+	/* a phone: the copy over the map, no inset picture */
+	@media (max-width: 720px) {
+		.feature {
+			min-height: 0;
+		}
+
+		.copy {
+			padding: 20px 18px;
+		}
+
+		.display {
+			font-size: 26px;
+			line-height: 34px;
+		}
+
+		.hero-inset {
+			display: none;
+		}
+
+		.actions {
+			flex-wrap: wrap;
 		}
 	}
 

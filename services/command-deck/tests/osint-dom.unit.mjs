@@ -384,9 +384,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let browserFails = 0;
 try {
 	const { createRequire } = await import('node:module');
-	const requireP = createRequire('/home/sandy050405/argus/sahoshi/frontend/package.json');
+	const requireP = createRequire(process.env.PUPPETEER_FROM ?? path.resolve(DECK, '../../frontend/package.json'));
 	const puppeteer = requireP('puppeteer');
-	const CHROME = '/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome';
+	const CHROME = `${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`;
 	const browser = await puppeteer.launch({
 		executablePath: CHROME,
 		headless: 'new',

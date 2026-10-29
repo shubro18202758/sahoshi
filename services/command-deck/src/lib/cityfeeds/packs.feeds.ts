@@ -148,6 +148,11 @@ const en = {
 	cf_pub_worst: (site: unknown) => `Highest near ${s(site)}.`,
 	cf_pub_tomorrow: (band: unknown) => `Next 48 hours: ${s(band).toLowerCase()}.`,
 	cf_pub_source: 'Open-Meteo (CAMS) · CPCB National AQI bands',
+	cf_pub_lead_obs: 'Kolkata’s air as the CPCB monitoring stations measured it, in India’s National AQI bands.',
+	cf_pub_tag_obs: 'Measured',
+	cf_pub_tag_obs_tip: 'The CPCB stations’ own 24-hour averages (via OpenAQ), banded with the National AQI. Two pollutants only, so indicative.',
+	cf_pub_tomorrow_model: (band: unknown) => `Model outlook for the next 48 hours: ${s(band).toLowerCase()}.`,
+	cf_pub_source_obs: 'CPCB stations via OpenAQ · CPCB National AQI bands. Outlook: Open-Meteo (CAMS)',
 };
 
 export type FeedsKey = keyof typeof en;

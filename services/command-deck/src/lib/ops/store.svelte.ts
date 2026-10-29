@@ -966,9 +966,11 @@ class OpsStore {
 
 	// ─── names (geometry registry) ────────────────────────────────────────────
 
-	junctionName(id: number | null | undefined): string | null {
+	junctionName(id: number | null | undefined, lang?: string | null): string | null {
 		if (id == null) return null;
-		return this.junctions.find((j) => j.junctionId === id)?.name ?? null;
+		const j = this.junctions.find((x) => x.junctionId === id);
+		// the network's Bengali name on a Bengali page (cities/kolkata/network.json name_bn), else the signage name
+		return (lang === 'bn' ? j?.nameBn : null) ?? j?.name ?? null;
 	}
 
 	roadName(segmentId: number | null | undefined): string | null {
@@ -3227,6 +3229,7 @@ class OpsStore {
 	}
 
 	async pollTrafficFeed() {
+		if (this.signInRequired) return; // an operator read: nothing until someone signs in
 		try {
 			this.trafficFeed = await fetchTrafficProvenance();
 			this.trafficFeedNote = null;

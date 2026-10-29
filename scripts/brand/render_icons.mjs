@@ -11,9 +11,9 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STATIC = path.resolve(HERE, '../../services/command-deck/static');
-const require = createRequire(path.join(process.env.PUPPETEER_FROM ?? '/home/sandy050405/argus/sahoshi/frontend', 'package.json'));
+const require = createRequire(path.join(process.env.PUPPETEER_FROM ?? path.resolve(HERE, '../../frontend'), 'package.json'));
 const puppeteer = require('puppeteer');
-const CHROME = process.env.CHROME ?? '/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome';
+const CHROME = process.env.CHROME ?? `${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`;
 
 // [source svg, output png, size, full-bleed tile colour (maskable icons need a full square) or null]
 const JOBS = [

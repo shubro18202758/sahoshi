@@ -1,5 +1,5 @@
 {
-  "chrome": "/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome",
+  "chrome": "~/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome",
   "origin": "http://127.0.0.1:5373",
   "pursuitTitle": "PURSUIT — stolen WB06EM9001 (FIR 4401/2026, Hare Street PS)",
   "shots": {

@@ -169,6 +169,10 @@ export interface EventMetadata {
 	 * never reads as a real movement. Absent on unlabelled rows.
 	 */
 	label?: string | null;
+	/** The living city's Bengali title (the emulator's metadata.title_bn, "<cause> · <site>"); absent elsewhere. */
+	titleBn?: string | null;
+	/** The living city's cause id (metadata.cause: breakdown, market_spillover, …); absent elsewhere. */
+	cause?: string | null;
 }
 
 export type EventSource =

@@ -128,6 +128,8 @@
 					center: [cx, cy],
 					zoom: 12,
 					attributionControl: false,
+					// the canvas's accessible name in the page's language (maplibre's own default is the English "Map")
+					locale: { 'Map.Title': citizenT(lang, 'map_title'), 'AttributionControl.ToggleAttribution': citizenT(lang, 'map_credits') },
 					transformRequest: (url, resourceType) => {
 						if (String(resourceType) === 'Tile') tileRequests += 1;
 						return { url };

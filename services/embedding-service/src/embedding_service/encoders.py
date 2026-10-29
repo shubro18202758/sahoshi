@@ -8,7 +8,7 @@ Real encoders wrap the models verified on this machine (manifest):
   image-only batches must be encoded separately (model-card constraint); this
   service embeds text only.
 * bge-m3 — local SentenceTransformer snapshot at
-  ``/home/sandy050405/models/bge-m3``; encode → ``(N, 1024)`` float32
+  ``BGE_M3_PATH`` (default ``~/models/bge-m3``); encode → ``(N, 1024)`` float32
   unit-norm.
 
 Heavy imports (sentence_transformers / torch) happen lazily inside

@@ -1,3 +1,43 @@
+<script module lang="ts">
+	import { t as tm } from '$lib/i18n/strings';
+	import type { Mark as MarkT } from './logos';
+
+	const GROUP: Readonly<Record<string, string>> = {
+		police: 'police',
+		zone: 'police',
+		patrol: 'police',
+		kp: 'police',
+		traffic: 'traffic',
+		kp_traffic: 'traffic',
+		ems: 'ems',
+		'108': 'ems',
+		amb108: 'ems',
+		ambulance: 'ems',
+		municipal: 'municipal',
+		kmc: 'municipal',
+		disaster: 'disaster',
+		wbsdma: 'disaster',
+		sdrf: 'disaster',
+		ndma: 'ndma',
+		ndrf: 'ndma',
+		sachet: 'ndma',
+		imd: 'imd',
+		weather: 'imd',
+		metro: 'metro',
+		wbtc: 'wbtc',
+		bus: 'wbtc',
+		osm: 'osm',
+		openstreetmap: 'osm',
+		citizens: 'citizens',
+	};
+
+	/** The mark's owner in the reader's language (a known agency group), else the name on file. */
+	export function markName(role: string | null, m: MarkT | null | undefined, lang: string): string {
+		const g = GROUP[(role ?? '').toLowerCase()];
+		return g ? tm(lang, `v3i_agency_${g}`) : (m?.name ?? '');
+	}
+</script>
+
 <script lang="ts">
 	/**
 	 * AgencyMark — an agency's or a source's own mark, as-is on a light plate (it belongs to its owner; Sahoshi is not
@@ -30,37 +70,7 @@
 	} = $props();
 
 	const m = $derived(mark === undefined ? markFor(role) : mark);
-	const GROUP: Readonly<Record<string, string>> = {
-		police: 'police',
-		zone: 'police',
-		patrol: 'police',
-		kp: 'police',
-		traffic: 'traffic',
-		kp_traffic: 'traffic',
-		ems: 'ems',
-		'108': 'ems',
-		amb108: 'ems',
-		ambulance: 'ems',
-		municipal: 'municipal',
-		kmc: 'municipal',
-		disaster: 'disaster',
-		wbsdma: 'disaster',
-		sdrf: 'disaster',
-		ndma: 'ndma',
-		ndrf: 'ndma',
-		sachet: 'ndma',
-		imd: 'imd',
-		weather: 'imd',
-		metro: 'metro',
-		wbtc: 'wbtc',
-		bus: 'wbtc',
-		osm: 'osm',
-		citizens: 'citizens',
-	};
-	const name = $derived.by(() => {
-		const g = GROUP[(role ?? '').toLowerCase()];
-		return g ? t(lang, `v3i_agency_${g}`) : (m?.name ?? '');
-	});
+	const name = $derived(markName(role, m, lang));
 	const alt = $derived(decorative || !name ? '' : t(lang, 'v3i_mark_alt', name));
 	/** A wide mark (a wordmark) keeps its height and grows sideways, up to 3.4 times the size. */
 	const aspect = $derived(m ? Math.min(3.4, Math.max(1, m.w / m.h)) : 1);

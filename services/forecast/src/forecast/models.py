@@ -14,6 +14,9 @@ p10 / p50 / p90 of the next ``horizon`` steps — so the backtest compares like 
 
 Model weights load lazily on first use, on the GPU when there is one, and are freed after
 ``idle_unload_sec`` of disuse (``ModelSlot.maybe_unload``). Nothing is downloaded at import time.
+Another on-demand service that is short of memory may ask for them sooner (``POST /admin/release``):
+a slot is released only when no forecast holds it (``ModelSlot.using``) and it has been idle for
+``release_idle_sec``; it reloads on its next use.
 """
 
 from __future__ import annotations
@@ -21,10 +24,13 @@ from __future__ import annotations
 import gc
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Iterator, Protocol
 
 import numpy as np
+
+from forecast.memroom import idle_verdict
 
 __all__ = [
     "SeriesInput",
@@ -143,13 +149,18 @@ def _device(pref: str) -> str:
 class ModelSlot:
     """A lazily loaded model that frees itself after ``idle_sec`` of disuse."""
 
-    def __init__(self, name: str, loader: Callable[[], Any], idle_sec: float) -> None:
+    def __init__(self, name: str, loader: Callable[[], Any], idle_sec: float, need_gib: float = 2.0) -> None:
         self.name = name
         self._loader = loader
         self.idle_sec = idle_sec
+        #: what a release frees, roughly (the measured peak, rounded up): the /admin/release estimate
+        self.need_gib = need_gib
         self._obj: Any = None
         self._lock = threading.RLock()
         self.last_used = 0.0
+        # forecasts holding the model (``using``); its own lock, so one waiting behind a load already counts
+        self._busy = 0
+        self._busy_lock = threading.Lock()
         self.loaded_at: float | None = None
         self.load_sec: float | None = None
         self.loads = 0
@@ -181,6 +192,40 @@ class ModelSlot:
                 self.loads += 1
             self.last_used = time.monotonic()
             return self._obj
+
+    @contextmanager
+    def using(self) -> Iterator[Any]:
+        """The loaded model, held for one prediction: never released while held."""
+        with self._busy_lock:
+            self._busy += 1
+        try:
+            yield self.get()
+        finally:
+            with self._busy_lock:
+                self._busy -= 1
+            self.last_used = time.monotonic()
+
+    def release_if_idle(self, min_idle_s: float) -> dict[str, Any] | None:
+        """Unload when loaded, not held by a prediction and unused for ``min_idle_s`` seconds.
+
+        ``None`` when nothing is loaded (or loading); otherwise ``{"model", "released", "why",
+        "freed_gib"}``. Never waits: a slot whose lock is taken (loading) is reported as in use."""
+        if self._obj is None and not self._busy:
+            return None
+        why = idle_verdict(self._busy, self.last_used, time.monotonic(), min_idle_s)
+        if why is None and not self._lock.acquire(blocking=False):
+            why = "in use"
+        elif why is None:
+            try:  # re-check under the lock: a prediction may have started meanwhile
+                if self._obj is None:
+                    return None
+                why = idle_verdict(self._busy, self.last_used, time.monotonic(), min_idle_s)
+                if why is None:
+                    self.unload()
+                    return {"model": self.name, "released": True, "why": None, "freed_gib": self.need_gib}
+            finally:
+                self._lock.release()
+        return {"model": self.name, "released": False, "why": why, "freed_gib": 0.0}
 
     def touch_peak(self) -> None:
         try:
@@ -215,8 +260,11 @@ class ModelSlot:
 
     def maybe_unload(self, now: float | None = None) -> bool:
         now = time.monotonic() if now is None else now
-        if self._obj is not None and now - self.last_used > self.idle_sec:
-            return self.unload()
+        if self._obj is not None and not self._busy and now - self.last_used > self.idle_sec:
+            with self._lock:  # re-check: a prediction may be loading or holding it
+                if self._busy or self._obj is None:
+                    return False
+                return self.unload()
         return False
 
     def status(self) -> dict[str, Any]:
@@ -242,7 +290,7 @@ class Chronos2Forecaster:
         self.device = _device(device)
         self.dtype = dtype
         self.batch_size = batch_size
-        self.slot = ModelSlot(self.name, self._load, idle_sec)
+        self.slot = ModelSlot(self.name, self._load, idle_sec, need_gib=2.0)  # peak 1.6 GiB, 1.8 reserved
 
     def _load(self):
         torch = _torch()
@@ -252,7 +300,10 @@ class Chronos2Forecaster:
         return Chronos2Pipeline.from_pretrained(self.model_id, device_map=self.device, dtype=dt)
 
     def predict(self, inputs: list[SeriesInput], horizon: int) -> list[QuantileForecast]:
-        pipe = self.slot.get()
+        with self.slot.using() as pipe:  # held: never released mid-prediction
+            return self._predict(pipe, inputs, horizon)
+
+    def _predict(self, pipe: Any, inputs: list[SeriesInput], horizon: int) -> list[QuantileForecast]:
         batch = []
         for inp in inputs:
             item: dict[str, Any] = {"target": np.asarray(inp.target, dtype=np.float32)}
@@ -284,7 +335,7 @@ class TimesFMForecaster:
         self.model_id = model_id
         self.max_context = max_context
         self.max_horizon = max_horizon
-        self.slot = ModelSlot(self.name, self._load, idle_sec)
+        self.slot = ModelSlot(self.name, self._load, idle_sec, need_gib=3.5)  # peak 3.6 GiB process-wide
 
     def _load(self):
         import timesfm  # noqa: PLC0415
@@ -298,7 +349,10 @@ class TimesFMForecaster:
         return m
 
     def predict(self, inputs: list[SeriesInput], horizon: int) -> list[QuantileForecast]:
-        m = self.slot.get()
+        with self.slot.using() as m:  # held: never released mid-prediction
+            return self._predict(m, inputs, horizon)
+
+    def _predict(self, m: Any, inputs: list[SeriesInput], horizon: int) -> list[QuantileForecast]:
         _point, q = m.forecast(horizon=horizon,
                                inputs=[np.asarray(i.target[-self.max_context:], dtype=float) for i in inputs])
         self.slot.touch_peak()

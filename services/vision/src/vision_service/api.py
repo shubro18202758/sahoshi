@@ -2,6 +2,12 @@
 
     GET  /health
     POST /vision/road-state   image (jpeg/png) [+ ?question=…] → road state, UNVERIFIED-CAMERA
+    POST /admin/release       loopback machine callers only: stop the idle model (unused for
+                              ?idle_s=, default 20 s, and not serving a request)
+
+A start that would break the memory floor first makes room: the other
+on-demand services release their idle models (``memroom.py``). Released
+models reload on their next use; /health shows the last attempt.
 
 The image is the raw request body with its Content-Type (``image/jpeg`` or
 ``image/png``), or multipart field ``image`` when python-multipart is
@@ -27,6 +33,7 @@ from starlette.concurrency import run_in_threadpool
 from .config import Settings, get_settings
 from .ethics import screen_query, scrub
 from .images import ImageError, prepare
+from .memroom import RELOAD_NOTE, loopback_refusal, summarize
 from .model import DEPTH_BANDS, STATES, LlamaVisionModel, ModelUnavailable, RoadStateModel
 
 __all__ = ["create_app", "normalize", "main", "VERIFICATION_STATE"]
@@ -132,6 +139,7 @@ def create_app(settings: Settings | None = None, *, model: RoadStateModel | None
         app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"],
                            allow_headers=["content-type"])
     app.state.model = mdl
+    last_release: dict[str, Any] = {}
 
     @app.exception_handler(ModelUnavailable)
     async def _unavailable(_req: Request, exc: ModelUnavailable) -> JSONResponse:
@@ -139,13 +147,42 @@ def create_app(settings: Settings | None = None, *, model: RoadStateModel | None
 
     @app.get("/health")
     async def health() -> dict[str, Any]:
+        model_status = mdl.status()
+        readiness = model_status.get("readiness") if isinstance(model_status, dict) else None
+        ready = readiness.get("ready") if isinstance(readiness, dict) else None
         return {
-            "status": "ok",
+            # the process answers either way; "degraded" when a road-state request would
+            # get a 503 right now (it said "ok" while the model could not start)
+            "status": "degraded" if ready is False else "ok",
+            "ready": ready is not False,
+            "degraded_reason": readiness.get("reason") if ready is False else None,
             "service": "vision",
-            "model": mdl.status(),
+            "model": model_status,
             "states": list(STATES),
             "policy": "roads and vehicles only; no person description; no plate reading",
+            "make_room": {
+                **(mdl.make_room_status() if hasattr(mdl, "make_room_status")
+                   else {"enabled": False, "note": RELOAD_NOTE}),
+                "last_release": last_release or None,
+            },
         }
+
+    @app.post("/admin/release")
+    async def admin_release(request: Request,
+                            idle_s: float | None = Query(None, ge=0, le=3600)) -> dict[str, Any]:
+        why = loopback_refusal(request.client.host if request.client else None, request.headers)
+        if why:
+            raise HTTPException(403, why)
+        min_idle = s.release_idle_s if idle_s is None else idle_s
+        release = getattr(mdl, "release_idle", None)
+        out = await release(min_idle) if release is not None else summarize("vision", [])
+        last_release.clear()
+        last_release.update(at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), idle_s=min_idle,
+                            released=out["released"], freed_gib_estimate=out["freed_gib_estimate"],
+                            kept=out["kept"])
+        log.info("release asked: released %s (~%.1f GiB); kept %s", out["released"] or "nothing",
+                 out["freed_gib_estimate"], out["kept"] or "nothing")
+        return out
 
     @app.post("/vision/road-state")
     async def road_state(request: Request,

@@ -334,4 +334,42 @@
 			height: 44px;
 		}
 	}
+
+	/* a phone: no screen title (the tab bar names the page), the search takes what is left, the officer is its badge */
+	@media (max-width: 720px) {
+		.top {
+			grid-column: 1;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 8px;
+			padding: 0 12px;
+		}
+
+		.title {
+			display: none;
+		}
+
+		.search {
+			height: 40px;
+			gap: 8px;
+			padding: 0 12px;
+		}
+
+		.right {
+			gap: 6px;
+		}
+
+		.officer {
+			height: 40px;
+			padding: 0 3px;
+			border-radius: 20px;
+		}
+
+		.who {
+			display: none;
+		}
+
+		.officer-pop {
+			width: min(340px, calc(100vw - 32px));
+		}
+	}
 </style>

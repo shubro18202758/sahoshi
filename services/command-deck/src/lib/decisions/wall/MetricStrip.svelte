@@ -88,4 +88,13 @@
 			padding-left: 12px;
 		}
 	}
+
+	/* a phone: two rows of four, each figure with room for its label */
+	@media (max-width: 720px) {
+		.strip {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-auto-rows: 76px;
+			height: auto;
+		}
+	}
 </style>

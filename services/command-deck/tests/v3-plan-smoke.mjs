@@ -176,7 +176,7 @@ export async function hermeticPage(browser, origin, fx, { writes, errors, width 
 }
 
 export function findPuppeteer(DECK) {
-	for (const from of [process.env['PUPPETEER_FROM'], path.resolve(DECK, '../../frontend/package.json'), '/home/sandy050405/argus/sahoshi/frontend/package.json'].filter(Boolean)) {
+	for (const from of [process.env['PUPPETEER_FROM'], path.resolve(DECK, '../../frontend/package.json')].filter(Boolean)) {
 		try {
 			const req = createRequire(from);
 			return req('puppeteer').default ?? req('puppeteer');
@@ -187,7 +187,7 @@ export function findPuppeteer(DECK) {
 	return null;
 }
 
-export const CHROME = ['/home/sandy050405/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome'].find((p) => existsSync(p));
+export const CHROME = [`${process.env.HOME}/.cache/puppeteer/chrome/linux_arm-153.0.8010.36/chrome-linux-arm64/chrome`].find((p) => existsSync(p));
 
 // ─── the smoke ───────────────────────────────────────────────────────────────
 

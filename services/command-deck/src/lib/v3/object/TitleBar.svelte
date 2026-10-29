@@ -205,4 +205,23 @@
 			padding: 0 22px;
 		}
 	}
+
+	/* a phone: a smaller mark and title, the actions wrap under the name */
+	@media (max-width: 720px) {
+		.titlebar {
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+
+		.art {
+			width: 56px;
+			height: 56px;
+			border-radius: 16px;
+		}
+
+		.display {
+			font-size: 26px;
+			line-height: 33px;
+		}
+	}
 </style>

@@ -132,6 +132,22 @@ was run through the same twelve images and nine probes on the same llama.cpp bui
 Qwen3.5-9B read both broken-down buses correctly (Qwen3-VL missed one) but missed two of the three fallen
 trees, the commoner Kolkata case after a nor'wester or a cyclone, and it is slower. Qwen3-VL-8B stays.
 
+## Making room
+
+The model starts on demand and is refused (503) when MemAvailable minus its ~8 GiB would fall under
+the 8 GiB floor. Before refusing, the service makes room (`memroom.py`): it asks forecast, then
+speech, on loopback (`POST /admin/release?idle_s=0`, 2 s each) to release every model that is not
+serving a request right now (a waiting start has priority; `VISION_MAKE_ROOM_IDLE_S`, default 0),
+polls MemAvailable for up to 5 s and checks the same floor again; the floor never moves. A start
+that passed the floor check but failed to allocate GPU memory (MemAvailable counts page cache and
+swap a GPU allocation cannot use) makes room for the model's size the same way before its one
+retry. Its own `POST /admin/release` stops the llama-server only when no road-state request is
+running or starting; called by hand it also keeps a server used in the last 20 s
+(`VISION_RELEASE_IDLE_S`). Released models are not restarted afterwards: each reloads on its own
+next use. `/health` → `make_room` shows the last attempt and the last release; `VISION_MAKE_ROOM=0`
+turns it off. Before a demo segment, `scripts/ai_warm.sh vision` releases the other idle models and
+runs one road-state call on a bundled test still.
+
 ## Limits and next steps
 
 - Twelve images is a smoke test. Before a pilot: a labelled set of real

@@ -26,7 +26,7 @@ from typing import Any, Callable, Protocol
 import numpy as np
 
 from .audio import TARGET_SR
-from .runtime import LazyModel, ModelNotProvisioned, not_provisioned
+from .runtime import DEFAULT_MIN_FREE_GIB, LazyModel, ModelNotProvisioned, not_provisioned
 
 __all__ = [
     "Transcript",
@@ -37,6 +37,7 @@ __all__ = [
     "FallbackASR",
     "RoutedASR",
     "SUPPORTED_LANGS",
+    "lazy_models_of",
 ]
 
 log = logging.getLogger("speech.asr")
@@ -104,7 +105,7 @@ class WhisperASR:
     """
 
     def __init__(self, model_id: str, *, device: str = "cuda", beams: int = 1,
-                 min_free_gib: float = 12.0, idle_unload_s: float = 600) -> None:
+                 min_free_gib: float = DEFAULT_MIN_FREE_GIB, idle_unload_s: float = 600) -> None:
         self.model_id = model_id
         self.device = device
         self.beams = beams
@@ -135,11 +136,17 @@ class WhisperASR:
     def unload(self) -> bool:
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     # -- inference -------------------------------------------------------------
     def transcribe(self, samples: np.ndarray, lang: str | None) -> Transcript:
+        with self._lazy.using() as (proc, model, dtype):  # held: never released mid-request
+            return self._transcribe(proc, model, dtype, samples, lang)
+
+    def _transcribe(self, proc, model, dtype, samples: np.ndarray, lang: str | None) -> Transcript:
         import torch
 
-        proc, model, dtype = self._lazy.get()
         t0 = time.perf_counter()
         texts: list[str] = []
         logps: list[float] = []
@@ -190,12 +197,11 @@ class WhisperASR:
         """Spoken language of the first 30 s: bn, en or hi (anything else → bn)."""
         import torch
 
-        proc, model, dtype = self._lazy.get()
-        chunk = samples[: int(_CHUNK_S * TARGET_SR)]
-        with self._run_lock, torch.inference_mode():
-            feats = proc(chunk, sampling_rate=TARGET_SR, return_tensors="pt").input_features
-            code = self._detect(model, proc, feats.to(self.device, dtype=dtype))
-        self._lazy.touch()
+        with self._lazy.using() as (proc, model, dtype):
+            chunk = samples[: int(_CHUNK_S * TARGET_SR)]
+            with self._run_lock, torch.inference_mode():
+                feats = proc(chunk, sampling_rate=TARGET_SR, return_tensors="pt").input_features
+                code = self._detect(model, proc, feats.to(self.device, dtype=dtype))
         return code
 
     @staticmethod
@@ -274,7 +280,7 @@ class IndicConformerASR:
     LANGS = ("bn", "hi")
 
     def __init__(self, model_id: str = DEFAULT_MODEL, *, decoder: str = "rnnt",
-                 revision: str | None = None, min_free_gib: float = 12.0,
+                 revision: str | None = None, min_free_gib: float = DEFAULT_MIN_FREE_GIB,
                  idle_unload_s: float = 600, loader: Callable[[], Any] | None = None) -> None:
         if decoder not in ("rnnt", "ctc"):
             raise ValueError(f"IndicConformer decoder must be 'rnnt' or 'ctc', not {decoder!r}")
@@ -316,21 +322,23 @@ class IndicConformerASR:
     def unload(self) -> bool:
         return self._lazy.unload()
 
+    def lazy_models(self) -> list[LazyModel]:
+        return [self._lazy]
+
     def transcribe(self, samples: np.ndarray, lang: str | None) -> Transcript:
         lang = lang or "bn"
         if lang not in self.LANGS:
             raise ValueError(f"IndicConformer here serves {self.LANGS}, not {lang!r}")
-        model = self._lazy.get()
-        t0 = time.perf_counter()
-        texts: list[str] = []
-        step = int(_CHUNK_S * TARGET_SR)
-        with self._run_lock, _inference_mode():
-            for start in range(0, max(1, samples.size), step):
-                chunk = samples[start:start + step]
-                if chunk.size < int(0.2 * TARGET_SR):
-                    continue
-                texts.append(_as_text(model(_batch_of_one(chunk), lang, self.decoder)).strip())
-        self._lazy.touch()
+        with self._lazy.using() as model:
+            t0 = time.perf_counter()
+            texts: list[str] = []
+            step = int(_CHUNK_S * TARGET_SR)
+            with self._run_lock, _inference_mode():
+                for start in range(0, max(1, samples.size), step):
+                    chunk = samples[start:start + step]
+                    if chunk.size < int(0.2 * TARGET_SR):
+                        continue
+                    texts.append(_as_text(model(_batch_of_one(chunk), lang, self.decoder)).strip())
         return Transcript(
             text=" ".join(t for t in texts if t).strip(),
             language=lang,
@@ -385,6 +393,9 @@ class FallbackASR:
         b = getattr(self.fallback, "unload", lambda: False)()
         return a or b
 
+    def lazy_models(self) -> list[LazyModel]:
+        return lazy_models_of(self.preferred, self.fallback)
+
 
 class RoutedASR:
     """Bengali to the Bengali checkpoint; English and Hindi to a multilingual one.
@@ -421,3 +432,16 @@ class RoutedASR:
         a = self.bn.unload()
         b = self.multi.unload()
         return a or b
+
+    def lazy_models(self) -> list[LazyModel]:
+        return lazy_models_of(self.bn, self.multi)
+
+
+def lazy_models_of(*backends: Any) -> list[LazyModel]:
+    """Every lazily loaded model behind these backends, once each (fakes have none)."""
+    out: list[LazyModel] = []
+    for b in backends:
+        for lm in getattr(b, "lazy_models", lambda: [])():
+            if all(lm is not x for x in out):
+                out.append(lm)
+    return out

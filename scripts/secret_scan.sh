@@ -15,8 +15,11 @@
 #            messages: REV_RANGE, else @{upstream}..HEAD, else origin/main..HEAD,
 #            else (no remote) every commit reachable from HEAD.
 #
-# Rules: the LITERAL values of SAHOSHI_OPERATOR_PIN, SAHOSHI_SESSION_SECRET and
-# SAHOSHI_CESIUM_ION_TOKEN (read at run time from sahoshi.env —
+# Rules: the LITERAL values of SAHOSHI_OPERATOR_PIN, SAHOSHI_SESSION_SECRET,
+# SAHOSHI_CESIUM_ION_TOKEN and every other sahoshi.env key named like a
+# credential (*_TOKEN*, *_KEY, *_SECRET, *_PASSWORD: the open-data keys —
+# WAQI, OpenAQ, FIRMS, Mapillary, data.gov.in — the ion dev/record tokens)
+# whose value has 12+ characters (read at run time from sahoshi.env —
 # ${SAHOSHI_ENV_FILE:-~/.config/sahoshi/sahoshi.env} — and the file named by
 # $SAHOSHI_OPERATOR_PIN_FILE): a value of 20+ characters anywhere it occurs; a
 # shorter one (the 6-digit PIN) only as a standalone token — not inside a hex
@@ -26,7 +29,7 @@
 # POSTGIS_PASSWORD) assigned a literal, a JWT (the shape of a Cesium ion
 # token), a signed operator session cookie, a bearer token, a PEM private key,
 # provider tokens (AWS, GitHub, Google, Slack, Hugging Face, OpenAI,
-# Anthropic), a database URL with a password, and a quoted long literal
+# Anthropic, a Mapillary MLY| client token), a database URL with a password, and a quoted long literal
 # assigned to a key/secret/token/password/pin name. Placeholders (${…}, <…>)
 # and the repo's public dev defaults (dev_changeme, the 1234 test PIN) are not
 # findings. gitleaks / trufflehog run as well when installed.
@@ -67,7 +70,9 @@ if [ "$SELFTEST" = 1 ]; then
     # with the repository and must not match its own rules.
     PIN=482913 SECRET=Zx9Qw8Er7Ty6Ui5Op4As3 PW=Sup3rS3cretPw DBPW=Hunter2Hunter2
     JWT="$(printf 'ey%s.ey%s.%s' JhbGciOiJIUzI1NiJ9 JqdGkiOiJzZWxmdGVzdCJ9 c2VsZnRlc3Qtc2lnbmF0dXJl)"
-    printf '%s=%s\n' SAHOSHI_OPERATOR_PIN "$PIN" SAHOSHI_SESSION_SECRET "$SECRET" SAHOSHI_CESIUM_ION_TOKEN "$JWT" > "$T/sahoshi.env"
+    WAQI="$(printf 'f00d%s' 7e57c0ffee0123456789abcdef01234567)"
+    printf '%s=%s\n' SAHOSHI_OPERATOR_PIN "$PIN" SAHOSHI_SESSION_SECRET "$SECRET" SAHOSHI_CESIUM_ION_TOKEN "$JWT" \
+        WAQI_TOKEN "$WAQI" SAHOSHI_DEMO 1 > "$T/sahoshi.env"
     printf 'boot\n' > "$T/repo/README"
     g add -A; g commit -q -m base
     # a leak committed, then deleted: only the unpushed commits still carry it
@@ -94,6 +99,8 @@ if [ "$SELFTEST" = 1 ]; then
         printf 'hf_%s\n' abcdefghijklmnopqrstuvwxyzABCDEFGH
         printf 'sk-%s\n' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
         printf 'sk-ant-%s\n' abcdefghijklmnopqrstuvwxyz0123
+        printf 'const img = "MLY|%s|%s";\n' 1234567890123456 0123456789abcdef0123456789abcdef
+        printf 'aqi_url = base + "?k=%s"\n' "$WAQI"
     } > "$T/repo/leaks.js"
     # silent: placeholders, prose, public dev defaults, a PIN's digits inside a
     # decimal, and test fixtures' fake credentials
@@ -113,13 +120,15 @@ QUIET
     printf '{"pin_sig": "%s|1729500000", "id": %s, "blob": "%s"}\n' "$PIN" "$PIN" "$SECRET" > "$T/repo/showcase/snapshot.json"
     printf 'operator:\n  pin: %s\n' "$PIN" > "$T/repo/settings.yml"
     printf "process.env.%s = '%s';\n" SAHOSHI_OPERATOR_PIN 13579 SAHOSHI_SESSION_SECRET suite-secret-value > "$T/repo/tests/fake.entry.ts"
+    # SAHOSHI_DEMO=1 (not a credential name, 1 character) must not become a value rule
+    printf 'mode = SAHOSHI_DEMO=1 and 1 more\n' >> "$T/repo/quiet.sh"
     g add -A
     out="$(env -u SAHOSHI_OPERATOR_PIN_FILE SAHOSHI_ENV_FILE="$T/sahoshi.env" bash "${BASH_SOURCE[0]}" "$T/repo" --range HEAD 2>&1)"
     status=$?
     want=(operator-pin-literal session-secret-literal ion-token-literal postgis-password-literal jwt session-cookie
           bearer-token private-key aws-access-key github-token google-api-key slack-token huggingface-token
-          openai-key anthropic-key database-url-password assigned-secret
-          operator-pin-value session-secret-value ion-token-value)
+          openai-key anthropic-key mapillary-token database-url-password assigned-secret
+          operator-pin-value session-secret-value ion-token-value env-credential-value)
     bad=0
     for r in "${want[@]}"; do
         grep -q "\[$r\]" <<<"$out" || { echo "secret_scan selftest: rule $r did NOT fire on its planted fake" >&2; bad=1; }
@@ -143,7 +152,7 @@ QUIET
         bad=1
     fi
     [ "$status" = 1 ] || { echo "secret_scan selftest: a scan with findings exited $status, expected 1" >&2; bad=1; }
-    if grep -qF -e "$PIN" -e "$SECRET" -e "$PW" -e "$DBPW" -e "$JWT" <<<"$out"; then
+    if grep -qF -e "$PIN" -e "$SECRET" -e "$PW" -e "$DBPW" -e "$JWT" -e "$WAQI" <<<"$out"; then
         echo "secret_scan selftest: the report PRINTED a planted value" >&2
         bad=1
     fi
@@ -190,6 +199,7 @@ slack-token	\bxox[abposr]-[A-Za-z0-9-]{10,}
 huggingface-token	\bhf_[A-Za-z0-9]{30,}\b
 openai-key	\bsk-(?!ant-)[A-Za-z0-9_-]{32,}\b
 anthropic-key	\bsk-ant-[A-Za-z0-9_-]{20,}
+mapillary-token	\bMLY\|[0-9]{6,}\|[0-9a-f]{16,}
 database-url-password	\b(?:postgres(?:ql)?|redis|rediss|mysql|mongodb(?:\+srv)?|amqp|nats)://[^:/@\s"']++:(?!@FAKE@@|\$|<|\{)[^@\s"'/]{4,}@
 assigned-secret	(?i)\b[\w.-]*(?:api[_-]?key|secret|token|passw(?:or)?d|pin)["']?\s*+[:=]\s*+["'](?!@FAKE@["'])[A-Za-z0-9+/_=.-]{16,}["']
 EOF
@@ -229,6 +239,24 @@ env_value() {  # <KEY> — the last KEY= line of sahoshi.env, unquoted
 add_value operator-pin-value "$(env_value SAHOSHI_OPERATOR_PIN)"
 add_value session-secret-value "$(env_value SAHOSHI_SESSION_SECRET)"
 add_value ion-token-value "$(env_value SAHOSHI_CESIUM_ION_TOKEN)"
+# every other credential-named key of sahoshi.env (the open-data keys the city
+# feeds use, the ion dev/record tokens, …): a value of 12+ characters anywhere
+if [ -r "$ENV_FILE" ]; then
+    while IFS= read -r key; do
+        case "$key" in SAHOSHI_OPERATOR_PIN|SAHOSHI_SESSION_SECRET|SAHOSHI_CESIUM_ION_TOKEN) continue ;; esac
+        v="$(env_value "$key")"
+        [ "${#v}" -ge 12 ] || continue
+        case "$v" in dev_changeme|changeme*|placeholder*|example*) continue ;; esac  # public dev defaults
+        if [ "${#v}" -ge 20 ]; then
+            add_value env-credential-value "$v"
+        else  # 12–19 characters: still anywhere (add_value would keep a short one to PIN lines)
+            [[ "$v" == *'\E'* ]] && continue
+            printf '%s\t\\Q%s\\E\n' env-credential-value "$v" >> "$WORK/rules"
+            nvalues=$((nvalues + 1))
+        fi
+    done < <(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' "$ENV_FILE" \
+             | grep -E '(_TOKEN|_TOKEN_[A-Z0-9_]+|_KEY|_SECRET|_PASSWORD)$' | sort -u)
+fi
 if [ -n "${SAHOSHI_OPERATOR_PIN_FILE:-}" ] && [ -r "$SAHOSHI_OPERATOR_PIN_FILE" ]; then
     add_value operator-pin-value "$(tr -d '\r\n' < "$SAHOSHI_OPERATOR_PIN_FILE")"
 fi

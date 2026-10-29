@@ -469,7 +469,8 @@
 	const protectedSet = $derived(selectors.protectedUrns());
 	let vw = $state(1920);
 	/** The Now panel's width (§6.10: 380, 320 below 1500 px) and the strip it covers. */
-	const nowW = $derived(vw <= 1500 ? 320 : 380);
+	// a phone (≤ 720 px) has no Now column: the map takes the width, the chips and the Layers sheet sit over it
+	const nowW = $derived(vw <= 720 ? 0 : vw <= 1500 ? 320 : 380);
 	const clearInsets = $derived({ left: sheetOpen || statsOpen ? 400 : 0, right: nowW + 36, top: 64, bottom: 0 });
 
 	// ── the corridor stats (each figure shown here only) ───────────────────
@@ -723,7 +724,7 @@
 				/>
 			{/if}
 			{#if !sheetOpen && !statsOpen && !hsOn}
-				<CityChips {lang} />
+				<div class="city-chips"><CityChips {lang} /></div>
 			{/if}
 			{#if sheetOpen}
 				<div class="panel">
@@ -1151,6 +1152,71 @@
 
 		.panel {
 			width: 340px;
+		}
+	}
+
+	/* a phone: no Now column (Home lists the same things); the chips scroll sideways in one row; the rain and tide line
+	   stays; the city row (air, heat, cyclone …) is on Home; the selection card and the Layers sheet take the width */
+	@media (max-width: 720px) {
+		.now,
+		.city-chips {
+			display: none;
+		}
+
+		.left {
+			left: 10px;
+			right: 10px;
+			top: 10px;
+			gap: 8px;
+		}
+
+		.left > :global(.chips) {
+			flex-wrap: nowrap;
+			max-width: 100%;
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+
+		.panel {
+			width: 100%;
+		}
+
+		.bottom-left {
+			left: 10px;
+			right: 10px;
+			bottom: 10px;
+		}
+
+		.card {
+			width: 100%;
+		}
+
+		.bottom-mid {
+			right: 64px;
+			bottom: 70px;
+			left: 10px;
+		}
+
+		.label {
+			white-space: normal;
+		}
+
+		.replay {
+			width: 100%;
+		}
+
+		.tools {
+			right: 10px;
+			bottom: 10px;
+		}
+
+		/* the imagery credits stay readable but small, clear of the tools */
+		.map3 .stage :global(.ge-wrap[data-chrome='v2'] .ge-canvas .cesium-viewer-bottom) {
+			left: 6px;
+			right: 64px !important;
+			max-width: none;
+			font-size: 10px;
+			line-height: 13px;
 		}
 	}
 </style>

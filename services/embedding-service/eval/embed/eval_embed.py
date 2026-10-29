@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import statistics
 import sys
 import time
@@ -35,7 +36,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
-BGE_M3 = "/home/sandy050405/models/bge-m3"
+BGE_M3 = os.environ.get("BGE_M3_PATH", os.path.expanduser("~/models/bge-m3"))
 CAP = 64  # traffic.memory_docs token-vector cap
 
 CANDIDATES: dict[str, tuple[str, str]] = {

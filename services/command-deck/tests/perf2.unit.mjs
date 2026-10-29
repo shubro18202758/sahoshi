@@ -147,10 +147,11 @@ if (process.argv[2] === '--print-golden') {
  */
 const PACK_GOLDEN = {
 	// Re-derived 2026-10-28 (Sahoshi): the Bengali packs (danda sentence ends), the Kolkata EN/HI copy, and the merged streams' pack edits — recomputed with `--print-golden src` after every stream merged.
+	// 2026-10-29 (UI audit): strings.citizen gains map_title / map_credits (the citizen map's accessible name); packs HI band words in Hindi.
 	'strings': { en: [146, '3eb5587af4790de100b40a9bae8b75235d0a05c25cf5fbcb2fee2e5116fc7da0'], hi: [146, '11d5788965ac7584b895b95e73cdaaccbc32f636a8d1acf7347cd5d79133e29a'], bn: [146, 'a1858c295e29999dd874a6597fd90c6ebe80d82422f70042e1e80ce1313802ad'] },
 	'strings.ops': { en: [438, 'df2a64a61f561a8ea444e72a8629dedb67029b0b867f3c5faedca98b3d6f40f8'], hi: [438, 'c61295e7fcc4ae7287c6893bf3e3d7dd0bda1dfa344dd504b2dc0e7ac4d4ee4e'], bn: [438, '53300ddb8b8ab714eee67ec3bdf5b769d5582b5a97f497296193e7563a991f58'] },
-	'strings.citizen': { en: [203, '562661c0997b3fcbd4f8802e8619fb546a9b0a71277f5301ce83089326edd81c'], hi: [203, '8b46be08106dbedc7002e81b9b6e9ae450d39a86a1d0c23f2b3c60e680580842'], bn: [203, '9e05749bea70dc2338c5204511e364b3a5c617a266b438f7f410aee8f4df8bb2'] },
-	'packs': { en: [390, 'd68de260b50d0755e0dda39cdeee0276482ab5f61455b87d12e4ea4e49a08571'], hi: [390, '40e6b2f199b3bf26f3ae7d6546ed8ea380da33f21340ea44a4b7def3da6ccb42'], bn: [390, '5ddbd4eec015ac357d7b707bc782e6c6b911b37296588a8d88a239ccabb4a10f'] },
+	'strings.citizen': { en: [205, 'be6fa4c9773cc7dd431fb03ac0a85ddccc2bbab3bcf820daa393df2987737bf7'], hi: [205, 'a02687be419746ff41109b8babf2dc6581a7d68677028410ecbe162c50e7abd7'], bn: [205, '99a9ffaeddd346ea46ac7e5d228171d25bcb963e58690a351dd261fee041729e'] },
+	'packs': { en: [390, 'd68de260b50d0755e0dda39cdeee0276482ab5f61455b87d12e4ea4e49a08571'], hi: [390, 'c4dc82573a385c19a314402392354ac9b704741d9ea22ac6207f5081503c8fba'], bn: [390, '5ddbd4eec015ac357d7b707bc782e6c6b911b37296588a8d88a239ccabb4a10f'] },
 	'packs.ui': { en: [77, '336571b9c2618b1f5a04460921c2071561d77c328e72959512b7757c5ab10e10'], hi: [77, '0b50bf2c25811a196aad26e73662f949fee8b30f3aab17d89ca0e55f4dbfc376'], bn: [77, '41019938c39a785c8a9ccc6fd901731c045a5f22845e5d4be6b5f1248ffaf39b'] },
 	'packs.wall': { en: [358, 'd7d2d6dc7448c87859689955cb90fe8ba4e487e3c999d3202fdea440d075b9a7'], hi: [358, '16a48ed8fd550fbabee3bee346c9654d78299be01a656237f4f4b3cf030596cf'], bn: [358, '03cc0675fc6f2674868ca529e987d6217d29c9346e60c8dd0c370f0129c5064c'] },
 	'packs.views': { en: [229, '98a28fe74628344d747b42ff18af4fe7018a25dff31f8ee374e0d4e972a7ba08'], hi: [229, '518219e53accd6c8b5f7b4265a8fd00050ef6b1cb7c293e3e68f2aa79d57b6c2'], bn: [229, '88ae04de0d97e1d40060f72b57005e97e7a8d649acb35f36a6893449c9e98fd4'] },

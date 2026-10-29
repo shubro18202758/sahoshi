@@ -137,4 +137,9 @@ export const bn: Record<FeedsKey, string | Fn> = {
 	cf_pub_worst: (site: unknown) => `সূচক সবচেয়ে বেশি ${s(site)}-এর কাছে।`,
 	cf_pub_tomorrow: (band: unknown) => `আগামী 48 ঘণ্টা: ${s(band)}।`,
 	cf_pub_source: 'ওপেন-মেটিও (CAMS) · CPCB-র জাতীয় AQI স্তর',
+	cf_pub_lead_obs: 'CPCB-র মাপক কেন্দ্রে মাপা কলকাতার বাতাস, ভারতের জাতীয় বায়ু মান সূচকের স্তরে।',
+	cf_pub_tag_obs: 'মাপা মান',
+	cf_pub_tag_obs_tip: 'CPCB কেন্দ্রগুলির নিজেদের 24 ঘণ্টার গড় (OpenAQ থেকে), জাতীয় বায়ু মান সূচকের স্তরে। শুধু দুটি দূষক, তাই আনুমানিক।',
+	cf_pub_tomorrow_model: (band: unknown) => `মডেলের পূর্বাভাস, আগামী 48 ঘণ্টা: ${s(band)}।`,
+	cf_pub_source_obs: 'CPCB কেন্দ্র (OpenAQ) · CPCB-র জাতীয় AQI স্তর। পূর্বাভাস: ওপেন-মেটিও (CAMS)',
 };

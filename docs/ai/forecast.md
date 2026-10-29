@@ -84,6 +84,7 @@ Covariates follow the history's world:
 | `GET /forecast/segment/{id}?horizon_min=` | One segment and its proposal. Unknown id: 404. Not forecast: 409. |
 | `GET /forecast/metrics` | Rolling backtest, with the honest data label |
 | `POST /forecast/refresh?backtest=false` | Recompute now; include the backtest when `backtest=true` |
+| `POST /admin/release?idle_s=` | Loopback machine callers only: free the models no forecast holds and unused for `idle_s` (default 20 s). See "Making room". |
 
 ### Proposal shape
 
@@ -147,6 +148,18 @@ A second run a few minutes later (`POST /forecast/refresh?backtest=true`, origin
 - `SAHOSHI_FORECAST_DTYPE=bfloat16` halves the Chronos-2 weights.
 - Chronos-2 is loaded on first use and **freed after `idle_unload_sec` of disuse**. In the development run (idle 60 s), `/health` then showed `loaded: false`, `unloads: 1` and 32 MiB still allocated.
 - TimesFM is freed as soon as the backtest finishes.
+
+### Making room
+
+Speech and vision refuse a load that would leave MemAvailable under their 8 GiB floor (or that ran
+out of GPU memory), and before refusing they ask the other on-demand services to free models;
+forecast is asked first, since Chronos-2 is small (≈2 GiB) and reloads in seconds. `POST
+/admin/release` (loopback only; a request carrying browser or proxy headers is refused) frees a
+slot only when no forecast holds it and it has been unused for `idle_s` seconds: a service making
+room sends `idle_s=0` (a waiting load has priority over a model merely kept warm), a call by hand
+defaults to 20 s (`SAHOSHI_FORECAST_RELEASE_IDLE_SEC`). The next forecast reloads it, and until then
+nothing else changes. Forecast loads without a floor of its own, so it never makes room itself.
+`/health` → `make_room.last_release` shows the last release.
 
 ## Limits
 

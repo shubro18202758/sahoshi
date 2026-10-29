@@ -23,6 +23,11 @@ const TICK_MS = 4000;
 class LiveWorld implements World {
 	/** Bumped every 4 s while a page reads the world (registered sources between polls). */
 	tick = $state(0);
+	/**
+	 * The traffic readings are simulated (the corridor summary's feed label is not 'live'): a road segment's record
+	 * then says SIMULATED, never "Live feed" (kinds/common.ts baseRow). Set by the pages that read the ops store.
+	 */
+	simulatedFeed = $state(true);
 
 	#graph: ObjectGraph = EMPTY_GRAPH;
 	#registry: ObjectRow[] = [];
@@ -31,10 +36,10 @@ class LiveWorld implements World {
 
 	graph(): ObjectGraph {
 		this.#startTicker();
-		const key = `${cityRegistry.version}|${dossier.version}|${registryClock.value}|${this.tick}`;
+		const key = `${cityRegistry.version}|${dossier.version}|${registryClock.value}|${this.tick}|${this.simulatedFeed}`;
 		if (key !== this.#key) {
 			const entities = cityRegistry.entities();
-			const graph = buildObjectGraph({ entities, dossiers: dossier.recent(), rows: sourceRows() });
+			const graph = buildObjectGraph({ entities, dossiers: dossier.recent(), rows: sourceRows(), ctx: { simulatedFeed: this.simulatedFeed } });
 			this.#registry = entities.map((e) => graph.get(e.urn)).filter((r): r is ObjectRow => !!r);
 			this.#graph = graph;
 			this.#key = key;

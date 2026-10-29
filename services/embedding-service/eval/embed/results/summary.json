@@ -3695,7 +3695,7 @@
  "models": {
   "bge-m3": {
    "candidate": "bge-m3",
-   "repo": "/home/sandy050405/models/bge-m3",
+   "repo": "~/models/bge-m3",
    "family": "dense",
    "dtype": "fp32",
    "device": "cuda",

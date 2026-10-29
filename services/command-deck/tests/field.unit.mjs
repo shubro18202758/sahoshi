@@ -294,7 +294,8 @@ const drafts = [];
 	}
 	ok('board: the object page labels a field / camera board entry (its one provenance tag)', M.objModel.provenanceOf({ kind: 'event', source: 'live', verification: null, test: false, props: { metadata: { source: 'field-voice' } } }) === 'UNVERIFIED-FIELD' && M.labels.fieldLabelOf({ source: 'camera-ai' }) === 'UNVERIFIED-CAMERA' && M.labels.fieldLabelOf({ source: 'osint' }) === null);
 	// the oracle's own request model (pydantic) must accept every draft — the payload is exactly what the board ingests
-	const py = '/home/sandy050405/argus/sahoshi/.venvs/gate/bin/python';
+	const MAIN = [REPO, path.resolve(REPO, '../..')]; // this checkout, or the one whose .worktrees/<name> it is
+	const py = process.env.SAHOSHI_GATE_PYTHON ?? MAIN.map((r) => path.join(r, '.venvs/gate/bin/python')).find((p) => existsSync(p)) ?? '';
 	const oracleSrc = path.join(REPO, 'services/traffic-oracle/src');
 	if (existsSync(py) && existsSync(oracleSrc)) {
 		const tmp = path.join(HERE, 'artifacts', 'field-drafts.json');
@@ -440,7 +441,7 @@ print(json.dumps({"n": len(json.load(open(sys.argv[1]))), "bad": bad}))
 	ok('honesty: the sheet shows UNVERIFIED-FIELD and the camera panel UNVERIFIED-CAMERA', /data-label="UNVERIFIED-FIELD"/.test(sheet) && /data-label="UNVERIFIED-CAMERA"/.test(panel) && /data-label="SIMULATED"/.test(read('src/lib/v3/object/SegmentForecastPanel.svelte')) && /data-label="MODELLED"/.test(read('src/lib/v3/object/SegmentWaterPanel.svelte')) && /data-label="MODELLED"/.test(read('src/lib/v3/public/WaterOnYourRoad.svelte')));
 	ok('honesty: the sheet never confirms — no confirm verb, one POST per press through the writer', !/confirm\w*\(/.test(sheet.replace(/\/\*[\s\S]*?\*\//g, '')) && (sheet.match(/writeBoardEntry\(/g) ?? []).length === 1);
 	const patch = path.join(REPO, '..', '.orchestration', 'patches', 'int-field-microphone.patch');
-	const p2 = '/home/sandy050405/argus/sahoshi/.orchestration/patches/int-field-microphone.patch';
+	const p2 = [REPO, path.resolve(REPO, '../..')].map((r) => path.join(r, '.orchestration', 'patches', 'int-field-microphone.patch')).find((p) => existsSync(p)) ?? '';
 	const pf = existsSync(patch) ? patch : p2;
 	if (existsSync(pf)) ok('microphone: the hooks patch grants the microphone to this origin on the (v3) console only', /microphone=\(\$\{microphone \? 'self' : ''\}\)/.test(readFileSync(pf, 'utf8')) && /startsWith\('\/\(v3\)'\)/.test(readFileSync(pf, 'utf8')));
 	else console.log('skip microphone: the hooks patch is not in this checkout (it ships through .orchestration/patches)');

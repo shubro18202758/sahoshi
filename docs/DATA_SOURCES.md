@@ -136,9 +136,9 @@ These need an agency's access or a paid licence. Each is a stand-in, labelled wh
 | CCTV video | Kolkata Police | none ingested; sample stills, or the nearest public Mapillary photo (§1) | "Sample still · not live"; "Reference photo · not live" with its date |
 | Scenario events, crowds, historical traffic | — | event emulator, forecast and twin profiles | SIMULATED / EMULATED |
 
-One label gap was found in this check: the oracle badges junction signal entities `live` although their phase is
-the stored program's clock (no controller). A one-line fix (badge them `emulated`) is proposed in
-`.orchestration/patches/sources-junction-badge.patch`; the oracle's tests pass with it.
+One label gap was found in this check: the oracle badged junction signal entities `live` although their phase is
+the stored program's clock (no controller). They are now badged `emulated`
+(`services/traffic-oracle/src/traffic_oracle/city/entities.py`).
 
 ## 8. Checked and not used
 

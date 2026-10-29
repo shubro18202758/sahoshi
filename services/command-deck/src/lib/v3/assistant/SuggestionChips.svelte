@@ -63,6 +63,10 @@
 			flex-wrap: nowrap;
 			overflow-x: auto;
 			scrollbar-width: none;
+			/* the row scrolls sideways: its right edge fades, so a cut chip reads as "more", never as a clipped one */
+			-webkit-mask-image: linear-gradient(to right, black calc(100% - 48px), transparent);
+			mask-image: linear-gradient(to right, black calc(100% - 48px), transparent);
+			padding-right: 40px;
 		}
 	}
 </style>

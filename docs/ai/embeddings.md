@@ -208,8 +208,8 @@ Viterbi decoding). It returns `{"spans": [[{start, end, label, score}]], "model"
 - **Labels.** The default labels are `private_person`, `private_email` and `private_phone`.
 - **Only adds.** The model only ADDS redactions. The OSINT rules stay primary, and the ingress uses the model only
   with `OSINT_PII_MODEL=1`, which is off by default and fails open to the rules.
-- **The integration** is a patch for the stream that owns the OSINT packages:
-  `.orchestration/patches/ai-embed-piitracer.patch`.
+- **The integration** lives in the OSINT ingress
+  (`services/osint-ingress/src/osint_ingress/connectors/_model_pii.py`), off by default.
 - **Pinning.**
   - The revision is pinned (`d25c16f`), and the SHA-256 of its reviewed `modeling_pii_masking.py` is pinned
     because it runs as `trust_remote_code`.

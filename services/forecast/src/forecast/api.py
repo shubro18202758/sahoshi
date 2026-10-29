@@ -9,6 +9,10 @@
                                                   seasonal-naive baseline (and the contender), with its
                                                   honest data label
     POST /forecast/refresh?backtest=false         recompute now (and the backtest when asked)
+    POST /admin/release?idle_s=                   loopback machine callers only (another on-demand service
+                                                  making room, scripts/ai_warm.sh): free the models no
+                                                  forecast holds and unused for idle_s (default 20 s);
+                                                  they reload on their next use
 
 Every answer carries its data label: forecasts on the simulated history say SIMULATED.
 """
@@ -17,17 +21,19 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
+from datetime import UTC, datetime
 from typing import Any, AsyncIterator
 
 import structlog
 import uvicorn
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from forecast import __version__
 from forecast.config import Settings, get_settings
 from forecast.covariates import HydroClient
 from forecast.engine import MAX_HORIZON_MIN, Engine
+from forecast.memroom import RELOAD_NOTE, loopback_refusal
 from forecast.models import gpu_stats
 from forecast.network import load_network
 
@@ -88,6 +94,8 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     def eng() -> Engine:
         return app.state.engine
 
+    last_release: dict[str, Any] = {}
+
     @app.get("/health")
     async def health() -> dict[str, Any]:
         e = eng()
@@ -106,7 +114,26 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
             "oracle": {"url": e.s.oracle_url, **oracle},
             "network": {"source": e.net.source, "segments": len(e.net.segments)},
             "gpu": gpu_stats(),
+            # forecast loads without a memory floor (≈2 GiB), so it never makes room itself; it frees its
+            # idle models when another on-demand service asks (POST /admin/release)
+            "make_room": {"enabled": False, "release_idle_s": s.release_idle_sec,
+                          "last_release": last_release or None, "note": RELOAD_NOTE},
         }
+
+    @app.post("/admin/release")
+    async def admin_release(request: Request, idle_s: float | None = Query(default=None, ge=0, le=3600)) -> dict:
+        why = loopback_refusal(request.client.host if request.client else None, request.headers)
+        if why:
+            raise HTTPException(status_code=403, detail=why)
+        min_idle = s.release_idle_sec if idle_s is None else idle_s
+        out = await asyncio.to_thread(eng().release_idle, min_idle)
+        last_release.clear()
+        last_release.update(at=datetime.now(UTC).isoformat(timespec="seconds"), idle_s=min_idle,
+                            released=out["released"], freed_gib_estimate=out["freed_gib_estimate"],
+                            kept=out["kept"])
+        logger.info("forecast.release", released=out["released"], freed_gib=out["freed_gib_estimate"],
+                    kept=out["kept"])
+        return out
 
     @app.get("/forecast/segments")
     async def segments(horizon_min: int = Query(default=MAX_HORIZON_MIN, ge=15, le=MAX_HORIZON_MIN)) -> dict:

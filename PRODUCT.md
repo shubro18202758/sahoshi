@@ -444,7 +444,7 @@ aliases, and add the local agencies' marks. The services do not change. The next
 | Now | Kolkata City Pack; forecasting, waterlogging nowcast, Bengali voice, road-state vision, signal-timing twin; console in three languages |
 | Pilot, months 1–3 | Wire the FFEWS gauges and pump status into hydro; record real traffic for one division; calibrate the waterlogging model on gauge data; consented voice set and re-evaluation; labelled CCTV still set and confidence calibration |
 | Pilot, months 4–12 | Signal adapter for the division's controllers (officer-approved changes only); Bengali and English news OSINT sources (Anandabazar, Ei Samay, Sangbad Pratidin, The Telegraph, TOI Kolkata, Millennium Post RSS), aggregate only; retrieval over SOPs (KP traffic advisories, KMC monsoon plan, WBSDMA cyclone SOP, NDMA guidelines) with citations |
-| After the pilot | Regional flood extent from Sentinel-1 SAR (Prithvi-EO-2.0) at district scale after cyclones; the gated Indic speech models (IndicConformer, Indic Parler-TTS) once access is granted; Bengali numerals option on public pages; next City Packs |
+| After the pilot | Regional flood extent from Sentinel-1 SAR (Prithvi-EO-2.0) at district scale after cyclones; IndicConformer re-measured on consented field recordings (Indic Parler-TTS is already live); Bengali numerals option on public pages; next City Packs |
 
 ---
 

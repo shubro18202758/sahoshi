@@ -11,6 +11,7 @@
  * only once a forecast has answered: with nothing to ask, no compute POST leaves the page),
  * decisions 30 s. A feed that fails says so in `feeds[name]` — never a zero.
  */
+import { operatorSession } from '$lib/shell/session.svelte';
 import { getForecast, getNowcast, getRain, getTide, postReplay, postTwinPropose, AiNotDeployed, AiSignIn } from './client';
 import { createPoller, type Poller } from './poll';
 import { aiCards, replayProposals, twinAsks, type AiCard } from './model';
@@ -97,6 +98,8 @@ class AiState {
 			this.twins = out;
 		},
 		decisions: async () => {
+			// the decision record is an operator read: nothing while the gate waits for a sign-in (no 403 to the console)
+			if (operatorSession.gate === true && !operatorSession.officer) return;
 			// the writer (and its decision record reads) load with the first page that decides: Decide
 			const { fetchDecisions } = await import('./writer');
 			const rows = await fetchDecisions();

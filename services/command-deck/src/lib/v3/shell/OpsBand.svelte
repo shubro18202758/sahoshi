@@ -370,4 +370,24 @@
 			padding: 0 12px 0 10px;
 		}
 	}
+
+	/* a phone: the tabs and the status chips in one row that scrolls sideways (they never draw over each other) */
+	@media (max-width: 720px) {
+		.bar {
+			gap: 6px;
+			padding: 0 12px;
+			overflow-x: auto;
+			overflow-y: hidden;
+			scrollbar-width: none;
+		}
+
+		.tabs,
+		.band {
+			flex: none;
+		}
+
+		.grow {
+			flex: 0 0 8px;
+		}
+	}
 </style>
