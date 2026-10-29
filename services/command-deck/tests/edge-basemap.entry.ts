@@ -20,7 +20,7 @@
  *      styles now need an API key); no other plain-http source anywhere;
  *   2. <html lang> follows the sahoshi_lang cookie (en | hi | bn, contract C-M)
  *      on operator and public routes, falls back to the route default
- *      (/driver Bengali-first, else English) when the cookie is absent,
+ *      (English on every route) when the cookie is absent,
  *      unknown, malformed or hostile — never echoing it, never a 500 —
  *      and the document reads the SAME choice the browser's parser does
  *      (lib/i18n/lang-cookie langFromCookieHeader: one parser, two sides);
@@ -109,11 +109,11 @@ const LANG_CASES: Array<[string | null, string | undefined, string, string]> = [
 	['/(deck)/gods-eye', 'sahoshi_lang=hi', 'hi', 'City Command in Hindi'],
 	['/(public)/citizen', 'sahoshi_lang=hi', 'hi', 'citizen page follows the cookie'],
 	['/(public)/citizen', undefined, 'en', 'citizen default English'],
-	['/(public)/driver', undefined, 'bn', '/driver stays Bengali-first'],
-	['/(public)/driver', 'sahoshi_lang=en', 'en', '/driver honours an English choice'],
+	['/(public)/driver', undefined, 'en', '/driver opens in English, like every page'],
+	['/(public)/driver', 'sahoshi_lang=bn', 'bn', '/driver honours a Bengali choice'],
 	['/(deck)/ops', 'session=abc; sahoshi_lang=bn; theme=x', 'bn', 'found among other cookies'],
 	['/(deck)/ops', 'sahoshi_lang=xx', 'en', 'unknown language → route default'],
-	['/(public)/driver', 'sahoshi_lang=fr', 'bn', 'unknown language on /driver → Bengali'],
+	['/(public)/driver', 'sahoshi_lang=fr', 'en', 'unknown language on /driver → English'],
 	['/(deck)/ops', 'sahoshi_lang=%E0%A4', 'en', 'malformed escape → route default'],
 	['/(deck)/ops', 'sahoshi_lang="><script>alert(1)</script>', 'en', 'hostile value never echoed'],
 	['/(deck)/ops', 'sahoshi_lang=BN', 'en', 'only the exact codes count'],
@@ -128,7 +128,7 @@ for (const [route, cookie, want, why] of LANG_CASES) {
 // One parser on both sides (C-M): the first paint's <html lang> is exactly the
 // choice the ops store / shells read back from document.cookie.
 for (const [route, cookie, want, why] of LANG_CASES) {
-	const routeDefault = route === '/(public)/driver' ? 'bn' : 'en';
+	const routeDefault = 'en';
 	check(`lang: the browser reads the same choice — ${why}`, (langFromCookieHeader(cookie) ?? routeDefault) === want);
 }
 {
