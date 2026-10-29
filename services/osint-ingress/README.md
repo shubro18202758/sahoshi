@@ -42,8 +42,8 @@ reaches the live oracle by accident. The deployment names its oracle explicitly;
 | `imd` | 10 min | IMD's CAP alerts via the WMO Alert Hub mirror (`cap-sources.s3.amazonaws.com/in-imd-en/`), kept to West Bengal |
 | `google_news_rss` | 10 min | Google News RSS search, English (`hl=en-IN`) and Bengali (`hl=bn`) Kolkata incident queries (pointer layer, never redistributed) |
 | `news_rss` | 15 min | the outlets' own RSS feeds (Kolkata and Bengal sections, English and Bengali; pointer layer, never redistributed; robots.txt honoured per feed) |
-| `gdelt_events` | 15 min | GDELT 2.1 `lastupdate.txt` and only the export zip it names (Kolkata metro bbox, ADM1 `IN28`) |
-| `gdelt_doc` | 30 min | GDELT DOC 2.0 ArtList, `(Kolkata OR Calcutta) sourcecountry:IN` (≥ 5 s between requests). A 429, the throttle banner or a 60 s timeout backs it off: `Retry-After` honoured, else jittered exponential from the cadence, at most 6 h; no request meanwhile, and the last live answer is served with its real fetch time and age |
+| `gdelt_events` | 15 min | GDELT 2.1 `lastupdate.txt` and only the export zip it names (Kolkata metro bbox, ADM1 `IN28`). The CDN at `data.gdeltproject.org` caches a 404 for an hour when someone asks for a file before its upload, so a 404 for the named export is retried once from GDELT's own bucket (`storage.googleapis.com/data.gdeltproject.org/gdeltv2/<stamp>.export.CSV.zip`, same MD5 check) |
+| `gdelt_doc` | 30 min | GDELT DOC 2.0 ArtList, `(Kolkata OR Calcutta) sourcecountry:IN` (≥ 5 s between requests). A 429, the throttle banner or a 60 s timeout backs it off: `Retry-After` honoured, else jittered exponential from the cadence, at most 2 h; no request meanwhile, and the last live answer is served with its real fetch time and age |
 | `reddit_rss` | 15 min | r/kolkata newest-posts Atom feed (aggregate social signal only; the committed synthetic capture uses the fictional `r/example_city`) |
 | `kmc_scrape` | hourly | the KMC portal page, best effort, notices about places and roads only (never HR circulars, hearings or menu links); a robots.txt disallow disables the connector. The server offers RSA key exchange only: one narrow TLS allowance (`safe_http.TLS_COMPAT`), certificate still verified |
 | `kolkata_police_scrape` | hourly | the Kolkata Traffic Police home page's current advisories (diversions, closures); menu links and commented-out advisories never read. The server lacks secure renegotiation: one narrow TLS allowance, certificate still verified |
@@ -150,8 +150,9 @@ The cache root is created `0700` (files `0600`). A CAP `<expires>` days ahead is
 - News- and social-tier URLs are never emitted, stored or logged: the signal keeps the outlet's domain and a
   `url_sha256:` hint of the canonical URL. Official sources keep their identifier URLs.
 - `raw` is a scalar whitelist (`RAW_ALLOWED_KEYS`), never the source record.
-- Egress goes only to an allow-list of exact hosts over https, with redirects checked hop by hop; the oracle is
-  loopback only; every XML, RSS, CAP and Atom document is parsed with `defusedxml`.
+- Egress goes only to an allow-list of exact hosts over https, with redirects checked hop by hop (plus
+  `storage.googleapis.com` for one path shape only: a GDELT 2.0 export zip in GDELT's bucket, no query); the
+  oracle is loopback only; every XML, RSS, CAP and Atom document is parsed with `defusedxml`.
 
 ## Optional model check at parse (PII-Tracer)
 

@@ -34,14 +34,16 @@ class KeyedSource:
 
 
 KEYED: dict[str, KeyedSource] = {k.id: k for k in (
-    KeyedSource("waqi", "WAQI_TOKEN", "World Air Quality Index: observed AQI at the Kolkata and Howrah CPCB/WBPCB "
-                "stations (US EPA scale, as WAQI publishes it)", "https://aqicn.org/data-platform/token/"),
-    KeyedSource("openaq", "OPENAQ_API_KEY", "OpenAQ v3: the latest observed PM2.5 and PM10 at the stations "
-                "(hourly values as the CPCB network reports them)",
+    KeyedSource("waqi", "WAQI_TOKEN", "World Air Quality Index: observed AQI at WBPCB's PM2.5 sensors near the "
+                "Kolkata and Howrah sites (US EPA scale, as WAQI publishes it)", "https://aqicn.org/data-platform/token/"),
+    KeyedSource("openaq", "OPENAQ_API_KEY", "OpenAQ v3: the CPCB stations' own PM2.5 and PM10 (latest value and "
+                "24-hour means); the indicative National AQI when data.gov.in has no key",
                 "https://explore.openaq.org/register (then Account settings → API key)"),
     KeyedSource("cpcb", "DATA_GOV_IN_API_KEY", "data.gov.in, CPCB real-time air quality index: observed "
                 "pollutant averages at every CAAQMS station in Kolkata and Howrah (the National AQI's own inputs)",
-                "https://data.gov.in/ (sign in; the key is under My Account)"),
+                "https://data.gov.in/ (sign in; the key is under My Account)",
+                without_key="OpenAQ carries the same CPCB station data (OPENAQ_API_KEY): the National AQI is taken "
+                            "from its 24-hour means instead"),
     KeyedSource("firms", "FIRMS_MAP_KEY", "NASA FIRMS area API: the last 2 days of VIIRS and MODIS hotspots in the "
                 "Kolkata Metropolitan Area box", "https://firms.modaps.eosdis.nasa.gov/api/map_key/",
                 without_key="the public FIRMS South Asia 24-hour files (live, no key) are read instead"),

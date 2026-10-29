@@ -3,11 +3,13 @@
 Policies (OSINT SPEC §4 "offline / no secrets"; plan R7 says compose cannot filter by domain, so this module is the
 egress control):
 
-1. **Sources** — :data:`ALLOWED_HOSTS` is an allow-list of exact host names. Every request is checked twice before
-   any connection: by :func:`check_egress_url` (scheme ``https``, no credentials, default port, exact host) and
+1. **Sources** — :data:`ALLOWED_HOSTS` is an allow-list of exact host names, and :data:`PATH_RESTRICTED_HOSTS`
+   names the hosts reachable for one exact path shape only (GDELT's export zips in its own Cloud Storage bucket).
+   Every request is checked twice before any connection: by :func:`check_egress_url` (scheme ``https``, no
+   credentials, default port, exact host, and for a path-restricted host the exact path shape with no query) and
    again by :class:`AllowListTransport`, which wraps the real transport, so even a direct ``client.get`` cannot
    reach another host. Redirects are never followed automatically: :func:`fetch` follows at most five, each one
-   only to an allow-listed host, and refuses anything else before connecting.
+   only to an allowed URL, and refuses anything else before connecting.
 2. **The one client** — :func:`make_source_client` builds the single ``httpx.AsyncClient`` the connectors share,
    with ``trust_env=False`` (no proxy, netrc or certificate override from the environment) and a user-agent that
    names the project and no person. Two government servers need a TLS compatibility allowance
@@ -31,6 +33,7 @@ Nothing here logs a URL path or a body: errors name the host at most.
 
 from __future__ import annotations
 
+import re
 import ssl
 import time
 import urllib.robotparser
@@ -43,7 +46,9 @@ import httpx
 
 __all__ = [
     "ALLOWED_HOSTS",
+    "EGRESS_HOSTS",
     "LOOPBACK_HOSTS",
+    "PATH_RESTRICTED_HOSTS",
     "ROBOTS_DISALLOWS",
     "ROBOTS_TOKEN",
     "TLS_COMPAT",
@@ -91,6 +96,22 @@ ALLOWED_HOSTS: frozenset[str] = frozenset(
         "bengali.abplive.com",
     }
 )
+
+#: Hosts reachable for ONE path shape only: ``re.fullmatch`` on the raw path, so no query, no percent-encoding and
+#: no other object; a fragment is refused too. GDELT's bulk files live in the public Cloud Storage bucket named
+#: ``data.gdeltproject.org``; the host ``data.gdeltproject.org`` is a CDN in front of it whose 404 (the bucket's
+#: not-found page) says ``Cache-Control: public, max-age=3600``. A client elsewhere that asks for a 15-minute file
+#: before GDELT uploads it leaves that 404 in the CDN for up to an hour, so the export ``lastupdate.txt`` names can
+#: answer 404 there for many minutes after it exists (seen from this box on 2026-10-29: the 04:00, 04:15 and 04:30
+#: UTC exports, each uploaded 14 to 16 min before it answered 404). ``storage.googleapis.com`` serves the same bucket
+#: path-style without that cache (its 404 is ``private, max-age=0``), so ``gdelt_events`` asks it for that one file
+#: after a 404. Only a GDELT 2.0 export zip of that one bucket matches: no other bucket and no other object of it.
+PATH_RESTRICTED_HOSTS: Mapping[str, re.Pattern[str]] = {
+    "storage.googleapis.com": re.compile(r"/data\.gdeltproject\.org/gdeltv2/\d{14}\.export\.CSV\.zip"),
+}
+
+#: Every host this service may contact (``/health`` ``egress_allowlist``): the exact hosts and the path-restricted ones.
+EGRESS_HOSTS: frozenset[str] = ALLOWED_HOSTS | frozenset(PATH_RESTRICTED_HOSTS)
 
 #: Per-host TLS compatibility allowances (checked from this box with ``openssl s_client`` on 2026-10-29). For these
 #: hosts the certificate chain and the host name are verified exactly as for every other host (system-independent
@@ -148,7 +169,12 @@ def check_egress_url(url: str | httpx.URL) -> httpx.URL:
     if u.userinfo:
         raise EgressRefused(f"egress refused: credentials in URL ({host[:64]})")
     if host not in ALLOWED_HOSTS:
-        raise EgressRefused(f"egress refused: host not allow-listed ({host[:64] or 'none'})")
+        rule = PATH_RESTRICTED_HOSTS.get(host)
+        if rule is None:
+            raise EgressRefused(f"egress refused: host not allow-listed ({host[:64] or 'none'})")
+        # raw_path keeps the query and any percent-encoding, so only the one literal path shape passes
+        if u.fragment or not rule.fullmatch(u.raw_path.decode("ascii", "replace")):
+            raise EgressRefused(f"egress refused: path not allowed on {host[:64]}")
     if u.port not in (None, 443):
         raise EgressRefused(f"egress refused: non-default port ({host[:64]}:{u.port})")
     return u

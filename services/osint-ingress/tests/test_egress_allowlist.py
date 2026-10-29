@@ -14,6 +14,7 @@ from conftest import Recorder
 from osint_ingress.config import USER_AGENT, Settings
 from osint_ingress.safe_http import (
     ALLOWED_HOSTS,
+    PATH_RESTRICTED_HOSTS,
     EgressRefused,
     FetchError,
     RobotsCache,
@@ -46,6 +47,9 @@ def test_allow_list_is_exactly_the_brief():
         "www.sangbadpratidin.in",
         "bengali.abplive.com",
     }
+    # one host reachable for one path shape only: GDELT's export zips in GDELT's own bucket (no other bucket)
+    assert set(PATH_RESTRICTED_HOSTS) == {"storage.googleapis.com"}
+    assert not set(PATH_RESTRICTED_HOSTS) & ALLOWED_HOSTS
 
 
 def test_every_feed_and_page_host_is_allow_listed_and_the_unverified_ones_are_not():
@@ -80,6 +84,22 @@ def test_every_feed_and_page_host_is_allow_listed_and_the_unverified_ones_are_no
         "file:///etc/passwd",
         "gopher://news.google.com/",
         "not a url",
+        # GDELT's bucket host: its one export path shape only, nothing else on it
+        "https://storage.googleapis.com/",
+        "https://storage.googleapis.com/another-bucket/20261029040000.export.CSV.zip",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/lastupdate.txt",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.gkg.csv.zip",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.mentions.CSV.zip",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip?alt=json",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000%2Eexport.CSV.zip",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/../../other/20261029040000.export.CSV.zip",
+        "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip#frag",
+        "https://storage.googleapis.com//data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip",
+        "http://storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip",
+        "https://storage.googleapis.com:8443/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip",
+        "https://u:p@storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip",
+        "https://evil.storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip",
+        "https://data.gdeltproject.org.storage.googleapis.com/gdeltv2/20261029040000.export.CSV.zip",
     ],
 )
 async def test_disallowed_is_refused_before_connecting(url):
@@ -104,6 +124,24 @@ async def test_redirect_off_the_list_is_refused():
         with pytest.raises(EgressRefused, match="redirect to a host off the allow-list"):
             await fetch(client, "https://news.google.com/rss/search?q=x", max_bytes=1024)
     assert rec.hosts == ["news.google.com"]
+
+
+async def test_a_redirect_to_the_gdelt_bucket_host_is_held_to_its_one_path_shape():
+    export = "/data.gdeltproject.org/gdeltv2/20261029040000.export.CSV.zip"
+    rec = Recorder({
+        "data.gdeltproject.org/gdeltv2/a": lambda r: httpx.Response(
+            302, headers={"location": "https://storage.googleapis.com/another-bucket/x.zip"}),
+        "data.gdeltproject.org/gdeltv2/b": lambda r: httpx.Response(
+            302, headers={"location": f"https://storage.googleapis.com{export}"}),
+        f"storage.googleapis.com{export}": lambda r: httpx.Response(200, content=b"PK"),
+    })
+    async with _client(rec) as client:
+        with pytest.raises(EgressRefused):
+            await fetch(client, "https://data.gdeltproject.org/gdeltv2/a", max_bytes=1024)
+        res = await fetch(client, "https://data.gdeltproject.org/gdeltv2/b", max_bytes=1024)
+    assert res.ok and res.url == f"https://storage.googleapis.com{export}"
+    assert [f"{r.url.host}{r.url.path}" for r in rec.requests] == [
+        "data.gdeltproject.org/gdeltv2/a", "data.gdeltproject.org/gdeltv2/b", f"storage.googleapis.com{export}"]
 
 
 async def test_redirect_to_http_or_userinfo_is_refused():

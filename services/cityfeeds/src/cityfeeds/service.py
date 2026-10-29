@@ -89,10 +89,15 @@ class CityFeeds:
         fetch = (lambda c: fetch_fires_area(c, mk)) if mk else fetch_fires_public
         return await self.f.get("fires", fetch, lambda: load_fixture("firms_kma.json"), force)
 
-    #: keyed air providers: (feed id, keyed source id, fetch, parse)
-    _AIR_OBSERVED = (("air_cpcb", "cpcb", obs.fetch_cpcb, obs.parse_cpcb),
-                     ("air_waqi", "waqi", obs.fetch_waqi, obs.parse_waqi),
+    #: keyed air providers: (feed id, keyed source id, fetch(client, key, now), parse)
+    _AIR_OBSERVED = (("air_cpcb", "cpcb", lambda c, k, _now: obs.fetch_cpcb(c, k), obs.parse_cpcb),
+                     ("air_waqi", "waqi", lambda c, k, _now: obs.fetch_waqi(c, k), obs.parse_waqi),
                      ("air_openaq", "openaq", obs.fetch_openaq, obs.parse_openaq))
+    #: where the observed National AQI comes from, in order: CPCB's bulletin on data.gov.in, else OpenAQ's copy of
+    #: the same CAAQMS data (24-hour means of its hourly values)
+    _NAQI_FROM = {"cpcb": "CPCB CAAQMS station averages via data.gov.in; National AQI bands on PM2.5/PM10",
+                  "openaq": "CPCB CAAQMS station data via OpenAQ: 24-hour means of the hourly PM2.5/PM10 "
+                            f"(at least {obs.MIN_HOURS_24H} hours); National AQI bands"}
 
     async def _observed(self, force=False) -> dict[str, Any]:
         """Each keyed air provider: no key → no call ("needs <ENV>"); offline → no call (no recording exists)."""
@@ -105,7 +110,8 @@ class CityFeeds:
                 providers[src] = {"state": keyed_state(src) if k is None else "offline: no call",
                                   "env": KEYED[src].env, "signup": KEYED[src].signup}
             else:
-                calls.append((src, parse, self.f.get(feed, lambda c, _f=fetch, _k=k: _f(c, _k), lambda: None, force)))
+                calls.append((src, parse, self.f.get(feed, lambda c, _f=fetch, _k=k: _f(c, _k, self.now()),
+                                                     lambda: None, force)))
         got = await asyncio.gather(*(c for _s, _p, c in calls))  # the keyed providers in parallel
         for (src, parse, _c), f in zip(calls, got):
             sites = parse(f.data) if f.ok else {}
@@ -155,8 +161,10 @@ class CityFeeds:
         # OBSERVED beside MODELLED (additive): per site, each keyed provider's own measurement; none without a key
         for st in v.get("stations") or []:
             st["observed"] = o["sites"].get(st["id"])
-        cpcb = {sid: x["cpcb"] for sid, x in o["sites"].items() if x.get("cpcb", {}).get("naqi")}
-        worst = max(cpcb.items(), key=lambda kv: kv[1]["naqi"]["aqi"], default=None)
+        prov = next((p for p in self._NAQI_FROM if any((x.get(p) or {}).get("naqi") for x in o["sites"].values())),
+                    None)
+        ranked = {sid: x[prov] for sid, x in o["sites"].items() if prov and (x.get(prov) or {}).get("naqi")}
+        worst = max(ranked.items(), key=lambda kv: kv[1]["naqi"]["aqi"], default=None)
         v["observed"] = {
             "label": "OBSERVED" if o["sites"] else "NONE",
             "what": "the stations' own measurements from the keyed services (CPCB via data.gov.in, WAQI, OpenAQ); "
@@ -165,8 +173,7 @@ class CityFeeds:
             "sites_observed": len(o["sites"]),
             "city_naqi": ({"aqi": worst[1]["naqi"]["aqi"], "band": worst[1]["naqi"]["band"], "site": worst[0],
                            "prominent": worst[1]["naqi"]["prominent"], "at": worst[1]["at"], "label": "OBSERVED",
-                           "sub_label": "INDICATIVE",
-                           "source": "CPCB CAAQMS station averages via data.gov.in; National AQI bands on PM2.5/PM10"}
+                           "sub_label": "INDICATIVE", "provider": prov, "source": self._NAQI_FROM[prov]}
                           if worst else None),
         }
         return v

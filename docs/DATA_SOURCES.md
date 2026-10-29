@@ -25,9 +25,9 @@ Labels used below: **LIVE** (a third-party feed answered), **OBSERVED** (a stati
 | Source | What it gives | Host | Key | State, 29 Oct 2026 | Label |
 |---|---|---|---|---|---|
 | Open-Meteo air-quality API (CAMS model) | PM2.5, PM10, NO₂, O₃ at the ten WBPCB/CPCB sites; 48-h forecast | `air-quality-api.open-meteo.com` | none | Live: HTTP 200 in 0.6 s | LIVE feed, values MODELLED, National AQI INDICATIVE |
-| CPCB real-time AQI on data.gov.in | Observed pollutant averages at every CAAQMS station in Kolkata and Howrah | `api.data.gov.in` | `DATA_GOV_IN_API_KEY` | Wired; without a key the API answers 400 "Authorization field missing", so no call is made | OBSERVED (National AQI from its PM averages: INDICATIVE) |
-| World Air Quality Index (aqicn.org) | Observed station AQI (US EPA scale, as WAQI publishes it) | `api.waqi.info` | `WAQI_TOKEN` | Wired; without a token: "Invalid key" | OBSERVED |
-| OpenAQ v3 | Latest observed PM2.5 and PM10 per station (hourly values) | `api.openaq.org` | `OPENAQ_API_KEY` | Wired; without a key: HTTP 401 | OBSERVED |
+| CPCB real-time AQI on data.gov.in | Observed pollutant averages at every CAAQMS station in Kolkata and Howrah | `api.data.gov.in` | `DATA_GOV_IN_API_KEY` | Wired; no key yet (data.gov.in's sign-up was failing on 29 Oct). Without a key the API answers 400 "Authorization field missing", so no call is made, and the National AQI comes from OpenAQ's copy of the same CPCB data (below) | OBSERVED (National AQI from its PM averages: INDICATIVE) |
+| World Air Quality Index (aqicn.org) | Observed AQI (US EPA scale, as WAQI publishes it). In the Kolkata box WAQI lists WBPCB's PM2.5 sensor network (schools, colleges, municipal offices), not the CAAQMS stations, so each site gets the nearest such sensor, named, with its distance | `api.waqi.info` | `WAQI_TOKEN` | **Live (key set 29 Oct):** 49 sensors in the box, 5 of the 10 sites within 2 km of one | OBSERVED |
+| OpenAQ v3 | The CAAQMS stations' own PM2.5 and PM10: the latest value and the 24-hour means of the hourly values. OpenAQ's provider for these stations is CPCB, so with at least 16 hours (CPCB's rule) the means give the National AQI when data.gov.in has no key | `api.openaq.org` | `OPENAQ_API_KEY` | **Live (key set 29 Oct):** all 10 sites; 9 with 24-hour means, the city's worst Moderate (AQI 101, PM10) at Ghusuri at 10:30 IST. OpenAQ also lists sensors retired in 2022 with their last values, so only readings under 24 hours old and above zero are read | OBSERVED (National AQI: INDICATIVE) |
 | Open-Meteo forecast API | Temperature, humidity, heat index at Alipore and Dum Dum | `api.open-meteo.com` | none | Live: HTTP 200 | LIVE feed, MODELLED |
 | GDACS (EC JRC and UN OCHA) | Cyclones and floods in the Bay of Bengal box | `www.gdacs.org` | none | Live (service health: no error; the list API is slow, 40 s+) | LIVE; distances MODELLED |
 | Central Water Commission flood forecasting | Observed river levels on the DVC / lower Damodar / Hooghly stations | `ffs.india-water.gov.in` | none | Live (service health: no error) | LIVE |
@@ -42,7 +42,8 @@ Labels used below: **LIVE** (a third-party feed answered), **OBSERVED** (a stati
 
 `GET /health` and `GET /feeds/summary` list each keyed source as `live`, `needs <ENV_VAR>` or `error: <reason>`.
 The observed air values sit beside the modelled ones (`/feeds/air` → `observed`, and each site's `observed`); the
-summary's air chip keeps its modelled value and adds `observed` (the CPCB National AQI) when a key is set.
+summary's air chip keeps its modelled value and adds `observed` (the CPCB National AQI: data.gov.in's averages
+when that key is set, else the 24-hour means of OpenAQ's copy of the same stations, with `provider` saying which).
 
 ## 2. OSINT event intelligence (`services/osint-ingress`, port 8193)
 
@@ -58,8 +59,8 @@ never persons.
 | WB Disaster Management dept. | Notices | `wbdmd.gov.in` | — | Disabled: port 443 answers plain HTTP (no TLS), http answers 503 | not read |
 | Google News RSS | Kolkata headlines | `news.google.com` | none | Live: HTTP 200 | news tier |
 | Outlets' RSS (TOI, Millennium Post, Sangbad Pratidin, ABP Ananda) | Kolkata headlines | the outlets' hosts | none | Live | news tier |
-| GDELT 2.1 Events (bulk) | Machine-coded events for Kolkata / West Bengal | `data.gdeltproject.org` | none | Live: HTTP 200 | news tier |
-| GDELT DOC 2.0 | Article list | `api.gdeltproject.org` | none | **Throttled:** HTTP 429 to this box even at 1 request per 15 min (no `Retry-After`). Now: every 30 min, jittered exponential back-off (Retry-After honoured, at most 6 h), and meanwhile the last live answer with its real fetch time and age | news tier |
+| GDELT 2.1 Events (bulk) | Machine-coded events for Kolkata / West Bengal | `data.gdeltproject.org`; after a 404, the same file from GDELT's public bucket on `storage.googleapis.com` (that one path shape only) | none | Live: HTTP 200. The host is a CDN that caches a 404 for an hour when someone asks for a 15-minute file before it is uploaded (04:00–04:30 UTC on 29 Oct); the bucket copy has no such cache and passes the same MD5 check | news tier |
+| GDELT DOC 2.0 | Article list | `api.gdeltproject.org` | none | **Throttled by address:** HTTP 429 to this box even at one request per 15 min (no `Retry-After`). GDELT limits each IP address, and this box reaches the internet through a shared campus NAT address (103.21.124.0/22), so other users spend that allowance; any other network (a venue's) clears it. Now: every 30 min, jittered exponential back-off (Retry-After honoured, at most 2 h), and meanwhile the last live answer with its real fetch time and age | news tier |
 | Reddit r/kolkata RSS | Public posts, aggregate only, authors dropped | `www.reddit.com` | none | Live: HTTP 200 | social, unverified |
 | Common Crawl | Backfill only, never scheduled | `index.commoncrawl.org`, `data.commoncrawl.org` | none | Not scheduled (the index answered an empty reply on 29 Oct) | — |
 
@@ -143,7 +144,7 @@ the stored program's clock (no controller). A one-line fix (badge them `emulated
 
 - **`wbpcb.gov.in`** has no DNS record; the board's site is **`www.wbpcb.gov.in`** (answers 200). It is a
   script-only web app with no documented machine-readable air data, so the official observed route is CPCB's
-  data on data.gov.in (`DATA_GOV_IN_API_KEY`).
+  data on data.gov.in (`DATA_GOV_IN_API_KEY`), or OpenAQ's copy of it (`OPENAQ_API_KEY`).
 - **`kolkatapolice.gov.in`** answers with the same legacy TLS as the traffic police; it carries recruitment and
   security notices, not traffic advisories, so it is not read.
 - **`kolkataporttrust.gov.in`** and **`smportkolkata.in`** present certificates for other names; not used.

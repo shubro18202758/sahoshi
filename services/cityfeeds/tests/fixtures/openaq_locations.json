@@ -1,7 +1,5 @@
-{"meta": {"found": 2}, "results": [
- {"id": 5001, "name": "Fort William, Kolkata - WBPCB", "coordinates": {"latitude": 22.5562, "longitude": 88.3422},
-  "sensors": [{"id": 9001, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}},
-              {"id": 9002, "name": "pm10 µg/m³", "parameter": {"id": 1, "name": "pm10", "units": "µg/m³"}}]},
- {"id": 5002, "name": "An unrelated site", "coordinates": {"latitude": 22.70, "longitude": 88.52},
-  "sensors": [{"id": 9003, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}]}
+{"meta": {"found": 3}, "results": [
+ {"id": 5001, "name": "Fort William, Kolkata - WBPCB", "coordinates": {"latitude": 22.5562, "longitude": 88.3422}, "sensors": [{"id": 9001, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}, {"id": 9002, "name": "pm10 µg/m³", "parameter": {"id": 1, "name": "pm10", "units": "µg/m³"}}, {"id": 9004, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}], "provider": {"id": 168, "name": "CPCB"}, "datetimeLast": {"utc": "2026-10-28T15:00:00Z", "local": "2026-10-28T20:30:00+05:30"}},
+ {"id": 5003, "name": "Fort William - WBSPCB", "coordinates": {"latitude": 22.556, "longitude": 88.342}, "provider": {"id": 168, "name": "CPCB"}, "datetimeLast": {"utc": "2022-10-31T01:45:00Z", "local": "2022-10-31T07:15:00+05:30"}, "sensors": [{"id": 9005, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}]},
+ {"id": 5002, "name": "An unrelated site", "coordinates": {"latitude": 22.7, "longitude": 88.52}, "sensors": [{"id": 9003, "name": "pm25 µg/m³", "parameter": {"id": 2, "name": "pm25", "units": "µg/m³"}}]}
 ]}

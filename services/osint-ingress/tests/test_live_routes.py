@@ -232,3 +232,126 @@ async def test_an_imported_capture_is_never_called_a_live_answer(tmp_path):
     finally:
         await rt.aclose()
     assert "imported capture" in st.error and "last live answer" not in st.error
+
+
+# ── GDELT events: a CDN 404 for the export lastupdate.txt names is fetched from GDELT's bucket ──────────────────────
+
+_SLOT = "20261020120000"
+_CDN_EXPORT = f"data.gdeltproject.org/gdeltv2/{_SLOT}.export"
+_BUCKET_EXPORT = f"storage.googleapis.com/data.gdeltproject.org/gdeltv2/{_SLOT}.export"
+#: what the CDN sends for a file it was asked for before the upload: the bucket's empty not-found page, cacheable
+_CDN_404 = {"cache-control": "public, max-age=3600", "age": "624", "content-type": "text/html"}
+
+
+def _export_and_lastupdate() -> tuple[bytes, str]:
+    import hashlib
+
+    zipped = (CAPTURE / f"{_SLOT}.export.CSV.zip").read_bytes()
+    md5 = hashlib.md5(zipped, usedforsecurity=False).hexdigest()
+    return zipped, (
+        f"{len(zipped)} {md5} http://data.gdeltproject.org/gdeltv2/{_SLOT}.export.CSV.zip\n"
+        f"5 0123456789abcdef0123456789abcdef http://data.gdeltproject.org/gdeltv2/{_SLOT}.mentions.CSV.zip\n"
+        f"9 0123456789abcdef0123456789abcdef http://data.gdeltproject.org/gdeltv2/{_SLOT}.gkg.csv.zip\n"
+    )
+
+
+def _gdelt_routes(lastupdate: str, cdn, bucket) -> Recorder:
+    return Recorder({
+        "data.gdeltproject.org/gdeltv2/lastupdate.txt": lambda r: httpx.Response(200, text=lastupdate),
+        _CDN_EXPORT: cdn,
+        _BUCKET_EXPORT: bucket,
+    })
+
+
+def test_the_bucket_url_is_the_only_shape_its_host_allows():
+    from osint_ingress.connectors.gdelt import BUCKET_EXPORT_URL
+    from osint_ingress.safe_http import check_egress_url
+
+    url = BUCKET_EXPORT_URL.format(name=f"{_SLOT}.export.CSV.zip")
+    assert url == f"https://{_BUCKET_EXPORT}.CSV.zip"
+    assert str(check_egress_url(url)) == url
+
+
+async def test_a_cdn_404_for_the_named_export_is_fetched_from_the_bucket(tmp_path, protect):
+    from osint_ingress.connectors.gdelt import GdeltBulk
+
+    zipped, lastupdate = _export_and_lastupdate()
+    rec = _gdelt_routes(lastupdate, lambda r: httpx.Response(404, headers=_CDN_404),
+                        lambda r: httpx.Response(200, content=zipped))
+    cache = Cache(tmp_path)
+    async with _client(rec) as client:
+        entry = await GdeltBulk().fetch(client, cache)
+        n = len(rec.requests)
+        await GdeltBulk().fetch(client, cache)  # the slice is cached now: only lastupdate.txt is read again
+    urls = [f"{r.url.host}{r.url.path}" for r in rec.requests]
+    assert urls[:n] == ["data.gdeltproject.org/gdeltv2/lastupdate.txt", f"{_CDN_EXPORT}.CSV.zip",
+                        f"{_BUCKET_EXPORT}.CSV.zip"]
+    assert urls[n:] == ["data.gdeltproject.org/gdeltv2/lastupdate.txt"]
+    assert all(r.url.scheme == "https" and not r.url.query for r in rec.requests)
+    assert not any("mentions" in u or "gkg" in u for u in urls)  # still only the export it names
+    assert entry is not None and entry.blobs == (f"{_SLOT}.export.CSV.zip",) and entry.fetch_mode == "live"
+    assert cache.read_blob("gdelt_events", f"{_SLOT}.export.CSV.zip") == zipped
+    assert len(GdeltBulk().parse(entry, protect)) == 2
+
+
+async def test_only_a_404_goes_to_the_bucket(tmp_path):
+    from osint_ingress.connectors.base import ConnectorError
+    from osint_ingress.connectors.gdelt import GdeltBulk
+
+    zipped, lastupdate = _export_and_lastupdate()
+    rec = _gdelt_routes(lastupdate, lambda r: httpx.Response(503), lambda r: httpx.Response(200, content=zipped))
+    async with _client(rec) as client:
+        with pytest.raises(ConnectorError, match=r"^HTTP 503 \(export file\)$"):
+            await GdeltBulk().fetch(client, Cache(tmp_path))
+    assert "storage.googleapis.com" not in rec.hosts
+
+
+async def test_the_bucket_answer_is_checked_like_the_cdn_answer(tmp_path):
+    from osint_ingress.connectors.base import ConnectorError
+    from osint_ingress.connectors.gdelt import GdeltBulk
+
+    _zipped, lastupdate = _export_and_lastupdate()
+    cache = Cache(tmp_path)
+    wrong = _gdelt_routes(lastupdate, lambda r: httpx.Response(404, headers=_CDN_404),
+                          lambda r: httpx.Response(200, content=b"not the export lastupdate.txt names"))
+    async with _client(wrong) as client:
+        with pytest.raises(ConnectorError, match="MD5"):
+            await GdeltBulk().fetch(client, cache)
+    missing = _gdelt_routes(lastupdate, lambda r: httpx.Response(404, headers=_CDN_404),
+                            lambda r: httpx.Response(404, headers={"cache-control": "private, max-age=0"}))
+    async with _client(missing) as client:
+        with pytest.raises(ConnectorError, match=r"^HTTP 404 \(export file; the bucket: HTTP 404\)$"):
+            await GdeltBulk().fetch(client, cache)
+
+    def unreachable(r: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("timed out", request=r)
+
+    down = _gdelt_routes(lastupdate, lambda r: httpx.Response(404, headers=_CDN_404), unreachable)
+    async with _client(down) as client:
+        with pytest.raises(ConnectorError, match=r"^HTTP 404 \(export file; the bucket: timed out\)$"):
+            await GdeltBulk().fetch(client, cache)
+    assert cache.blob_path("gdelt_events", f"{_SLOT}.export.CSV.zip") is None and cache.latest("gdelt_events") is None
+
+
+async def test_gdelt_events_label_stays_honest_through_a_cdn_404(tmp_path):
+    zipped, lastupdate = _export_and_lastupdate()
+    rec = _gdelt_routes(lastupdate, lambda r: httpx.Response(404, headers=_CDN_404),
+                        lambda r: httpx.Response(200, content=zipped))
+    settings = Settings(cache_dir=tmp_path / "cache", oracle_url=DEAD_ORACLE, mode="live")
+    rt = build_runtime(settings, source_transport=httpx.MockTransport(rec))
+    try:
+        signals, st = await rt.engine.run_connector("gdelt_events")  # the CDN hides it, the bucket has it: live
+        assert st.error is None and st.fetch_mode == "live" and st.cache_age_sec is None and len(signals) == 2
+        # a newer slot that neither the CDN nor the bucket has yet: the last live answer, said so, with its age
+        newer = lastupdate.replace(_SLOT, "20261020121500")
+        rec.routes.update({
+            "data.gdeltproject.org/gdeltv2/lastupdate.txt": lambda r: httpx.Response(200, text=newer),
+            "data.gdeltproject.org/gdeltv2/20261020121500.export": lambda r: httpx.Response(404, headers=_CDN_404),
+            "storage.googleapis.com/data.gdeltproject.org/gdeltv2/20261020121500.export": lambda r: httpx.Response(
+                404, headers={"cache-control": "private, max-age=0"}),
+        })
+        signals, st = await rt.engine.run_connector("gdelt_events")
+        assert st.fetch_mode == "cached-sample" and st.cache_age_sec is not None and len(signals) == 2
+        assert st.error.startswith("HTTP 404 (export file; the bucket: HTTP 404); serving the last live answer, ")
+    finally:
+        await rt.aclose()

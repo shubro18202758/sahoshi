@@ -360,6 +360,7 @@ which needs reading before they are considered.
   ahead and serve them from the cache.
 - IndicConformer and Indic Parler-TTS were measured on 29 Oct on the
   synthetic set only. Indic Parler-TTS is live since 29 Oct; its
-  advisories were checked by transcription, not yet by a listener; IndicConformer was not better than the
+  advisories were checked by transcription and approved by a listener on 29 Oct (the Bengali, Hindi and English
+  advisory samples); IndicConformer was not better than the
   current ASR ([the gated round](#the-29-oct-gated-round-indicconformer-and-indic-parler-tts)).
   Both stay behind config ([runbook](#when-access-is-granted)).

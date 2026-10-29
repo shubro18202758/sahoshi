@@ -17,7 +17,7 @@ from conftest import CAPTURE, DEAD_ORACLE, PACKAGE
 
 from osint_ingress.config import CONNECTOR_NAMES, Settings, cadences_from_env
 from osint_ingress.importer import import_capture
-from osint_ingress.safe_http import ALLOWED_HOSTS
+from osint_ingress.safe_http import ALLOWED_HOSTS, EGRESS_HOSTS
 from osint_ingress.service import create_app
 
 ISO_OR_NULL = (str, type(None))
@@ -81,7 +81,8 @@ async def test_health_shape_after_a_cycle(tmp_path):
     assert h["connectors"]["kolkata_police_scrape"]["cadence_sec"] == 3600
     lc = h["last_cycle"]
     assert lc["signals"] == 32 and lc["accepted"] == 32 and lc["surfaced"] == 3 and lc["pii_redactions"] > 0
-    assert h["egress_allowlist"] == sorted(ALLOWED_HOSTS)
+    # every host the service may contact: the exact hosts plus the path-restricted GDELT bucket host
+    assert h["egress_allowlist"] == sorted(EGRESS_HOSTS) == sorted(ALLOWED_HOSTS | {"storage.googleapis.com"})
 
 
 async def test_degraded_when_the_oracle_is_unreachable(tmp_path):

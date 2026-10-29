@@ -62,7 +62,7 @@ The production unit is `infra/systemd/sahoshi-feeds.service` (127.0.0.1:8199, pu
 
 ## Limits
 
-- **Air:** the values are the CAMS global model's, on a coarse grid (four cells cover the ten sites). The National AQI here uses PM2.5 and PM10 only, so it is indicative. With `DATA_GOV_IN_API_KEY` the stations' own CPCB averages are shown beside them, labelled OBSERVED (the keyed parsers are tested on hand-written samples in each service's documented shape; no key was available to record a real answer).
+- **Air:** the values are the CAMS global model's, on a coarse grid (four cells cover the ten sites). The National AQI here uses PM2.5 and PM10 only, so it is indicative. Beside them, labelled OBSERVED: the stations' own CPCB readings through OpenAQ (latest value and 24-hour means; the means give the observed National AQI) and WAQI's nearest WBPCB PM2.5 sensor. With `DATA_GOV_IN_API_KEY`, CPCB's own averages on data.gov.in take over the National AQI (that parser is tested on hand-written samples in the documented shape; no key was available to record a real answer).
 - **Site coordinates:** these are each named site's public location (landmark, campus or locality), good to about ±1 km.
 - **Heat:** the IMD test runs on the forecast maximum against the Alipore 1991–2020 monthly normal. It is never an IMD declaration.
 - **Rivers:** CWC publishes levels, not DVC release volumes. A release shows here as rising levels downstream and as news mentions.

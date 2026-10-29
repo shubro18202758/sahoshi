@@ -211,7 +211,7 @@ tide     | 5.98 m          | published_unavailable | MODELLED               next
 
 ## Limits
 
-- The air values are a global model's on a coarse grid. CPCB's own CAAQMS readings (data.gov.in), WAQI and OpenAQ are wired and show as OBSERVED the moment one free key is set; until then only the modelled values show.
+- The air values are a global model's on a coarse grid. Beside them, labelled OBSERVED: the CAAQMS stations' own PM2.5 and PM10 through OpenAQ (provider CPCB; the 24-hour means give the observed National AQI, still INDICATIVE because it uses two pollutants), and WAQI's nearest WBPCB PM2.5 sensor. CPCB's own bulletin on data.gov.in is wired and takes over the National AQI when `DATA_GOV_IN_API_KEY` is set.
 - The site positions are locality-level.
 - The heatwave test uses a monthly normal, not IMD's daily normal.
 - CWC levels are hourly and some stations report every 3 h. No release volume is machine-readable.

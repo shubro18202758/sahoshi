@@ -5,6 +5,17 @@ Bulk (``gdelt_events``, OSINT_SOURCES.md §1a):
 * ``fetch`` reads ``lastupdate.txt`` and downloads **only the ``*.export.CSV.zip`` it names** (never the mentions
   or GKG files), checking the size and MD5 that ``lastupdate.txt`` lists; the zip is cached as a blob by its own
   name, so a slice already on disk is not downloaded again.
+* **A 404 for that export is usually the CDN, not GDELT.** ``data.gdeltproject.org`` is a CDN in front of GDELT's
+  public Cloud Storage bucket (also named ``data.gdeltproject.org``), and its 404 is cacheable for an hour
+  (``Cache-Control: public, max-age=3600``). Clients elsewhere ask for the next 15-minute file before GDELT uploads
+  it, so the CDN can keep answering 404 for a file that ``lastupdate.txt`` already names and the bucket already
+  holds (on 2026-10-29 the 04:00, 04:15 and 04:30 UTC exports each answered 404 here 14 to 16 min after their
+  upload; a query string does not bypass that cache, a ``Cache-Control: no-cache`` request header does not either).
+  So after a 404 ``fetch`` asks the bucket itself, path-style on ``storage.googleapis.com``
+  (:data:`BUCKET_EXPORT_URL`; egress allows that host for exactly this path shape,
+  ``safe_http.PATH_RESTRICTED_HOSTS``), for the same file, with the same size cap and the same MD5 check.
+  Stepping back to an older slot would not help: that slot is already in the cache, and the one the CDN hides
+  would still be skipped.
 * ``parse`` streams the CSV out of the zip with stdlib ``zipfile`` and ``csv`` and keeps a row when
   ``ActionGeo_CountryCode`` is ``IN`` and its point is inside the **Kolkata metro bbox** (``cities/kolkata/
   city.json``; primary filter) or its ``ActionGeo_ADM1Code`` is ``IN28`` (secondary; FIPS 10-4 West Bengal,
@@ -21,11 +32,14 @@ Bulk (``gdelt_events``, OSINT_SOURCES.md §1a):
 DOC 2.0 (``gdelt_doc``, §1b): one ArtList query every 30 minutes (the DOC index itself refreshes every 15 min, and
 the 72-hour article list changes slowly), requests spaced ≥ 5 s apart process-wide (the API's documented limit:
 "Please limit requests to one every 5 seconds"). On 2026-10-28/29 the API answered this box with HTTP 429 (no
-``Retry-After``) even at one request per 15 minutes, and often took longer than 25 s. So a 429, the throttle banner
-or a timeout raises :class:`~.base.ConnectorThrottled` (with the server's ``Retry-After`` when it sends one): the
-runner backs off (jittered, exponential from the cadence, at most 6 h) and serves the last LIVE answer with its
-real fetch time and age meanwhile. The request itself may take up to 60 s. The article URL is never emitted (its
-slug can name a person): ``source_id`` is ``url-sha256:<hex>`` of the canonical URL.
+``Retry-After``) even at one request per 15 minutes, and often took longer than 25 s. The limit is per IP address,
+and this box reaches the internet through a shared campus NAT address, so other clients spend that budget: six
+requests in ten hours, any query, still drew 429s (the 429 itself arrives after about 11 s). No pacing here can fix
+that; another egress address (a venue network) would. So a 429, the throttle banner or a timeout raises
+:class:`~.base.ConnectorThrottled` (with the server's ``Retry-After`` when it sends one): the runner backs off
+(jittered, exponential from the cadence, at most 2 h) and serves the last LIVE answer with its real fetch time and
+age meanwhile. The request itself may take up to 60 s. The article URL is never emitted (its slug can name a
+person): ``source_id`` is ``url-sha256:<hex>`` of the canonical URL.
 """
 
 from __future__ import annotations
@@ -57,9 +71,10 @@ from osint_ingress.connectors.base import (
     build_signals,
     url_sha256,
 )
-from osint_ingress.safe_http import fetch
+from osint_ingress.safe_http import fetch, network_reason
 
 __all__ = [
+    "BUCKET_EXPORT_URL",
     "CAMEO_ROOT",
     "DOC_URL",
     "EVENT_COLUMNS",
@@ -71,6 +86,8 @@ __all__ = [
 ]
 
 LASTUPDATE_URL = "https://data.gdeltproject.org/gdeltv2/lastupdate.txt"
+#: The same export in GDELT's public bucket, path-style, without the CDN's cached 404 (module docstring)
+BUCKET_EXPORT_URL = "https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/{name}"
 DOC_URL = (
     "https://api.gdeltproject.org/api/v2/doc/doc?query=%28Kolkata%20OR%20Calcutta%29%20sourcecountry:IN"
     "&mode=artlist&maxrecords=40&format=json&timespan=72h&sort=datedesc"
@@ -215,6 +232,13 @@ class GdeltBulk(Connector):
             if size is not None and size > _MAX_EXPORT_BYTES:
                 raise ConnectorError("export file larger than the cap")
             zres = await fetch(client, url, max_bytes=_MAX_EXPORT_BYTES)
+            if zres.status == 404:  # most likely the CDN's cached 404: ask the bucket itself (module docstring)
+                try:
+                    zres = await fetch(client, BUCKET_EXPORT_URL.format(name=name), max_bytes=_MAX_EXPORT_BYTES)
+                except httpx.HTTPError as exc:
+                    raise ConnectorError(f"HTTP 404 (export file; the bucket: {network_reason(exc)})") from exc
+                if not zres.ok:
+                    raise ConnectorError(f"HTTP 404 (export file; the bucket: HTTP {zres.status})")
             if not zres.ok:
                 raise ConnectorError(f"HTTP {zres.status} (export file)")
             if md5 is not None and hashlib.md5(zres.content, usedforsecurity=False).hexdigest() != md5:

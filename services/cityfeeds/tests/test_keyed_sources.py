@@ -15,6 +15,8 @@ import pytest
 from conftest import NOW
 
 from cityfeeds import tls
+from cityfeeds.air import naqi
+from cityfeeds.air_observed import parse_openaq
 from cityfeeds.config import Settings
 from cityfeeds.fetch import Fetcher, load_fixture
 from cityfeeds.fires import KMA_BBOX, parse_csv
@@ -58,6 +60,8 @@ class Upstream:
                 return httpx.Response(200, json=_j("openaq_locations.json"))
             if path == "/v3/locations/5001/latest":
                 return httpx.Response(200, json=_j("openaq_latest_5001.json"))
+            if path in ("/v3/sensors/9001/hours", "/v3/sensors/9002/hours"):
+                return httpx.Response(200, json=_j(f"openaq_hours_{path.split('/')[3]}.json"))
         if host == "firms.modaps.eosdis.nasa.gov":
             modis = "MODIS" in path
             return httpx.Response(200, text=(FX / ("firms_modis.csv" if modis else "firms_area.csv")).read_text())
@@ -153,14 +157,65 @@ async def test_waqi_and_openaq_are_matched_to_the_sites(live, upstream, monkeypa
     assert by["victoria_memorial"]["waqi"]["waqi_aqi"] == 152 and by["victoria_memorial"]["waqi"]["scale"].startswith("US EPA")
     assert by["rabindra_sarobar"]["waqi"]["waqi_aqi"] == 88
     assert by["rabindra_bharati"] is None  # WAQI's "-" is no value, never a zero
+    assert "not its CAAQMS station" in by["victoria_memorial"]["waqi"]["source"]  # WAQI lists WBPCB's PM2.5 sensors
     fw = by["fort_william"]["openaq"]
-    assert fw["pm25_latest"] == 63.4 and fw["pm10_latest"] == 101.2 and "no AQI" in fw["averaging"]
-    assert a["observed"]["city_naqi"] is None  # WAQI and OpenAQ never stand in for the National AQI
+    assert fw["pm25_latest"] == 63.4 and fw["pm10_latest"] == 101.2
+    assert fw["upstream_name"] == "Fort William, Kolkata - WBPCB" and fw["upstream_provider"] == "CPCB"
     oq = upstream.to("api.openaq.org")
     assert oq and all(r.headers["x-api-key"] == FAKE["OPENAQ_API_KEY"] for r in oq)
     assert all(FAKE["OPENAQ_API_KEY"] not in str(r.url) for r in oq)  # a header, never the URL
     _no_key_anywhere(a)
     await live.f.aclose()
+
+
+async def test_openaq_reads_only_the_sensors_reporting_now(live, upstream, monkeypatch):
+    _keys(monkeypatch, "OPENAQ_API_KEY")
+    a = await live.air()
+    fw = next(s for s in a["stations"] if s["id"] == "fort_william")["observed"]["openaq"]
+    # the retired sensor's 2022 value (168.4) sits in the same answer as today's 63.4: only today's is read
+    assert fw["pm25_latest"] == 63.4 and fw["at"] == "2026-10-28T15:00:00Z"
+    paths = [r.url.path for r in upstream.to("api.openaq.org")]
+    assert "/v3/locations/5003/latest" not in paths  # a location silent since 2022 costs no call
+    assert "/v3/sensors/9004/hours" not in paths and "/v3/sensors/9001/hours" in paths
+    since = {r.url.params["datetime_from"] for r in upstream.to("api.openaq.org") if r.url.path.endswith("/hours")}
+    assert since == {"2026-10-27T15:50:00Z"}  # the last 24 hours by the service's clock
+
+
+async def test_openaq_24_hour_means_give_the_national_aqi_without_data_gov_in(live, upstream, monkeypatch):
+    _keys(monkeypatch, "OPENAQ_API_KEY", "WAQI_TOKEN")
+    a = await live.air()
+    fw = next(s for s in a["stations"] if s["id"] == "fort_william")["observed"]["openaq"]
+    # 20 usable hours for PM2.5 (a zero and a gap do not count); PM10 has 12, under CPCB's 16-hour rule
+    assert fw["pm25_24h"] == 65.0 and fw["hours_24h"] == {"pm25": 20, "pm10": 12} and fw["pm10_24h"] is None
+    assert fw["naqi"] == naqi(65.0, None) and fw["naqi"]["band"] == "moderate"
+    city = a["observed"]["city_naqi"]
+    assert city["site"] == "fort_william" and city["provider"] == "openaq" and city["aqi"] == fw["naqi"]["aqi"]
+    assert city["label"] == "OBSERVED" and city["sub_label"] == "INDICATIVE" and "OpenAQ" in city["source"]
+    assert live.keyed_sources()["cpcb"]["without_key"].startswith("OpenAQ carries the same CPCB station data")
+    _no_key_anywhere(a)
+    await live.f.aclose()
+
+
+async def test_data_gov_in_stays_first_for_the_national_aqi(live, upstream, monkeypatch):
+    _keys(monkeypatch, "OPENAQ_API_KEY", "DATA_GOV_IN_API_KEY")
+    a = await live.air()
+    city = a["observed"]["city_naqi"]
+    assert city["provider"] == "cpcb" and city["site"] == "ghusuri" and "data.gov.in" in city["source"]
+    await live.f.aclose()
+
+
+def test_openaq_gives_no_national_aqi_for_a_station_cpcb_does_not_run():
+    raw = {"now": "2026-10-28T15:50:00Z", "locations": [_j("openaq_locations.json")["results"][0] | {"provider": {"name": "StateAir"}}],
+           "latest": {"5001": _j("openaq_latest_5001.json")["results"]}, "hours": {"9001": _j("openaq_hours_9001.json")["results"]}}
+    fw = parse_openaq(raw)["fort_william"]
+    assert fw["pm25_24h"] == 65.0 and fw["naqi"] is None and fw["source"] == "OpenAQ v3"
+
+
+def test_openaq_drops_a_stopped_analyser_and_a_day_old_reading():
+    loc = _j("openaq_locations.json")["results"][0]
+    latest = [{"datetime": {"utc": "2026-10-28T15:00:00Z"}, "value": 0.0, "sensorsId": 9001},
+              {"datetime": {"utc": "2026-10-27T12:00:00Z"}, "value": 99.0, "sensorsId": 9002}]
+    assert parse_openaq({"now": "2026-10-28T15:50:00Z", "locations": [loc], "latest": {"5001": latest}}) == {}
 
 
 async def test_a_refused_key_is_reported_without_the_key(live, upstream, monkeypatch):

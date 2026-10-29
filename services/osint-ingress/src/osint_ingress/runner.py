@@ -6,7 +6,7 @@ retention, then queue the new signals in the outbox and flush it to the oracle w
 
 A source that asks us to slow down (``ConnectorThrottled``: HTTP 429, a throttle banner, an overload timeout) is
 backed off (:class:`Backoff`): no request to it until the server's ``Retry-After`` or a jittered exponential delay
-(the connector's cadence × 2^(n-1), ±20 %, at most 6 h), whichever is later. Meanwhile each run serves the
+(the connector's cadence × 2^(n-1), ±20 %, at most 2 h), whichever is later. Meanwhile each run serves the
 connector's last LIVE answer and says so with its real fetch time and age (``cache_age_sec``); it is never a
 recorded sample. One answer resets the back-off.
 
@@ -53,7 +53,7 @@ from osint_ingress.cache import Cache, stamp_of
 from osint_ingress.connectors._redact import has_poster_handle, has_url
 from osint_ingress.connectors.base import Connector, ConnectorDisabled, ConnectorError, ConnectorThrottled
 from osint_ingress.publish import PublishResult, Publisher
-from osint_ingress.safe_http import ALLOWED_HOSTS, EgressRefused, FetchError, network_reason
+from osint_ingress.safe_http import EGRESS_HOSTS, EgressRefused, FetchError, network_reason
 
 __all__ = ["Backoff", "ConnectorStatus", "CycleReport", "Engine", "new_run_id", "signal_checks"]
 
@@ -70,7 +70,7 @@ def new_run_id(now: datetime | None = None) -> str:
 
 
 #: the longest back-off (a throttled source is asked again at least every six hours)
-MAX_BACKOFF_SEC = 6 * 3600
+MAX_BACKOFF_SEC = 2 * 3600
 
 
 @dataclass
@@ -472,5 +472,5 @@ class Engine:
             if last is not None
             else {"at": None, "signals": 0, "accepted": 0, "rejected": 0, "geotagged": 0, "surfaced": 0,
                   "pii_redactions": 0},
-            "egress_allowlist": sorted(ALLOWED_HOSTS),
+            "egress_allowlist": sorted(EGRESS_HOSTS),
         }
