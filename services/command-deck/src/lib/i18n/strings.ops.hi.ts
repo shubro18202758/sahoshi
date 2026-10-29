@@ -46,11 +46,11 @@ export const hi: Pack = {
 	queuePursuitConfirm: 'पर्सुट खोलने की पुष्टि करें — मनुष्य ही शुरू करता है, मशीन कभी नहीं।',
 	queuePursuitHumanConfirms: 'मनुष्य पुष्टि करता है',
 
-	// ── डिस्पैच टाइल (जन रक्षक) ────────────────────────────────────────
+	// ── डिस्पैच टाइल (सिविक वॉलंटियर) ────────────────────────────────────────
 	dispatchTitle: 'फ़ील्ड यूनिट डिस्पैच',
 	dispatchSub: 'अनुरोधित → स्वीकृत → रास्ते में → स्थल पर',
 	dispatchRequestUnit: 'यूनिट माँगें',
-	dispatchUnitPlaceholder: 'यूनिट आईडी (जैसे JR-EM-01)',
+	dispatchUnitPlaceholder: 'यूनिट आईडी, यूनिट सूची में जैसी है',
 	dispatchApprove: 'स्वीकृत करें',
 	dispatchDefer: 'टालें',
 	dispatchEnRoute: 'रास्ते में',

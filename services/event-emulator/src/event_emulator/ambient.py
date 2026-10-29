@@ -7,6 +7,18 @@ ride their patrol routes, the registered ANPR cameras read passing traffic,
 and every ~25 minutes an ambulance (108) asks for a green corridor — which
 only a named duty officer can approve.
 
+DENSITY.  ``EMULATOR_LIVING_DENSITY`` (``DENSITY_LEVELS``) makes the same
+city busier, never different in kind: at 2, eighteen emulated field units
+ride (eleven Kolkata Traffic Police beats, three Kolkata Police PCR beats
+and four ambulance (108) standby circuits, each on a connected chain of
+the city network's own two-way roads, beside the first two beats), two more
+intermittent cause lanes run (mostly three to five causes at once), a 108
+request comes every ~15 minutes and a deliberate violator every ~12; at 3,
+four more lanes (mostly four to seven causes), a 108 request every ~11
+minutes and a violator every ~10.  Every unit, cause and read stays labelled emulated; the levels
+are MODELLED choices for a legible picture, not a statistic of the city.
+At 1 (the default) the program is exactly the baseline one.
+
 THE CITY'S RHYTHM.  What happens when follows Kolkata's day and year (see
 ``_kind_weights``; every weight is a MODELLED assumption, not a statistic):
 the office peaks into and out of BBD Bag–Esplanade and Sector V (about
@@ -94,8 +106,6 @@ import structlog
 from event_emulator.city import (
     EARMARK_EXERCISE_PLATE,
     IST,
-    PATROL_AGENCY,
-    PATROL_AGENCY_LABEL,
     PLATE_RTO_CODES,
     PUJA_NIGHTS,
     STOLEN_FIR_PLATE,
@@ -103,6 +113,8 @@ from event_emulator.city import (
     is_monsoon,
     puja_night_of,
     tide_index,
+    unit_label,
+    unit_role,
 )
 from event_emulator.kolkata_network import PATROL_ROWS, SIGNALISED_JUNCTIONS, SITE_ROWS
 from event_emulator.nats_seam import UNITS_EMULATED_SUBJECT
@@ -132,6 +144,9 @@ __all__ = [
     "SLOT_KINDS",
     "SITES",
     "PATROLS",
+    "DENSITY_LEVELS",
+    "Density",
+    "patrols_for",
     "Slot",
     "AmbulanceRequest",
     "Violation",
@@ -247,13 +262,17 @@ SITES: tuple[Site, ...] = tuple(
 #: Junctions with a signal program (corridor.signal_programs).
 _SIGNALISED = SIGNALISED_JUNCTIONS
 
-#: The two Kolkata Traffic Police beats (connected chains of the city
-#: network, each one-way driven its own way).  Unit ids carry the EM marker
-#: like every emulated plate and unit (LC: living city — never the
-#: KTP-EM-0n ids a use-case tape publishes).
+#: The living city's emulated field units (connected chains of the city
+#: network, each one-way driven its own way): Kolkata Traffic Police beats
+#: (KTP-EM-LCn), Kolkata Police PCR beats (KP-EM-PCRn) and ambulance (108)
+#: standby circuits (108-EM-LCn); the id's prefix names the agency
+#: (city.unit_role).  Unit ids carry the EM marker like every emulated
+#: plate and unit (LC: living city — never the KTP-EM-0n ids a use-case
+#: tape publishes, nor the 108-EM0n request pool).  The first two ride at
+#: every density; the rest join at density 2.
 PATROLS: tuple[tuple[str, str, tuple[int, ...]], ...] = tuple(
     (uid, beat, tuple(route)) for uid, beat, route in PATROL_ROWS)
-_PATROL_SPEED_KMH = 18.0
+_BASE_PATROLS = 2
 
 
 def _sites_by_kind() -> dict[str, tuple[Site, ...]]:
@@ -266,9 +285,37 @@ _SITES_BY_KIND: dict[str, tuple[Site, ...]] = _sites_by_kind()
 _AMBULANCES = tuple(f"108-EM{i:02d}" for i in range(1, 7))
 _URGENCIES = ("cardiac", "trauma", "maternity", "stroke", "respiratory")
 
-#: Cadences (minutes).
+#: Cadences (minutes) at density 1.
 _AMBULANCE_EVERY_MIN = 24.0       # + 0..3 min jitter: always < 30 min apart
 _VIOLATOR_EVERY_MIN = 15.0        # + 0..4 min jitter
+
+
+@dataclass(frozen=True)
+class Density:
+    """One EMULATOR_LIVING_DENSITY level (MODELLED choices, see DENSITY)."""
+
+    extra_lanes: int              # intermittent cause lanes beyond the three
+    ambulance_every_min: float    # 108 request cadence (+ 0..3 min jitter)
+    violator_every_min: float     # deliberate violator cadence (+ 0..4 min)
+    all_units: bool               # every beat and standby circuit rides
+
+
+DENSITY_LEVELS: dict[int, Density] = {
+    1: Density(0, _AMBULANCE_EVERY_MIN, _VIOLATOR_EVERY_MIN, False),
+    2: Density(2, 14.0, 10.0, True),
+    3: Density(4, 10.0, 8.0, True),
+}
+
+
+def _density(level: int) -> Density:
+    if level not in DENSITY_LEVELS:
+        raise ValueError(f"living-city density must be one of {sorted(DENSITY_LEVELS)}")
+    return DENSITY_LEVELS[level]
+
+
+def patrols_for(level: int) -> tuple[tuple[str, str, tuple[int, ...]], ...]:
+    """The field units that ride at this density."""
+    return PATROLS if _density(level).all_units else PATROLS[:_BASE_PATROLS]
 
 #: Retry cadence (seconds) for lifecycle calls / a ledger row an outage
 #: left undone.
@@ -594,9 +641,13 @@ def _titles(kind: str, site: Site, local: datetime,
 
 
 def build_day_program(city_seed: int, date_ist: date,
-                      puja_nights: tuple[date, ...] | None = None) -> DayProgram:
+                      puja_nights: tuple[date, ...] | None = None,
+                      density: int = 1) -> DayProgram:
     """The day's ambient program — pure: f(city_seed, IST date) (and the
-    Puja calendar, when an operator overrides it)."""
+    Puja calendar, when an operator overrides it, and the density level:
+    at 1 the baseline three lanes; extra lanes draw after them, so a
+    denser day keeps the baseline lanes' slots)."""
+    level = _density(density)
     seed = day_seed_for(city_seed, date_ist)
     rng = SeededRng(seed)
     day_start = datetime.combine(date_ist, dtime(0), IST).astimezone(timezone.utc)
@@ -608,9 +659,9 @@ def build_day_program(city_seed: int, date_ist: date,
         return any(s.starts_at < end and start < s.ends_at
                    and set(s.route_segment_ids) & set(segs) for s in slots)
 
-    for lane in range(3):
+    for lane in range(3 + level.extra_lanes):
         cursor = day_start
-        if lane == 2:
+        if lane >= 2:                       # lanes 2+ are intermittent
             cursor += timedelta(minutes=rng.uniform(20.0, 60.0))
         prev_kind: str | None = None
         prev_site: str | None = None
@@ -685,7 +736,7 @@ def build_day_program(city_seed: int, date_ist: date,
             used[site.site_id] = used.get(site.site_id, 0) + 1
             prev_kind, prev_site = kind, site.site_id
             cursor = end
-            if lane == 2:
+            if lane >= 2:
                 cursor += timedelta(minutes=rng.uniform(30.0, 80.0))
 
     slots.sort(key=lambda s: (s.starts_at, s.lane))
@@ -708,7 +759,7 @@ def build_day_program(city_seed: int, date_ist: date,
             slot_id=target.slot_id if target else None, waypoint_junction=waypoint,
         ))
         k += 1
-        t += timedelta(minutes=_AMBULANCE_EVERY_MIN)
+        t += timedelta(minutes=level.ambulance_every_min)
 
     # rare deliberate violators: one every ~15-19 minutes
     violations: list[Violation] = []
@@ -717,7 +768,7 @@ def build_day_program(city_seed: int, date_ist: date,
         at = t + timedelta(minutes=rng.uniform(0.0, 4.0))
         kind = "red_light" if rng.uniform() < 0.5 else "speed"
         violations.append(Violation(at=at, kind=kind, pick=int(rng.uniform(0.0, 1e9))))
-        t += timedelta(minutes=_VIOLATOR_EVERY_MIN)
+        t += timedelta(minutes=level.violator_every_min)
 
     return DayProgram(
         date_ist=date_ist, city_seed=int(city_seed), day_seed=seed,
@@ -859,9 +910,13 @@ class LivingCity:
         tick_sec: float = TICK_SEC,
         now: Callable[[], datetime] = utcnow,
         violators: bool = True,
+        density: int = 1,
     ) -> None:
         self._deps = deps
         self.city_seed = int(city_seed)
+        # EMULATOR_LIVING_DENSITY: how busy the same city is (DENSITY_LEVELS)
+        self.density = int(density)
+        self.patrols = patrols_for(self.density)
         self.enabled = bool(enabled)
         # the Puja calendar override (config EMULATOR_PUJA_NIGHTS); None:
         # city.PUJA_NIGHTS
@@ -903,7 +958,8 @@ class LivingCity:
     def program_for(self, d: date) -> DayProgram:
         if d not in self._programs:
             self._programs = {k: v for k, v in self._programs.items() if k >= d - timedelta(days=1)}
-            self._programs[d] = build_day_program(self.city_seed, d, self.puja_nights)
+            self._programs[d] = build_day_program(self.city_seed, d, self.puja_nights,
+                                                  self.density)
         return self._programs[d]
 
     @staticmethod
@@ -967,7 +1023,8 @@ class LivingCity:
             "run_id": sess.run_id if sess else None,
             "active_slots": active,
             "next_causes": upcoming[:8],
-            "units": [p[0] for p in PATROLS],
+            "units": [p[0] for p in self.patrols],
+            "density": self.density,
             "violators": self.violators,
             "since": sess.since.isoformat() if sess else None,
             "program": {"slots": len(program.slots),
@@ -1396,12 +1453,12 @@ class LivingCity:
         if store is not None and mono - self._dispatched_checked >= 15.0:
             self._dispatched_checked = mono
             try:
-                self._dispatched = await store.dispatched_units([p[0] for p in PATROLS])
+                self._dispatched = await store.dispatched_units([p[0] for p in self.patrols])
             except Exception as exc:  # noqa: BLE001
                 self.last_error = f"dispatch check: {exc}"
         day_start = datetime.combine(self.ist_date(now), dtime(0), IST)
         elapsed = (now - day_start).total_seconds()
-        for i, (unit_id, beat, route) in enumerate(PATROLS):
+        for i, (unit_id, beat, route) in enumerate(self.patrols):
             if unit_id in self._dispatched:
                 self.counters["units_handed_over"] += 1
                 continue
@@ -1412,13 +1469,14 @@ class LivingCity:
                 continue
             if len(line) < 2:
                 continue
+            role = unit_role(unit_id)
             lon, lat, heading = pingpong_point(
-                line, _PATROL_SPEED_KMH / 3.6 * elapsed + 1500.0 * i)
+                line, role.speed_kmh / 3.6 * elapsed + 1500.0 * i)
             doc = {
-                "unit_id": unit_id, "agency": PATROL_AGENCY,
-                "label": f"{PATROL_AGENCY_LABEL} {unit_id} · {beat} beat",
+                "unit_id": unit_id, "agency": role.agency,
+                "label": unit_label(unit_id, beat),
                 "position": [lon, lat], "heading": heading,
-                "speed_kmh": _PATROL_SPEED_KMH, "status": "patrol",
+                "speed_kmh": role.speed_kmh, "status": role.status,
                 "t": now.isoformat(), "run_id": self.run_id, "source": "emulated",
             }
             ok = await nats.publish_json(UNITS_EMULATED_SUBJECT, doc)

@@ -37,6 +37,7 @@ from event_emulator.ambient import (
     SLOT_KINDS,
     LivingCity,
     build_day_program,
+    patrols_for,
     _plate,
     day_seed_for,
     trickle_read,
@@ -44,7 +45,14 @@ from event_emulator.ambient import (
 from event_emulator.nats_seam import UNITS_EMULATED_SUBJECT
 from event_emulator.runner import RunnerDeps
 from event_emulator.tape import movement_states_at
-from event_emulator.city import EARMARK_EXERCISE_PLATE, PLACES, PUJA_NIGHTS, STOLEN_FIR_PLATE
+from event_emulator.city import (
+    EARMARK_EXERCISE_PLATE,
+    PLACES,
+    PUJA_NIGHTS,
+    STOLEN_FIR_PLATE,
+    unit_label,
+    unit_role,
+)
 from fakes import FakeNats, FakeOracle, FakeStore, FakeTwin, FakeValkey, NoSleep
 from kolkata import KEYS, SEGMENTS, between, legal_path, segment_named
 
@@ -116,6 +124,62 @@ class TestDayProgram:
             target = next(s for s in p.slots if s.slot_id == a.slot_id)
             assert target.active_at(a.at)
             assert a.unit_id.startswith("108-EM") and a.waypoint_junction is not None
+
+    def test_density_one_is_the_baseline_program(self):
+        assert build_day_program(SEED, DAY, density=1).to_json() == \
+            build_day_program(SEED, DAY).to_json()
+
+    @pytest.mark.parametrize("offset", range(0, 365, 41))
+    def test_a_denser_day_keeps_the_baseline_lanes_and_adds_causes(self, offset):
+        d = date(2026, 1, 1) + timedelta(days=offset)
+        base = build_day_program(SEED, d)
+        for level, lanes, most in ((2, 5, 5), (3, 7, 7)):
+            p = build_day_program(SEED, d, density=level)
+            assert p.to_json() == build_day_program(SEED, d, density=level).to_json()
+            # the baseline three lanes are drawn first, identically
+            assert [s for s in p.slots if s.lane < 3] == list(base.slots)
+            assert {s.lane for s in p.slots} <= set(range(lanes))
+            assert len(p.slots) > len(base.slots)
+            t, counts = p.day_start, []
+            while t < p.day_start + timedelta(days=1):
+                active = p.active_at(t)
+                assert 2 <= len(active) <= most, (d, level, t)
+                segs = [s for slot in active for s in slot.route_segment_ids]
+                assert len(segs) == len(set(segs)), (d, level, t)  # still disjoint roads
+                counts.append(len(active))
+                t += timedelta(minutes=5)
+            assert sum(counts) / len(counts) > 3.0
+            for a in p.ambulance_requests:
+                target = next(s for s in p.slots if s.slot_id == a.slot_id)
+                assert target.active_at(a.at)
+
+    def test_density_cadences(self):
+        def mean_gap(rows):
+            gaps = [(b.at - a.at).total_seconds() / 60.0 for a, b in zip(rows, rows[1:])]
+            return sum(gaps) / len(gaps)
+
+        p2 = build_day_program(SEED, DAY, density=2)
+        p3 = build_day_program(SEED, DAY, density=3)
+        assert 13.0 < mean_gap(p2.ambulance_requests) < 16.0
+        assert 9.0 < mean_gap(p3.ambulance_requests) < 12.0
+        assert 9.0 < mean_gap(p2.violations) < 13.0
+        assert 7.0 < mean_gap(p3.violations) < 11.0
+        with pytest.raises(ValueError):
+            build_day_program(SEED, DAY, density=4)
+
+    def test_every_beat_is_a_legal_chain_of_two_way_roads_beyond_the_first_two(self):
+        assert len(PATROLS) == 18 and len({p[0] for p in PATROLS}) == 18
+        assert patrols_for(1) == PATROLS[:2] and patrols_for(2) == patrols_for(3) == PATROLS
+        for unit_id, beat, route in PATROLS:
+            assert legal_path(list(route)), unit_id
+            for a, b in zip(route, route[1:]):          # consecutive roads meet
+                ends_a = {SEGMENTS[a]["from_junction"], SEGMENTS[a]["to_junction"]}
+                ends_b = {SEGMENTS[b]["from_junction"], SEGMENTS[b]["to_junction"]}
+                assert ends_a & ends_b, (unit_id, a, b)
+            assert unit_role(unit_id).agency in ("traffic", "police", "ambulance")
+            assert len(unit_label(unit_id, beat)) <= 80, unit_id
+        for unit_id, _beat, route in PATROLS[2:]:     # driven back and forth
+            assert not any(SEGMENTS[s]["oneway"] for s in route), unit_id
 
     def test_violators_are_rare(self):
         p = build_day_program(SEED, DAY)
@@ -268,14 +332,15 @@ class TestDayProgram:
 # ── the supervisor ──────────────────────────────────────────────────────────
 
 
-def _city(store=None, reserved=None, rules=None):
+def _city(store=None, reserved=None, rules=None, density=1):
     store = store or FakeStore(cameras=[dict(c) for c in CAMERAS], programs={PARK_ST: PROGRAM},
                                legs=LEGS)
     oracle = FakeOracle(store=store, rules=rules)
     nats = FakeNats()
     deps = RunnerDeps(store=store, valkey=FakeValkey(), twin=FakeTwin(), nats=nats,
                       oracle=oracle, sleep=NoSleep())
-    city = LivingCity(deps, city_seed=SEED, reserved_routes=reserved or (lambda: {}))
+    city = LivingCity(deps, city_seed=SEED, reserved_routes=reserved or (lambda: {}),
+                      density=density)
     return city, store, oracle, nats
 
 
@@ -327,7 +392,9 @@ class TestSupervisor:
         await _run(city, _at(9, 0), 3)
         docs = [d for s, d, _r in nats.json_docs if s == UNITS_EMULATED_SUBJECT]
         assert len(docs) == 6
-        assert {d["unit_id"] for d in docs} == {p[0] for p in PATROLS}
+        # the baseline city: its first two Kolkata Traffic Police beats
+        assert city.patrols == PATROLS[:2]
+        assert {d["unit_id"] for d in docs} == {"KTP-EM-LC1", "KTP-EM-LC2"}
         for d in docs:
             assert d["agency"] == "traffic" and d["source"] == "emulated"
             assert d["label"].startswith("Kolkata Traffic Police KTP-EM-LC")
@@ -335,6 +402,36 @@ class TestSupervisor:
         # they move
         first = [d["position"] for d in docs if d["unit_id"] == "KTP-EM-LC1"]
         assert first[0] != first[-1]
+
+    async def test_a_denser_city_rides_every_unit_labelled_by_agency(self):
+        city, store, oracle, nats = _city(density=2)
+        await _run(city, _at(9, 0), 3)
+        docs = [d for s, d, _r in nats.json_docs if s == UNITS_EMULATED_SUBJECT]
+        assert {d["unit_id"] for d in docs} == {p[0] for p in PATROLS}
+        assert len(docs) == 3 * len(PATROLS) == 54
+        by_agency = Counter(d["agency"] for d in docs[: len(PATROLS)])
+        assert by_agency == {"traffic": 11, "police": 3, "ambulance": 4}
+        for d in docs:
+            assert d["source"] == "emulated" and d["run_id"] == city.run_id
+            assert len(d["label"]) <= 80                 # the oracle's C-A label cap
+            if d["agency"] == "traffic":
+                assert d["label"].startswith(f"Kolkata Traffic Police {d['unit_id']} · ")
+                assert d["status"] == "patrol" and d["unit_id"].startswith("KTP-EM-LC")
+            elif d["agency"] == "police":
+                assert d["label"].startswith(f"Kolkata Police PCR {d['unit_id']} · ")
+                assert d["status"] == "patrol" and d["unit_id"].startswith("KP-EM-PCR")
+            else:
+                assert d["label"].startswith(f"Ambulance (108) {d['unit_id']} · standby circuit, ")
+                # on a standby circuit, never on a call: 'available', not en route
+                assert d["status"] == "available" and d["unit_id"].startswith("108-EM-LC")
+        # never the 108 request pool's ids
+        assert not {d["unit_id"] for d in docs} & {f"108-EM{i:02d}" for i in range(1, 7)}
+        # each unit moves along its beat
+        for uid in ("KTP-EM-LC9", "KP-EM-PCR2", "108-EM-LC3"):
+            pos = [d["position"] for d in docs if d["unit_id"] == uid]
+            assert pos[0] != pos[-1], uid
+        doc = city.status_doc()
+        assert doc["density"] == 2 and doc["units"] == [p[0] for p in PATROLS]
 
     async def test_patrols_ride_the_network_after_it_changes(self):
         # the store's network is converted under the running city (WP-20):

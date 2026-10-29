@@ -308,7 +308,7 @@ export const bn: Pack = {
 	dec_life_active: 'এই ঘটনা সক্রিয় করুন',
 	dec_life_completed: 'এই ঘটনা সম্পূর্ণ করুন',
 	dec_life_cancelled: 'এই ঘটনা বাতিল করুন',
-	dec_live_movement: (cls) => `ভিভিআইপি যাত্রা · ${s(cls)}`,
+	dec_live_movement: (cls) => `সুরক্ষিত যাত্রা · ${s(cls)}`,
 	dec_live_vehicle: 'গাড়ি',
 	dec_live_band: (band) => `যাত্রার সময় ব্যান্ড ${s(band)}`,
 	dec_band_red: 'লাল',

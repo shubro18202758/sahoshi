@@ -46,7 +46,7 @@ export const bn: Pack = {
 	dss_agency_ambulance: 'অ্যাম্বুলেন্স (108)',
 	dss_agency_police: 'পুলিশ',
 	dss_agency_traffic: 'ট্রাফিক পুলিশ',
-	dss_agency_jan_rakshak: 'জরুরি সহায়তা (112)',
+	dss_agency_jan_rakshak: 'সিভিক ভলান্টিয়ার',
 	dss_agency_fire: 'দমকল ও জরুরি পরিষেবা',
 	dss_coa_list: 'পদক্ষেপের বিকল্প',
 	dss_coa_rank: (rank) => `ক্রম ${s(rank)}`,

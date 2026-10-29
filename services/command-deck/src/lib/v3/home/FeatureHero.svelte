@@ -68,6 +68,7 @@
 				{#if vm.inset.kind === 'vehicle'}<VehicleShot cls={vm.inset.cls} {lang} width={240} />{:else}<img src={vm.inset.art} alt={t(lang, 'v3i_art_alt', vm.kindLine)} width="240" height="135" loading="eager" decoding="async" />{/if}
 			</div>
 		{/if}
+		{#key vm.key}
 		<div class="copy">
 			<div class="eyebrow">
 				<V3Tag tone="decide" glyph="clock">{t(lang, 'v3_hero_now')}</V3Tag>
@@ -105,6 +106,7 @@
 			</div>
 			<p class="ifnot"><Glyph name="info" size={16} />{vm.ifNot}</p>
 		</div>
+		{/key}
 	{:else}
 		<img class="clear-scene" src={sceneSrc('all-clear')} alt={t(lang, 'v3i_scene_all-clear')} width={SCENE.w} height={SCENE.h} loading="eager" decoding="async" />
 		<div class="scrim" aria-hidden="true"></div>
@@ -242,6 +244,7 @@
 
 	.cd {
 		color: var(--v3-decide-text);
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* the call to action follows the facts: the hero stretches to the pulse column's height (often past the fold),
@@ -359,9 +362,11 @@
 		width: clamp(170px, 24%, 260px);
 		aspect-ratio: 16 / 10;
 		overflow: hidden;
-		border: 1px solid var(--v3-line-2);
+		border: 1px solid var(--v3-glass-border);
 		border-radius: var(--v3-radius-l);
-		background: var(--v3-glass);
+		background: var(--v3-glass-bg);
+		-webkit-backdrop-filter: var(--v3-glass-blur);
+		backdrop-filter: var(--v3-glass-blur);
 		box-shadow: var(--v3-elev-2);
 		pointer-events: none;
 	}
@@ -418,10 +423,27 @@
 		}
 	}
 
-	/* a phone: the copy over the map, no inset picture */
+	/* a phone: the place on top (the satellite and its marker, never under the words), the copy below; no inset picture */
 	@media (max-width: 720px) {
 		.feature {
 			min-height: 0;
+		}
+
+		.feature:not(.clear) {
+			flex-direction: column;
+		}
+
+		.feature:not(.clear) :global(.art) {
+			position: relative;
+			inset: auto;
+			flex: none;
+			height: 176px;
+		}
+
+		.feature:not(.clear) .scrim {
+			inset: 0 0 auto;
+			height: 176px;
+			background: linear-gradient(0deg, var(--v3-s1) 0%, var(--v3-scrim-none) 45%);
 		}
 
 		.copy {
@@ -442,9 +464,31 @@
 		}
 	}
 
+	/* the featured decision (and the next one, when the stack moves) enters softly: 200 ms, a fade and a small rise */
+	.copy,
+	.hero-inset {
+		animation: v3h-enter 200ms var(--v3-ease) both;
+	}
+
+	@keyframes v3h-enter {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.btn-primary {
 			transition: none;
+		}
+
+		.copy,
+		.hero-inset {
+			animation: none;
 		}
 	}
 </style>

@@ -21,8 +21,8 @@ export const hi = {
 	nav_chat: 'एजेंट कंसोल',
 	nav_design: 'डिज़ाइन शीट',
 	nav_section_public: 'सार्वजनिक दृश्य',
-	nav_citizen: 'नागरिक — आपका रास्ता',
-	nav_driver: 'ड्राइवर — विंडो',
+	nav_citizen: 'आपका रास्ता',
+	nav_driver: 'एम्बुलेंस (108)',
 
 	shell_brand: 'SAHOSHI',
 	shell_search: 'डेक खोजें',

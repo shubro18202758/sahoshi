@@ -68,14 +68,14 @@ class TestSurface:
     def test_root_describes_seams(self, client):
         body = client.get("/").json()
         assert body["service"] == "event-emulator"
-        assert body["use_cases"] == 18
+        assert body["use_cases"] == 19
         assert "adaptive:inputs:{movement_id}" in body["seams"]["valkey"]
         assert "C-E" in body["seams"]["anpr"] and "C-F" in body["seams"]["lifecycle"]
 
     def test_use_cases_listed(self, client):
         cases = client.get("/api/v1/emulator/use-cases").json()
         ids = {u["id"] for u in cases}
-        assert "durga_puja_north" in ids and len(ids) == 18
+        assert "durga_puja_north" in ids and "bijoya_immersion_procession" in ids and len(ids) == 19
         # additive: the honest label, the three names and the Kolkata places
         for u in cases:
             assert u["label"] == "SIMULATED" and u["name_bn"] and u["name_hi"], u["id"]
@@ -370,6 +370,20 @@ class TestReplayOnTheCurrentNetwork:
 
 
 class TestLivingCityRoutes:
+    def test_density_reaches_the_status_doc(self):
+        store = FakeStore()
+        app = create_app(_deps(store=store, nats=FakeNats()),
+                         settings=_settings(living_density=2), background=False)
+        with TestClient(app) as c:
+            body = c.get("/api/v1/emulator/living-city").json()
+            assert body["density"] == 2 and len(body["units"]) == 18
+            assert body["units"][:2] == ["KTP-EM-LC1", "KTP-EM-LC2"]
+        app = create_app(_deps(store=FakeStore(), nats=FakeNats()), settings=_settings(),
+                         background=False)
+        with TestClient(app) as c:
+            body = c.get("/api/v1/emulator/living-city").json()
+            assert body["density"] == 1 and body["units"] == ["KTP-EM-LC1", "KTP-EM-LC2"]
+
     def test_start_status_stop(self):
         store = FakeStore()
         nats = FakeNats()

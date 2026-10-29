@@ -5,6 +5,10 @@
 	 * outfall gates (Modelled), and the signal-timing proposals waiting (the twin) — each line links to where it is
 	 * worked (Decide, the map). Under it, "Replay 23 Sep 2025" opens the replay sheet. A service that does not answer
 	 * says so in one neutral line; decisions still work.
+	 *
+	 * Simple on the surface, deep underneath: one plain sentence per line and ONE honesty tag for the group (every line
+	 * here is a model's output: Modelled). "How these are made" opens the depth — each line's own labels (the forecast's
+	 * Simulated history among them) and the forecast's per-road V/C — so no label is lost, only put one level down.
 	 */
 	import { onMount } from 'svelte';
 	import { t } from '$lib/i18n/strings';
@@ -58,8 +62,8 @@
 
 <section class="nh" aria-label={L('ai_h_aria')} data-testid="ai-next-hours">
 	<div class="head">
-		<h3>{L('ai_h_title')}</h3>
-		<span class="spark" title={L('ai_tag')}><Glyph name="spark" size={16} /></span>
+		<h3><span class="spark" title={L('ai_tag')}><Glyph name="spark" size={16} /></span>{L('ai_h_title')}</h3>
+		<ProvTag prov="modelled" {lang} />
 	</div>
 	{#if down}
 		<p class="down" role="status">{L('ai_h_down')}</p>
@@ -69,22 +73,15 @@
 				<span class="ic"><Glyph name="graph" size={16} /></span>
 				<span class="tx">
 					{#if nh.crossingCount == null}<span class="dim">{L('ai_fc_loading')}</span>
-					{:else if nh.crossingCount}<a href="/decide">{L('ai_h_cross', nh.crossingCount)}</a>
+					{:else if nh.crossingCount}<a href="/decide">{L('ai_h_cross', nh.crossingCount)}</a>{#if nh.crossings.length}<span class="dim"> · {nh.crossings.map((c) => placeOf(c)).join(', ')}</span>{/if}
 					{:else}{L('ai_h_cross_none')}{/if}
-					{#if nh.crossings.length}
-						<span class="chips">
-							{#each nh.crossings as c, i (i)}<span class="chip"><b>{placeOf(c)}</b> {c.inMin != null && c.vc != null ? L('ai_h_cross_row', c.inMin, c.vc.toFixed(2)) : ''}</span>{/each}
-						</span>
-					{/if}
 				</span>
-				<span class="pv">{#each fcProvs as p (p)}<ProvTag prov={p} {lang} />{/each}</span>
 			</li>
 			<li data-line="waterlog">
 				<span class="ic"><Glyph name="wave" size={16} /></span>
 				<span class="tx">
 					{#if atRisk == null}<span class="dim">{L('ai_fc_loading')}</span>{:else if atRisk}<a href="/map"><span class="sw" aria-hidden="true"></span>{L('ai_h_risk', atRisk)}</a>{:else}{L('ai_h_risk_none')}{/if}
 				</span>
-				<span class="pv"><ProvTag prov="modelled" {lang} /></span>
 			</li>
 			<li data-line="tide">
 				<span class="ic"><Glyph name="timeline" size={16} /></span>
@@ -94,16 +91,33 @@
 						{#if nh.tide.nextHigh}<span class="dim"> · {L('ai_rt_high', fmtTime(nh.tide.nextHigh.at), nh.tide.nextHigh.level.toFixed(2))}</span>{/if}
 					{:else}<span class="dim">{L('ai_fc_loading')}</span>{/if}
 				</span>
-				<span class="pv"><ProvTag prov="modelled" {lang} /></span>
 			</li>
 			<li data-line="twin">
 				<span class="ic"><Glyph name="signal" size={16} /></span>
 				<span class="tx">
 					{#if nh.twinWaiting == null}<span class="dim">{L('ai_fc_loading')}</span>{:else if nh.twinWaiting}<a href="/decide">{L('ai_h_twin', nh.twinWaiting)}</a>{:else}{L('ai_h_twin_none')}{/if}
 				</span>
-				<span class="pv"><ProvTag prov="modelled" {lang} /></span>
 			</li>
 		</ul>
+		<!-- depth on demand: every line's own labels and the forecast's per-road figures -->
+		<details class="how" data-testid="ai-next-hours-how">
+			<summary>{L('ai_h_how')}<Glyph name="chevD" size={14} /></summary>
+			<dl>
+				<dt>{L('ai_h_how_forecast')}</dt>
+				<dd>
+					<span class="pv">{#each fcProvs as p (p)}<ProvTag prov={p} {lang} />{/each}</span>
+					{#if nh.crossings.length}
+						<span class="rows">{#each nh.crossings as c, i (i)}<span><b>{placeOf(c)}</b> {c.inMin != null && c.vc != null ? L('ai_h_cross_row', c.inMin, c.vc.toFixed(2)) : ''}</span>{/each}</span>
+					{/if}
+				</dd>
+				<dt>{L('ai_h_how_water')}</dt>
+				<dd><span class="pv"><ProvTag prov="modelled" {lang} /></span></dd>
+				<dt>{L('ai_h_how_tide')}</dt>
+				<dd><span class="pv"><ProvTag prov="modelled" {lang} /></span></dd>
+				<dt>{L('ai_h_how_twin')}</dt>
+				<dd><span class="pv"><ProvTag prov="modelled" {lang} /></span></dd>
+			</dl>
+		</details>
 	{/if}
 	<button type="button" class="replay" data-testid="ai-replay-open" onclick={() => void openReplay()}>
 		<span class="r-ic"><Glyph name="history" size={18} /></span>
@@ -120,11 +134,11 @@
 	.nh {
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
-		padding: 14px 16px;
+		gap: 12px;
+		padding: 16px 18px;
 		border: 1px solid var(--v3-line-1);
 		border-radius: var(--v3-radius-l);
-		background: var(--v3-s1);
+		background: var(--v3-s2);
 	}
 
 	.head {
@@ -134,9 +148,12 @@
 	}
 
 	h3 {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
 		margin: 0;
-		font-size: var(--v3-text-sub);
-		font-weight: 700;
+		font-size: var(--v3-text-body);
+		font-weight: 650;
 		color: var(--v3-t1);
 	}
 
@@ -156,12 +173,13 @@
 
 	.lines li {
 		display: grid;
-		grid-template-columns: 18px minmax(0, 1fr) auto;
+		grid-template-columns: 18px minmax(0, 1fr);
 		align-items: start;
 		gap: 10px;
 		font-size: var(--v3-text-meta);
 		line-height: var(--v3-lh-meta);
 		color: var(--v3-t1);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.ic {
@@ -188,29 +206,77 @@
 		color: var(--v3-t3);
 	}
 
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-		margin-top: 6px;
+	.how {
+		color: var(--v3-t3);
+		font-size: var(--v3-text-micro);
+		line-height: var(--v3-lh-micro);
 	}
 
-	.chip {
-		padding: 2px 10px;
-		border-radius: 12px;
-		background: var(--v3-s3);
+	.how summary {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		min-height: 24px;
 		color: var(--v3-t2);
-		font-size: var(--v3-text-micro);
+		font-weight: 600;
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.how summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.how summary :global(.v3-glyph) {
+		transition: transform var(--v3-dur-2) var(--v3-ease);
+	}
+
+	.how[open] summary :global(.v3-glyph) {
+		transform: rotate(180deg);
+	}
+
+	.how summary:hover {
+		color: var(--v3-t1);
+	}
+
+	.how summary:focus-visible {
+		outline: 2px solid var(--v3-brand);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
+	.how dl {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: 8px 12px;
+		margin: 8px 0 0;
+	}
+
+	.how dt {
+		color: var(--v3-t2);
+	}
+
+	.how dd {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin: 0;
+	}
+
+	.how .rows {
+		display: flex;
+		flex-direction: column;
 		font-variant-numeric: tabular-nums;
 	}
 
-	.chip b {
+	.how .rows b {
 		color: var(--v3-t1);
 		font-weight: 600;
 	}
 
 	.pv {
 		display: inline-flex;
+		flex-wrap: wrap;
 		gap: 4px;
 	}
 
@@ -278,15 +344,4 @@
 		font-size: var(--v3-text-micro);
 	}
 
-	/* a phone: the provenance tags go under the line they label (the words keep the width) */
-	@media (max-width: 720px) {
-		.lines li {
-			grid-template-columns: 18px minmax(0, 1fr);
-		}
-
-		.pv {
-			grid-column: 2;
-			flex-wrap: wrap;
-		}
-	}
 </style>

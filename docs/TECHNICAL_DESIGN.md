@@ -68,7 +68,7 @@ Hindi, with voice.
 | Honest about what is real | Every record carries its provenance: LIVE, EMULATED, SIMULATED, MODELLED, UNVERIFIED-FIELD, UNVERIFIED-CAMERA, NEWS-REPORTED, OFFICIAL-VERIFIED |
 | Vehicles and places, never people | No person, face or biometric field exists on any path; vision refuses person and plate questions; OSINT is aggregate |
 | Runs on premises | Every model runs on one edge server beside the control room; no cloud inference |
-| Bengali first | Public pages default to বাংলা; voice in and out in Bengali; Bengali rationales checked by code |
+| English first, Bengali throughout | Every page opens in English, with বাংলা and हिंदी one tap away (the choice is remembered); voice in and out in Bengali; Bengali rationales checked by code |
 | A new city is a new folder | The City Pack and `scripts/city_build.py` |
 
 ### 1.4 Non-goals
@@ -96,6 +96,42 @@ Hindi, with voice.
 | News and alerts | Real open sources, aggregate only | UNVERIFIED-OSINT / NEWS-REPORTED / OFFICIAL-VERIFIED |
 | Scenarios (Puja night, cloudburst, cyclone …) | Emulator scenarios | SIMULATED |
 | Impact figures | Deterministic model with an assumptions ledger | MODELLED |
+
+### 1.6 Capability map
+
+Every capability, the code that implements it and the screen it is seen on. The platform capabilities come first,
+then the five Kolkata AI services (§5).
+
+| Capability | Service · module | Screen | Label |
+|---|---|---|---|
+| Movement planning: k-shortest routes, weighted scoring, lane-floor validation per protection class (Z+ 6 lanes / 180 s, Z 4 / 120 s, Y 2 / 60 s, X any), closure plans with detour status (`found`, `no_path`, `dead_end`, `impractical`) | convoy-brain `workflows/pre_movement.py`, `agents/security_liaison.py`; traffic-oracle `optimize/*` | `/plan` | traffic SIMULATED |
+| Rolling holds and escort: closures 60–180 s ahead; one open proposal per escort (hold, alternate, re-route); officer approves; expiry after 90 s (15–600) keeps the plan; after-action report | convoy-brain `workflows/live_escort.py`, `post_clearance.py`, `gps_sim.py` | `/plan` Live, `/decide`, `/ops` | convoy GPS EMULATED |
+| Corridor events: one data model, kinds `protected_movement`, `procession`, `mass_gathering`, `race`, `ceremonial`, `egress_surge`, `emergency_evacuation`, `work_zone`, `crime_incident`, `vehicle_pursuit`; closure templates per kind | corridor-store `events.corridor_events`; event-emulator use-case library | `/map`, `/ops`, `/o/event:<id>` | scenarios SIMULATED |
+| Traffic ingest with eight plausibility checks | signal-ingress | Home systems line, `/map` | SIMULATED |
+| Forecast ladder for routing and ETAs (support gate → foundation model → heuristic) | traffic-oracle `predict/flow_forecaster.py` | `/plan` route times | "Simulated traffic" |
+| Situation bands (Active Movement Adaptation): score → GREEN/AMBER/RED/BLACK, monotone, hysteresis, protocol floors, twin shadow-evaluation fail-closed, stale after a hung tick | traffic-oracle `adaptive/*` | `/ops` module card, map band chip, Home pulse | — |
+| City signal plans: band → green split with cross-street floors; writer off by default; named officer; twin check before any write; snapshot, Restore, Restore all; refusal until the twin is field-calibrated | traffic-oracle `signals/*`, `simulation/calibration.py` | `/ops` City Signal Plans | no field controller |
+| Monte-Carlo scenario twin (shadow-evaluation, wargames, calibration replay) | traffic-oracle `simulation/*`, `scripts/scenario_library.json` | `/ops` Lab | MODELLED |
+| Stolen-vehicle chain: lawful-basis earmark (90-day cap) → emulated ANPR reads → evidence-only sighting (an e-challan on a stolen vehicle is refused, 409) → officer approval → one pursuit per approval (422 otherwise) → interception choke plan → trace | traffic-oracle `enforcement/*`, `vehicles/*`, `events/*` | `/decide`, `/ops`, `/map`, `/o/vehicle:<id>` | ANPR EMULATED |
+| E-challan support (segment speed, signal violation, closed-corridor entry), PENDING until an officer decides | traffic-oracle `enforcement/rules.py` | `/decide`, `/ops` | reads EMULATED |
+| Dispatch to five agencies (Civic Volunteers, Police Control, Traffic Police, Ambulance (108), Fire & Emergency) with an append-only lifecycle | traffic-oracle `units/*` | `/ops` dispatch tiles, `/o/dispatch:<id>` | units EMULATED |
+| Ambulance (108) green corridor (§9.4) | command-deck public projection; traffic-oracle `units/*` | `/driver`, `/decide` | — |
+| Event intelligence: connectors for official alerts, news and aggregate social signals; redaction at parse; offline gazetteer; credibility; officer promote gate | osint-ingress, osint-common, osint-geo, osint-analysis; traffic-oracle `osint/*` | Home "Reported in the city", `/o/osint_event:<id>` | OFFICIAL-VERIFIED / NEWS-REPORTED / UNVERIFIED-OSINT |
+| Decision support: five courses of action, AHP + lexical veto + TOPSIS, twin or surrogate wargame; approval creates dispatch requests only | traffic-oracle `decision_support/*` | `/decide` "Choose a response" | MODELLED |
+| Assistant: two tiers, grounding validator, confidence floor 0.45, read-only tools | convoy-brain `decider.py`, `grounding.py`, `mcp/server.py` | `/assistant`, `/chat` | per answer |
+| Advisories for four audiences in three languages, drafts only | command-deck `lib/comms/*` | `/comms` | exercise marker on emulated events |
+| 3D city with overlays, thermal-style view, share links, replay | command-deck `lib/gods-eye/*` | `/map`, `/gods-eye` | imagery not live |
+| Audit trail, operator gate, masking, retention | all services; command-deck `hooks.server.ts`, `operator-session.server.ts` | `/ops` audit, object Record tab | — |
+| Waterlogging nowcast | hydro (§5.2) | `/map` Waterlogging, Home, `/decide` | rain LIVE, tide MODELLED, pumps EMULATED |
+| Corridor forecasting | forecast (§5.1) | `/map` Forecast, `/o/segment:<id>` | on simulated traffic |
+| Bengali voice | speech (§5.3) | top bar → Report, `/citizen` Listen | UNVERIFIED-FIELD, synthetic voice |
+| Road-state vision | vision (§5.4) | `/o/camera:<id>` | UNVERIFIED-CAMERA |
+| Signal-timing twin | twin (§5.5) | `/decide` AI proposals | MODELLED |
+
+| The live map, closer | Situation wall |
+|---|---|
+| ![A closer view of the live map over Central Kolkata](screenshots/map-live-3d-close.jpg) | ![The situation wall](screenshots/situation-wall.jpg) |
+| *Closer in: each road's speed and V/C (simulated), events where they happen, units with their state (emulated).* | *Counts, decisions, the city band, signal plans (writer off) and the audit stream on one screen.* |
 
 ---
 
@@ -312,12 +348,17 @@ The five AI services are brought up with their own compose files and report on t
 |---|---|---|
 | `(v3)` operator pages | `/` (Home), `/map`, `/decide`, `/decide/[unit]`, `/plan`, `/assistant`, `/o/[urn]` (object pages) | Night theme; operator CSP |
 | `(deck)` analyst pages | `/analyst` (workspace), `/ops` (situation wall), `/gods-eye` (3D city), `/chat`, `/comms` (advisories) | Night theme; operator CSP |
-| `(public)` | `/citizen`, `/driver` | Day theme; strict public CSP; Bengali first for `/driver` |
+| `(public)` | `/citizen`, `/driver` | Day theme; strict public CSP; English first, বাংলা and हिंदी one tap away |
 | `(landing)` | `/welcome` | Public; no API calls |
 | `api/session` | `POST /api/session` (sign in), `GET` (gate state) | — |
 
 `src/hooks.ts` reroutes `/` to Home and `/analyst` to the workspace; every per-page decision (CSP, theme, default
 language) reads the resolved route id, not the URL.
+
+| Home | Analyst workspace |
+|---|---|
+| ![Home: the featured decision, the city pulse and the next two hours](screenshots/home.jpg) | ![The Analyst workspace](screenshots/analyst-workspace.jpg) |
+| *What needs an officer now, the city's band and four counts, and the next two hours (modelled).* | *The map, the active events and the selected movement's figures, with the timeline below.* |
 
 #### Request pipeline (`src/hooks.server.ts`)
 
@@ -456,6 +497,17 @@ Off by default (`SAHOSHI_OSINT=0`). Four Python packages, one runtime container:
 Rules enforced in code: names and ages are redacted at parse; a single social post is never surfaced and is capped
 at credibility 0.30; `OFFICIAL-VERIFIED` needs an official source; a surfaced situation must be located in the city;
 `crime_incident` and `vehicle_pursuit` can never come from OSINT.
+
+**Scope: roads, crowds, weather, hazards, closures and services only.** The oracle's ingest screens every signal
+with `osint_common.scope`, a deterministic gate (English, Bengali and Hindi cue lists; no model): a person-crime
+report, a clash between groups or a political item (elections, polls, candidates, party workers, protests and
+bandhs) is rejected as `out_of_scope_crime`, `out_of_scope_conflict` or `out_of_scope_political` and never stored;
+the classifier's `reported_crime`, `public_conflict` and `unrest` classes are refused the same way. A procession or
+gathering that bears on a road is kept as a crowd or closure situation, its political terms replaced by
+`[WITHHELD]`, so only the place and the road impact remain. Party names are never written in the code: a token is
+hashed and compared. Stored signals from before the rule are left out of every re-fusion (their situations are
+withdrawn on the next cycle), and `scripts/osint_scope_cleanup.py` (dry-run by default) retires older ones. The
+counts by reason are in the ingest reply (`scope`) and the `osint.ingest.counts` log line; no text is logged.
 
 ### 4.8 embedding-service
 
@@ -922,6 +974,11 @@ The server refuses a decision without a named officer (409 or 422; the deployed 
 `VVIP_REQUIRE_OFFICER=1`). Approve
 controls exist only in Decide and the analyst workspace, never on the map, in the assistant or on public pages.
 
+| Decide: signal timing | Audit trail |
+|---|---|
+| ![Decide: a signal-timing proposal tested in the twin](screenshots/decide-ai.jpg) | ![The audit trail in the Analyst workspace](screenshots/audit.jpg) |
+| *A signal change tested in the twin against doing nothing, the cross street's cost shown too (MODELLED).* | *Every action with its time, actor and object; filters for officers, machines and the system.* |
+
 ### 9.2 A field voice report
 
 ```mermaid
@@ -942,6 +999,11 @@ sequenceDiagram
     Deck->>Ora: confirmed report enters the board, attributed
 ```
 
+| Field report by voice | Field report in Bengali |
+|---|---|
+| ![A field report spoken in English](screenshots/voice-report-en.jpg) | ![A field report spoken in Bengali](screenshots/voice-report.jpg) |
+| *Speech becomes place, kind and severity with the words that decided it; unverified until an officer confirms.* | *Spoken Bengali, transcribed on the server and matched to its place.* |
+
 ### 9.3 A waterlogging alert reaching citizens
 
 1. hydro flags Rash Behari Avenue at class 2 with a 45-minute lead (MODELLED drivers shown).
@@ -950,11 +1012,21 @@ sequenceDiagram
 3. An officer approves the advisory; it appears on `/citizen`, where the Listen button calls `/api/speech/speak`
    (allow-listed, rate-limited) and the audio is marked "synthetic voice".
 
+| Decide: waterlogging | Advisories |
+|---|---|
+| ![Decide: waterlogging proposals in the exercise](screenshots/decide-waterlogging.jpg) | ![Advisories in three languages](screenshots/advisories.jpg) |
+| *A reroute around deep water in the 2025-storm exercise (MODELLED, Hindsight).* | *One fact for four audiences in three languages, marked exercise text; drafted, never sent on its own.* |
+
 ### 9.4 The ambulance (108) corridor request
 
 The crew taps one button on `/driver`; the request (rate-capped per client) becomes a PENDING dispatch for a named
 duty officer; the crew sees the status. The crew always follows 108 control; Sahoshi claims no partnership with the
 108 operator.
+
+| Ambulance (108) crew | Decide: a 108 corridor request |
+|---|---|
+| ![The ambulance crew page on a phone](screenshots/driver.jpg) | ![Decide: an ambulance (108) corridor request](screenshots/decide-corridor.jpg) |
+| *One request for a corridor window, its four steps; a duty officer decides.* | *A 108 crew's corridor request: the golden hour left and what changes if approved, for a named officer.* |
 
 ---
 
@@ -1059,6 +1131,11 @@ officer's browser when a token is set. Model weights are never downloaded at run
   renders; both use the same rule (a test keeps them in parity).
 - Vision refuses person and plate questions (403) and filters person sentences from its output.
 
+| Decide: the mark masked until an officer is named | Assistant: vehicles, never people |
+|---|---|
+| ![Decide: the stolen-vehicle sheet with the mark masked](screenshots/decide-masked.jpg) | ![The assistant answering a question about a person with vehicle facts only](screenshots/assistant-refusal.jpg) |
+| *No officer named: the mark is masked and every button waits for a name.* | *Asked about the driver, it answers about the vehicle only: no owner or personal details exist.* |
+
 ### 11.7 Secrets
 
 Secrets live only in `~/.config/sahoshi/sahoshi.env` (mode 600), set with `scripts/sahoshi_env.sh --set KEY -` so
@@ -1160,10 +1237,10 @@ released models reload on their next use, and the resident models are never touc
 
 | Level | What | Count (29 Oct 2026) |
 |---|---|---|
-| Unit and API (Python) | Every service, offline, outbound calls mocked | 6,212 passed |
+| Unit and API (Python) | Every service, offline, outbound calls mocked | 6,310 passed |
 | Real-model (opt-in) | forecast `-m model`, speech and vision `-m slow` | run on the box with weights |
 | Rust | signal-ingress | 121 passed |
-| Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 45 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |
+| Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 46 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |
 | City Pack | `city_build.py --check`; a test builds two cities | pass |
 | Browser smokes and journeys | Screens against a running stack | on demand |
 | Acceptance ladder | `scripts/verify_all.sh` (offline) and `--live` | on demand |
@@ -1221,11 +1298,13 @@ Each record states the context, the decision and its consequences.
   back to a template.
 - **Consequences.** Rationales are readable and safe; the validator checks numbers and script, not meaning.
 
-### ADR-06 — Bengali first
+### ADR-06 — English first, Bengali throughout
 
-- **Context.** Most residents, and many field officers, work in Bengali.
-- **Decision.** UI languages `bn`, `en`, `hi`; public pages default to Bengali; Noto Sans Bengali self-hosted; voice
-  reports in Bengali; advisories read aloud in Bengali; a Bengali-script lint on every pack; place matching across
+- **Context.** Most residents, and many field officers, work in Bengali; officers across agencies and visitors
+  share English.
+- **Decision.** UI languages `en`, `bn`, `hi`; every page, public pages included, opens in English and switches to
+  বাংলা or हिंदी in one tap, remembered per browser; Noto Sans Bengali self-hosted; voice reports in Bengali by
+  default; advisories read aloud in the page's language; a Bengali-script lint on every pack; place matching across
   scripts.
 - **Consequences.** Every string exists three times and the lint enforces parity; a native read is still advised
   before a pilot.

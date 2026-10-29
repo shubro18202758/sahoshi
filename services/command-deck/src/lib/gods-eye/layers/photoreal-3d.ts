@@ -146,6 +146,15 @@ function loadTileset(cesium: CesiumGlobal, fresh = false): Promise<CesiumTileset
 	return cesium.Cesium3DTileset.fromIonAssetId(PHOTOREAL_3D_ASSET_ID, options);
 }
 
+/**
+ * Is the photoreal city the base map right now? (The live map's place labels read it: on the City map the tiles
+ * already name the neighbourhoods, so the landmarks layer leaves its area names out there.)
+ */
+let photorealOn = false;
+export function photorealBaseOn(): boolean {
+	return photorealOn;
+}
+
 function createPhotoreal3dLayer(): GodsEyeLayerInstance {
 	let ctx: GodsEyeLayerContext | null = null;
 	let phase: Phase = 'idle';
@@ -320,9 +329,11 @@ function createPhotoreal3dLayer(): GodsEyeLayerInstance {
 				ctx.notify();
 				return;
 			}
+			photorealOn = true;
 			start();
 		},
 		deactivate() {
+			photorealOn = false;
 			generation++;
 			clearWatch();
 			dropTileset();

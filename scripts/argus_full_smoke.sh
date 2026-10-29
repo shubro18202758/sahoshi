@@ -93,9 +93,9 @@
 #   plan E2E       — POST /movements (title ARGUS SMOKE TEST, so the corridor
 #                         event it registers wears the deck's TEST pill and
 #                         never reads as a real movement) + POST
-#                         /movements/{id}/plan, Lal Darwaja 72.5813,23.0264 →
-#                         SVPI Airport 72.6221,23.072 (the re-anchored POIs of
-#                         the real network), class Z; ≥1 route candidate
+#                         /movements/{id}/plan, Nabanna 88.3209,22.5640 →
+#                         Kolkata Airport 88.4412,22.6510 (both on the Kolkata
+#                         road network), class Z; ≥1 route candidate
 #   predict/eta    — POST /api/v1/predict/eta chained off the planned
 #                         route (optimize/routes supplies the real
 #                         length/segments): point payload always; p10/p50/
@@ -384,13 +384,13 @@ decider_body="$(curl -sf --max-time 300 -X POST "$DECIDER_URL/decide" \
     -H 'Content-Type: application/json' \
     -d '{
         "request_id": "argus-full-smoke",
-        "state": "Argus full-system smoke: Z-class movement planned from Nabanna to Kolkata Airport across Kolkedabad junctions at 19:30 IST. Evening congestion rising on Ashram Road; Ring Road flowing. Advance closure 180s per protocol.",
+        "state": "Argus full-system smoke: Z-class movement planned from Nabanna to Kolkata Airport across central Kolkata junctions at 19:30 IST. Evening congestion rising on AJC Bose Road; EM Bypass flowing. Advance closure 180s per protocol.",
         "questions": {
             "reroute":   {"type": "choice",
                           "instructions": "Which corridor should the route prefer?",
-                          "options": {"ashram_road": "Ashram Road, congested",
-                                      "ring_road": "Ring Road, light flow",
-                                      "sg_highway": "SG Highway, moderate"}},
+                          "options": {"ajc_bose_road": "AJC Bose Road, congested",
+                                      "em_bypass": "EM Bypass, light flow",
+                                      "vip_road": "VIP Road, moderate"}},
             "urgency":   {"type": "noul",
                           "instructions": "Must the departure window be locked now?"},
             "readiness": {"type": "score",
@@ -457,7 +457,7 @@ fi
 if [ "$EMBED_PROBE" = write ]; then
     embed_body="$(curl -sf --max-time 120 -X POST "$EMBED_URL/embed/documents" \
         -H 'Content-Type: application/json' \
-        -d '{"documents": [{"body": "Argus full smoke: Z-class convoy staged at Lal Darwaja; corridor to SVPI Airport nominal.",
+        -d '{"documents": [{"body": "Argus full smoke: Z-class convoy staged at Nabanna; corridor to Kolkata Airport nominal.",
                             "title": "argus-smoke-a", "ref_id": "argus-smoke:1"},
                            {"body": "Argus full smoke: congestion building on the old-city approach; recovery projected 200s.",
                             "title": "argus-smoke-b", "ref_id": "argus-smoke:2"}],
@@ -586,7 +586,7 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 net_km=$(timeout 15 docker exec "$PG_CONTAINER" psql -U "$PG_USER" -d "$PG_DB" -At \
     -c "SELECT round((sum(ST_Length(geom::geography)) / 1000)::numeric, 2) FROM corridor.road_segments" 2>/dev/null)
-net_body="$(curl -s --max-time 15 "$ORACLE_URL/api/v1/spatial/segments?min_lon=72.3&min_lat=22.8&max_lon=72.9&max_lat=23.3" 2>/dev/null)"
+net_body="$(curl -s --max-time 15 "$ORACLE_URL/api/v1/spatial/segments?min_lon=88.20&min_lat=22.45&max_lon=88.50&max_lat=22.70" 2>/dev/null)"
 net_line=$(printf '%s' "$net_body" | EXPECT="$EXPECT_SEGMENTS" KM="${net_km:-?}" python3 -c '
 import collections, json, os, sys
 try:
@@ -872,12 +872,12 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# 15. REAL plan E2E — Lal Darwaja → SVPI Airport, class Z (createMovement →
+# 15. REAL plan E2E — Nabanna → Kolkata Airport, class Z (createMovement →
 #     pre-movement workflow → decider+gemma+oracle+postgis → the plan
 #     registered as a corridor event, contract C-F/city_link)
 # ════════════════════════════════════════════════════════════════════════════
 DEPART=$(date -u -d '+1 hour' +%Y-%m-%dT%H:%M:%SZ)
-MOVEMENT_BODY='{"origin":[72.5813,23.0264],"destination":[72.6221,23.072],"vvip_class":"Z","planned_departure":"'$DEPART'"}'
+MOVEMENT_BODY='{"origin":[88.3208745,22.5639606],"destination":[88.4411766,22.6510369],"vvip_class":"Z","planned_departure":"'$DEPART'"}'
 CREATE_BODY="${MOVEMENT_BODY%\}}"',"title":"'"$SMOKE_TITLE"'"}'
 mov_resp=$(curl -s --max-time 30 -X POST "$BRAIN_URL/movements" \
     -H 'Content-Type: application/json' -d "$CREATE_BODY" 2>/dev/null)

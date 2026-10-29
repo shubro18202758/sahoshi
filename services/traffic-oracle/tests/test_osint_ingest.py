@@ -39,6 +39,9 @@ from osint_common.testing import social_single_signal
 from osint_common.types import RawOsintSignal
 from traffic_oracle.osint import ingest, live_state, store
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 

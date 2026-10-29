@@ -57,6 +57,9 @@ from traffic_oracle.city import entities as ent  # noqa: E402
 from traffic_oracle.city import feed as feed_mod  # noqa: E402
 from traffic_oracle.units import router as units_router  # noqa: E402
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 # ─── canned city ─────────────────────────────────────────────────────────────
 
 NOW = datetime.now(timezone.utc)

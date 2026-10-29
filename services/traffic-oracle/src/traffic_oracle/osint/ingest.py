@@ -22,6 +22,15 @@ serialised transaction:
    stored or fused (ethics rule 2, defence in depth: ``osint_analysis.classify.strip_handles``, the
    pipeline's own helper — the ``submitted by …`` trailer goes, any other ``/u/<name>`` becomes
    ``[PERSON]``) — counted as ``account_refs_stripped``.
+2b. **Scope (events are about places and road situations)**: a signal that reports a person-crime, a clash
+   between groups or a political item (``osint_common.scope``: the wording, then the classifier's class —
+   ``reported_crime``, ``public_conflict`` and ``unrest`` are out of scope) is ``rejected`` with
+   ``out_of_scope_crime`` | ``out_of_scope_conflict`` | ``out_of_scope_political`` and is NEVER stored; a
+   procession or gathering on a road is kept with its political terms withheld (``[WITHHELD]``).  The
+   re-fused window is screened the same way (a signal stored before the rule is left out of re-fusion, so
+   its situation is withdrawn), and a situation the pipeline still places in an out-of-scope class (the
+   zero-shot fallback) is not written.  Counted in ``scope`` in the reply and the ``osint.ingest.counts``
+   log line; no text.
 3. **Store** ``osint.raw_signals`` (``ON CONFLICT DO NOTHING``: a repeat is counted in
    ``duplicates``), then **re-fuse** the window — this batch, every signal stored in the last 72 h,
    every signal published within 72 h of the batch's reports (so a replay or backfill of cached
@@ -57,7 +66,7 @@ import structlog
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from osint_common import ethics, kinds
+from osint_common import ethics, kinds, scope
 from osint_common.pipeline import Embedder, GeoResolver, RunPipeline
 from osint_common.types import PipelineResult, RawOsintSignal, signal_rejection_reason
 from traffic_oracle.osint import live_state, store
@@ -297,6 +306,84 @@ def prepare_signal(signal: RawOsintSignal) -> Prepared:
 
 
 # ---------------------------------------------------------------------------
+# The scope gate (osint_common.scope)
+# ---------------------------------------------------------------------------
+
+#: A test / tooling hook replacing the classifier the scope gate reads (default: ``osint_analysis``'s).
+SCOPE_CLASSIFIER_HOOK: Callable[[RawOsintSignal], Any] | None = None
+
+#: The scope gate is always on in the service: nothing (no environment variable, no setting) reads or sets this.
+#: It exists for the test modules whose synthetic fixtures were written before the rule — they exercise fusion,
+#: decision support and promotion mechanics on a reported clash beside a collision — and turn it off for their
+#: own tests only (``SCOPE_GATE_OFF = True`` in the module, read by tests/conftest.py).
+SCOPE_GATE: bool = True
+
+
+def _scope_class(signal: RawOsintSignal) -> str | None:
+    """The deterministic (lexicon) class of a signal, or None when the classifier is not importable."""
+    classify = SCOPE_CLASSIFIER_HOOK
+    if classify is None:
+        try:
+            from osint_analysis.classify import classify  # noqa: PLC0415 — lazy by design (X20)
+        except ImportError:
+            return None
+    try:
+        return str(classify(signal).event_class)
+    except Exception:  # noqa: BLE001 — a classifier failure never lets a text through unscreened by wording
+        return None
+
+
+def scope_screen(signal: RawOsintSignal) -> tuple[RawOsintSignal | None, str | None, int]:
+    """``(signal, None, masked)`` when in scope (its political terms withheld when ``masked``), else
+    ``(None, reason, 0)`` with reason ``crime`` | ``conflict`` | ``political``."""
+    if not SCOPE_GATE:
+        return signal, None, 0
+    verdict = scope.screen(signal.title, signal.text)
+    if verdict.reason is not None:
+        return None, verdict.reason, 0
+    if verdict.masked:
+        signal = RawOsintSignal.model_validate(
+            dict(signal.model_dump(), title=verdict.title[:_TITLE_MAX], text=verdict.text[:_TEXT_MAX])
+        )
+    out = scope.screen_class(_scope_class(signal))
+    if out is not None:
+        return None, out, 0
+    return signal, None, verdict.masked
+
+
+def scope_window(signals: Sequence[RawOsintSignal]) -> tuple[list[RawOsintSignal], Counter[str]]:
+    """The re-fusion window without out-of-scope signals (stored before the rule), and the count by reason."""
+    kept: list[RawOsintSignal] = []
+    left_out: Counter[str] = Counter()
+    for s in signals:
+        screened, reason, _ = scope_screen(s)
+        if screened is None:
+            left_out[str(reason)] += 1
+        else:
+            kept.append(screened)
+    return kept, left_out
+
+
+def scope_result(result: PipelineResult) -> tuple[PipelineResult, int]:
+    """The pipeline's answer without a situation in an out-of-scope class (primary or correlated)."""
+    if not SCOPE_GATE:
+        return result, 0
+    keep = [
+        r
+        for r in result.resolved
+        if scope.screen_class(r.event_class) is None
+        and not any(scope.screen_class(c) for c in (r.correlated_classes or ()))
+    ]
+    dropped = len(result.resolved) - len(keep)
+    if not dropped:
+        return result, 0
+    counts = result.counts.model_copy(
+        update={"fused": len(keep), "surfaced": sum(1 for r in keep if r.is_event)}
+    )
+    return result.model_copy(update={"resolved": keep, "counts": counts}), dropped
+
+
+# ---------------------------------------------------------------------------
 # The transaction
 # ---------------------------------------------------------------------------
 
@@ -345,12 +432,21 @@ async def ingest_signals(
     rejected: list[dict] = []
     reasons: Counter[str] = Counter()
     prepared: list[Prepared] = []
+    scope_rejected: Counter[str] = Counter()
+    masked_terms = 0
     for item in items:
         signal, reason = screen_signal(item)
         if signal is None:
             rejected.append({"signal_id": _echo_id(item), "reason": reason})
             reasons[str(reason)] += 1
             continue
+        in_scope, out, masked = scope_screen(signal)
+        if in_scope is None:
+            rejected.append({"signal_id": _echo_id(item), "reason": f"out_of_scope_{out}"})
+            reasons[f"out_of_scope_{out}"] += 1
+            scope_rejected[str(out)] += 1
+            continue
+        signal, masked_terms = in_scope, masked_terms + masked
         try:
             prepared.append(prepare_signal(signal))
         except ValidationError:  # a text the handle strip left invalid is never stored
@@ -362,6 +458,8 @@ async def ingest_signals(
     result = PipelineResult()
     outcome = store.PersistOutcome()
     window = store.Window()
+    window_left_out: Counter[str] = Counter()
+    situations_left_out = 0
     async with conn.transaction():
         await store.lock_ingest(conn)
         for p in prepared:
@@ -375,8 +473,10 @@ async def ingest_signals(
             window = await store.load_window(conn, batch_ids)
         if window.signals:
             live = await live_state.snapshot(conn, now=when, valkey=valkey)
+            fused_in, window_left_out = scope_window(window.signals)
             try:
-                result = await _run(pipeline, window.signals, live, when)
+                result = await _run(pipeline, fused_in, live, when)
+                result, situations_left_out = scope_result(result)
             except HTTPException:
                 raise
             except Exception as exc:
@@ -421,6 +521,10 @@ async def ingest_signals(
         trust_overrides=trust["payload_disagreed"],
         urls_withheld=trust["urls_withheld"],
         account_refs_stripped=trust["account_refs_stripped"],
+        scope_rejected=dict(scope_rejected),
+        scope_masked_terms=masked_terms,
+        scope_window_left_out=dict(window_left_out),
+        scope_situations_left_out=situations_left_out,
         window=len(window.signals),
         window_seeds=window.seeds,
         window_units=window.units,
@@ -447,6 +551,14 @@ async def ingest_signals(
         "counts": counts.model_dump(mode="json"),
         # additive: what the trust boundary did to this batch (counts only, no text)
         "trust_boundary": trust,
+        # additive: the scope gate (counts only, no text): rejected by reason, political terms withheld from
+        # kept signals, stored signals left out of re-fusion by reason, situations not written
+        "scope": {
+            "rejected": dict(scope_rejected),
+            "masked_terms": masked_terms,
+            "window_left_out": dict(window_left_out),
+            "situations_left_out": situations_left_out,
+        },
         "superseded": [{"osint_event_id": k, "superseded_by": v} for k, v in outcome.superseded.items()],
         # additive: the re-fused window — signals read, and those left out WHOLE (a unit that did
         # not fit the cap, or one with a member that could not be rebuilt), stored and untouched

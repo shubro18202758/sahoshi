@@ -4,14 +4,15 @@
 	 * Cyclone · River · Quake, each with its value, its band in words (and a dot in the band's colour — colour only
 	 * supports the word) and its honest label (Live, Modelled; Indicative for the National AQI; Recorded or Stale when
 	 * the service says so). A feed that does not answer says "Unavailable", never zero. A click opens the sheet with
-	 * the sources and the proposal drafts (FeedSheet, loaded on first open). Data: the shared summary poller
+	 * the sources and the proposal drafts (FeedSheet, loaded on first open). Calm on the surface: the honest label is a
+	 * quiet word at the row's end (its tip says what it means), not a chip per row; states (Stale, a proposal) stay tags. Data: the shared summary poller
 	 * (./store.svelte), GET /api/cityfeeds/feeds/summary.
 	 */
 	import { onMount, type Component } from 'svelte';
 	import { t } from '$lib/i18n/strings';
 	import Glyph from '$lib/v3/Glyph.svelte';
 	import V3Tag from '$lib/v3/ui/V3Tag.svelte';
-	import ProvTag from '$lib/ai/ui/ProvTag.svelte';
+	import ProvWord from '$lib/ai/ui/ProvWord.svelte';
 	import { cityFeeds } from './store.svelte';
 	import { CHIP_GLYPH, TONE_TOKEN, chipRow, type ChipVM } from './model';
 	import type { ChipId } from './types';
@@ -58,10 +59,10 @@
 						</span>
 						<span class="pv">
 							{#if c.available}
-								<ProvTag label={c.label} {lang} />
+								<ProvWord label={c.label} {lang} />
 								{#if c.stale}<V3Tag size="sm" tone="dashed" title={L('cf_tag_stale_tip')}>{L('cf_tag_stale')}</V3Tag>{/if}
 								{#if c.proposal}<V3Tag size="sm" tone="decide" glyph="spark">{L('cf_tag_proposal')}</V3Tag>{/if}
-							{:else if cityFeeds.status !== 'loading'}<ProvTag prov="unavailable" {lang} />{/if}
+							{:else if cityFeeds.status !== 'loading'}<ProvWord prov="unavailable" {lang} />{/if}
 						</span>
 					</button>
 				</li>
@@ -103,8 +104,10 @@
 	}
 
 	.cf.v-home {
-		padding-top: 12px;
-		border-top: 1px solid var(--v3-line-1);
+		padding: 14px 16px 12px;
+		border: 1px solid var(--v3-line-1);
+		border-radius: var(--v3-radius-l);
+		background: var(--v3-s2);
 	}
 
 	.head {
@@ -116,7 +119,7 @@
 	h3 {
 		margin: 0;
 		color: var(--v3-t1);
-		font-size: var(--v3-text-sub);
+		font-size: var(--v3-text-body);
 		font-weight: 650;
 	}
 
@@ -168,6 +171,7 @@
 	}
 
 	.v {
+		font-variant-numeric: tabular-nums;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -199,8 +203,9 @@
 	.pv {
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
+		gap: 6px;
 	}
+
 
 	.dim {
 		color: var(--v3-t3);

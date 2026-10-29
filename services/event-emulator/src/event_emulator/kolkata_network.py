@@ -2,7 +2,7 @@
 
 Written by ``tools/kolkata_library.py`` from the city road network
 (``cities/kolkata/network.json``): the living city's sites (EN + Bengali names, the
-landmarks.json place each sits at), its two Kolkata Traffic Police beats,
+landmarks.json place each sits at), its emulated field units' beats,
 the signalised junctions (those with a signal program) and the segments
 the profiles' own causes sit on.  Re-run the tool when the network is
 regenerated; the emulator's network check (ambient.py) and its tests
@@ -85,6 +85,22 @@ SITE_ROWS: tuple[tuple, ...] = (
 PATROL_ROWS: tuple[tuple, ...] = (
     ('KTP-EM-LC1', 'Howrah Bridge–BBD Bag–Esplanade', (1001, 1008, 1009, 1010)),
     ('KTP-EM-LC2', 'EM Bypass (Ruby–Salt Lake Stadium)', (1035, 1036, 1037)),
+    ('KTP-EM-LC3', 'Vidyasagar Setu–Nabanna–GT Road', (1003, 1002)),
+    ('KTP-EM-LC4', 'JL Nehru Road (Esplanade–Exide)', (1016, 1017, 1018)),
+    ('KTP-EM-LC5', 'APC Road (Sealdah–Shyambazar)', (1056, 1057)),
+    ('KTP-EM-LC6', 'AJC Bose Road (Exide–Sealdah)', (1023, 1024, 1025)),
+    ('KTP-EM-LC7', 'Hazra–Rash Behari Avenue–Gariahat', (1020, 1032, 1033)),
+    ('KTP-EM-LC8', 'CR Avenue (Central Avenue–Shyambazar)', (1052, 1053)),
+    ('KTP-EM-LC9', 'Salt Lake Bypass–Sector V–New Town', (1044, 1045)),
+    ('KTP-EM-LC10', 'DH Road (Kidderpore–Behala)', (1048, 1049, 1050)),
+    ('KTP-EM-LC11', 'VIP Road (Ultadanga–Baguiati)', (1039, 1040, 1041)),
+    ('KP-EM-PCR1', 'Strand Road (Howrah Bridge–Prinsep Ghat)', (1004, 1005)),
+    ('KP-EM-PCR2', 'SP Mukherjee Road (Rashbehari–Tollygunge)', (1021, 1022)),
+    ('KP-EM-PCR3', 'Park Street–Mother Teresa Sarani', (1026, 1027)),
+    ('108-EM-LC1', 'Ashutosh Mukherjee Rd–Hazra Rd', (1019, 1031)),
+    ('108-EM-LC2', 'Maa Flyover to Science City', (1029,)),
+    ('108-EM-LC3', 'Bijon Setu (Gariahat–Ruby)', (1034,)),
+    ('108-EM-LC4', 'CR Avenue–College Street', (1051, 1055)),
 )
 
 #: Junctions with a signal program (corridor.signal_programs).

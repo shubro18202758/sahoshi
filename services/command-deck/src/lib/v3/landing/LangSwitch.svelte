@@ -1,12 +1,12 @@
 <script lang="ts">
 	/**
-	 * The landing page's language switch: বাংলা · EN · हिंदी (Bengali first, as the public pages are), each label in its own
+	 * The landing page's language switch: English · हिंदी · বাংলা (English first, the product's default; the console's order), each label in its own
 	 * script (and `lang`), the chosen one pressed (words and aria-pressed, never colour alone). The page owns the
 	 * language; this only reports the pick.
 	 */
 	import { SUPPORTED } from '$lib/i18n/strings';
 
-	const ORDER: readonly string[] = ['bn', 'en', 'hi'];
+	const ORDER: readonly string[] = ['en', 'hi', 'bn'];
 	const rank = (code: string) => (ORDER.includes(code) ? ORDER.indexOf(code) : ORDER.length);
 	const LANGS = [...SUPPORTED].sort((a, b) => rank(a.code) - rank(b.code));
 

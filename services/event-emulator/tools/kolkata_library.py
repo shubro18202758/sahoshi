@@ -1363,6 +1363,54 @@ def build(net: Network) -> list[dict]:  # noqa: PLR0915 - one scenario per block
                            "ambulance_window"],
         event_kind="work_zone", crowd_class="LOW", duration_class="hours",
     ))
+
+    # (s) Bijoya Dashami immersion procession — the procession class ───────
+    route = W("shyambazar", "bagbazar", "howrah_bridge", "babughat")
+    bagbazar_st = named(net, out_of(net, route, "shyambazar"), "Bagbazar")
+    strand_bank = named(net, out_of(net, route, "bagbazar"), "Strand")
+    strand_ghat = named(net, out_of(net, route, "howrah_bridge"), "Strand")
+    amb_start, amb_speed = 1500.0, 18.0
+    evs = ev_windows(net, route, start_sec=amb_start, speed_kmh=amb_speed,
+                     label="ambulance (108) green-corridor window",
+                     places=["Bagbazar Street", "Strand Bank Road past Kumartuli",
+                             "Strand Road to Babughat"])
+    lib.append(scenario(
+        scenario_id="bijoya_immersion_procession",
+        name="Bijoya Dashami — Immersion Processions to the Ghats",
+        name_bn="বিজয়া দশমী — ঘাটে বিসর্জনের শোভাযাত্রা",
+        name_hi="विजया दशमी — घाटों तक विसर्जन की शोभायात्रा",
+        category="event",
+        description=(
+            "SIMULATED. Evening of Bijoya Dashami: idols from the North Kolkata pandals are "
+            "carried in procession from Shyambazar along Bagbazar Street and down Strand "
+            "Bank Road past Kumartuli to the immersion ghats by Babughat on Strand Road. "
+            "Each procession moves at walking pace with its trucks, drummers and followers, "
+            "holding each stretch in turn and releasing it behind; the river-side lanes "
+            "queue while the ghats are busy. Full closure at 120 s advance, rolled ahead of "
+            "the procession and lifted behind it. Twenty-five minutes in, an ambulance (108) "
+            "asks for a window along the same riverside stretch. Procession sizes, timings "
+            "and speeds are modelled assumptions, not an official route map; the AI "
+            "proposes each hold and a named officer decides."),
+        places=["shyambazar", "bagbazar", "kumartuli", "howrah_bridge", "babughat"],
+        route_segment_ids=route,
+        departure_time="2026-10-02T18:00:00+05:30",
+        vvip_class="X",
+        closure_policy={"advance_closure_sec": 120, "closure_type": "full_closure"},
+        horizon_min=60, n_replications=10, seed=202610021, convoy_speed_kmh=4,
+        weather={}, event_overrides={"market": 1.4, "ambulance": 1.0},
+        forced_events=[
+            fe("rally_spillover", bagbazar_st, 0, 2400, 0.9,
+               "immersion procession leaving Bagbazar along Bagbazar Street", 850),
+            fe("rally_spillover", strand_bank, 900, 2700, 0.85,
+               "procession on Strand Bank Road past Kumartuli", 800),
+            fe("rally_spillover", strand_ghat, 1800, 3600, 0.9,
+               "processions queueing for the ghats on Strand Road by Babughat", 900),
+            *evs,
+        ],
+        expected_features=["procession", "rolling_closure", "ghat_queue",
+                           "green_corridor_request"],
+        event_kind="procession", crowd_class="EXTREME", duration_class="hours",
+    ))
     return lib
 
 
@@ -1604,13 +1652,52 @@ _SITE_PREFIX = {"breakdown": "BD", "market_spillover": "MK", "school_egress": "S
                 "office_rush": "OR", "it_shift_change": "IT", "waterlogging": "WL",
                 "festival_crowd": "FC"}
 
-#: Two Kolkata Traffic Police beats (connected chains, each one-way driven
-#: its own way): (unit id, beat, walk through crossings).
+#: The living city's emulated field units (connected chains, each one-way
+#: driven its own way): (unit id, beat, walk through crossings).  The unit
+#: id's prefix names the agency (event_emulator.city.unit_role): KTP-EM
+#: Kolkata Traffic Police beats, KP-EM-PCR Kolkata Police patrol cars,
+#: 108-EM-LC ambulance (108) standby circuits.  The first two beats ride at
+#: every density; the rest join at EMULATOR_LIVING_DENSITY >= 2.  The beats
+#: added after the first two use two-way roads only (a beat is driven back
+#: and forth).  Beat names stay short: the oracle caps a unit label at 80
+#: characters.
 PATROL_SPECS = (
     ("KTP-EM-LC1", "Howrah Bridge–BBD Bag–Esplanade",
      ("howrah_station", "howrah_bridge", "bbd_bag", "red_road", "esplanade_sn_banerjee")),
     ("KTP-EM-LC2", "EM Bypass (Ruby–Salt Lake Stadium)",
      ("ruby", "science_city", "chingrighata", "salt_lake_stadium")),
+    ("KTP-EM-LC3", "Vidyasagar Setu–Nabanna–GT Road",
+     ("vidyasagar_setu", "nabanna", "howrah_station")),
+    ("KTP-EM-LC4", "JL Nehru Road (Esplanade–Exide)",
+     ("esplanade", "esplanade_sn_banerjee", "park_street", "exide")),
+    ("KTP-EM-LC5", "APC Road (Sealdah–Shyambazar)",
+     ("sealdah", "maniktala", "shyambazar")),
+    ("KTP-EM-LC6", "AJC Bose Road (Exide–Sealdah)",
+     ("exide", "mullickbazar", "moulali", "sealdah")),
+    ("KTP-EM-LC7", "Hazra–Rash Behari Avenue–Gariahat",
+     ("hazra", "rashbehari", "deshapriya_park", "gariahat")),
+    ("KTP-EM-LC8", "CR Avenue (Central Avenue–Shyambazar)",
+     ("central_avenue_mg_road", "girish_park", "shyambazar")),
+    ("KTP-EM-LC9", "Salt Lake Bypass–Sector V–New Town",
+     ("chingrighata", "sector_v", "biswa_bangla_sarani")),
+    ("KTP-EM-LC10", "DH Road (Kidderpore–Behala)",
+     ("kidderpore", "majerhat", "taratala", "behala_chowrasta")),
+    ("KTP-EM-LC11", "VIP Road (Ultadanga–Baguiati)",
+     ("ultadanga", "lake_town", "kestopur", "baguiati")),
+    ("KP-EM-PCR1", "Strand Road (Howrah Bridge–Prinsep Ghat)",
+     ("howrah_bridge", "babughat", "prinsep_ghat")),
+    ("KP-EM-PCR2", "SP Mukherjee Road (Rashbehari–Tollygunge)",
+     ("rashbehari", "kalighat", "tollygunge")),
+    ("KP-EM-PCR3", "Park Street–Mother Teresa Sarani",
+     ("park_street", "mullickbazar", "park_circus")),
+    ("108-EM-LC1", "Ashutosh Mukherjee Rd–Hazra Rd",
+     ("exide", "hazra", "ballygunge")),
+    ("108-EM-LC2", "Maa Flyover to Science City",
+     ("park_circus", "science_city")),
+    ("108-EM-LC3", "Bijon Setu (Gariahat–Ruby)",
+     ("gariahat", "ruby")),
+    ("108-EM-LC4", "CR Avenue–College Street",
+     ("esplanade", "central_avenue_mg_road", "college_street")),
 )
 
 
@@ -1660,7 +1747,7 @@ def network_module(net: Network, sites: list[dict], patrols: list[tuple],
         "",
         "Written by ``tools/kolkata_library.py`` from the city road network",
         f"(``{source}``): the living city's sites (EN + Bengali names, the",
-        "landmarks.json place each sits at), its two Kolkata Traffic Police beats,",
+        "landmarks.json place each sits at), its emulated field units' beats,",
         "the signalised junctions (those with a signal program) and the segments",
         "the profiles' own causes sit on.  Re-run the tool when the network is",
         "regenerated; the emulator's network check (ambient.py) and its tests",

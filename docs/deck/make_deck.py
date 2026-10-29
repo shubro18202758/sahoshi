@@ -36,7 +36,6 @@ S3 = RGBColor(0x2E, 0x2E, 0x2E)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 T2 = RGBColor(0xCB, 0xCB, 0xCB)
 T3 = RGBColor(0xA6, 0xA6, 0xA6)
-TAXI = RGBColor(0xFF, 0xC8, 0x00)  # the mark's colour, used only for the brand moment
 BLUE = RGBColor(0x7F, 0xA8, 0xF7)  # links / AI, sparingly
 LATIN = "Inter"
 BENGALI = "Noto Sans Bengali"
@@ -140,7 +139,7 @@ def credit(slug: str) -> str:
 
 def footer(slide, n: int):
     text(slide, Inches(0.6), Inches(7.05), Inches(8), Inches(0.3),
-         [([("Sahoshi", WHITE, True), ("  ·  সাহসী  ·  Kolkata", T3, False)], 10, T3, False)])
+         [([("Sahoshi", WHITE, True), ("  ·  Kolkata", T3, False)], 10, T3, False)])
     text(slide, Inches(12.2), Inches(7.05), Inches(0.6), Inches(0.3), [(str(n), 10, T3, False, PP_ALIGN.RIGHT)])
 
 
@@ -174,8 +173,8 @@ def build() -> None:
     shade.fill.fore_color.rgb = BLACK
     s.shapes.add_picture(str(ASSETS / "lockup-night.png"), Inches(0.6), Inches(0.9), height=Inches(0.62))
     text(s, Inches(0.6), Inches(2.0), Inches(6.2), Inches(2.4), [
-        ("থামিয়ে নয়,", 54, WHITE, True),
-        ("সামলে।", 54, TAXI, True),
+        ("Not by stopping.", 46, WHITE, True),
+        ("By steering.", 46, T3, True),
     ])
     text(s, Inches(0.6), Inches(4.35), Inches(6.0), Inches(2.0), [
         ("Keep Kolkata moving.", 24, WHITE, True),
@@ -207,12 +206,12 @@ def build() -> None:
 
     # 3 · the answer
     s = slide()
-    kicker_title(s, "SAHOSHI", "See · Decide · Act — one shared, Bengali-first picture")
+    kicker_title(s, "SAHOSHI", "See · Decide · Act — one shared picture")
     steps = [
         ("See", "Roads, live traffic, rain, the Hooghly tide, pumps, IMD/NDMA alerts, Bengali and English news, field reports spoken in Bengali, camera road state — on one map."),
         ("Look ahead", "Corridor congestion forecast 15–120 min ahead with uncertainty; a waterlogging nowcast ranks every road by risk with its lead time."),
         ("Decide", "One proposal at a time with what changes if approved: a diversion, a signal-timing change tested in a traffic twin, a rolling hold instead of a freeze, an ambulance window, a live-wire hazard request."),
-        ("Act", "A named officer approves or rejects — nothing acts on its own; no answer, the plan holds. Advisories go out in বাংলা, English and हिंदी, read aloud."),
+        ("Act", "A named officer approves or rejects — nothing acts on its own; no answer, the plan holds. Advisories go out in English, Bengali and Hindi, read aloud."),
     ]
     for i, (h, b) in enumerate(steps):
         cx = Inches(0.6) + i * Inches(3.1)
@@ -250,23 +249,23 @@ def build() -> None:
 
     # 6 · field: voice + vision
     s = slide()
-    kicker_title(s, "FROM THE FIELD", "Bengali voice reports and camera road state")
+    kicker_title(s, "FROM THE FIELD", "Voice reports and camera road state")
     picture(s, SHOTS / "voice-report.jpg", Inches(0.6), Inches(1.9), Inches(6.0), Inches(3.75), label="voice-report.jpg")
     picture(s, SHOTS / "road-state.jpg", Inches(6.75), Inches(1.9), Inches(6.0), Inches(3.75), label="road-state.jpg")
     text(s, Inches(0.6), Inches(5.8), Inches(6.0), Inches(1.2), [
-        ("An officer speaks in Bengali; the on-premises speech model returns place · kind · severity with the transcript — an unverified field report for a named officer to confirm. Audio is not stored.", 12, T2, False)])
+        ("An officer speaks in English, Bengali or Hindi; the on-premises speech model returns place · kind · severity with the transcript — an unverified field report for a named officer to confirm. Audio is not stored.", 12, T2, False)])
     text(s, Inches(6.75), Inches(5.8), Inches(6.0), Inches(1.2), [
         ("Qwen3-VL reads waterlogged / blocked / tree-fall / stalled bus / clear — roads and vehicles only. It refuses any question about people and never reads plates.", 12, T2, False)])
     footer(s, n)
 
     # 7 · citizens
     s = slide()
-    kicker_title(s, "FOR CITIZENS", "Check your road — in বাংলা, read aloud")
+    kicker_title(s, "FOR CITIZENS", "Check your road, read aloud")
     picture(s, SHOTS / "citizen.jpg", Inches(0.6), Inches(1.9), Inches(3.2), Inches(4.95), label="citizen.jpg")
     picture(s, SHOTS / "driver.jpg", Inches(4.0), Inches(1.9), Inches(3.2), Inches(4.95), label="driver.jpg")
     text(s, Inches(7.6), Inches(1.95), Inches(5.2), Inches(4.9), [
         ("Plain words, own language", 16, WHITE, True),
-        ("Waterlogging on your road, the tide and the rain, holds and diversions — in বাংলা, English and हिंदी, with a Listen button (synthetic voice).", 12, T2, False),
+        ("Waterlogging on your road, the tide and the rain, holds and diversions — in English, Bengali and Hindi, with a Listen button (synthetic voice).", 12, T2, False),
         ("Honest by design", 16, WHITE, True),
         ("Anything simulated or emulated says so; an officer's unverified report never reaches the public page.", 12, T2, False),
         ("Ambulance (108) crews", 16, WHITE, True),
@@ -410,9 +409,8 @@ def build() -> None:
     alpha = clr.makeelement(qn("a:alpha"), {"val": "62000"})
     clr.append(alpha)
     s.shapes.add_picture(str(ASSETS / "lockup-stacked-night.png"), Inches(5.42), Inches(1.4), height=Inches(1.6))
-    text(s, Inches(1.5), Inches(3.45), Inches(10.33), Inches(1.4), [("ধন্যবাদ", 54, WHITE, True, PP_ALIGN.CENTER)])
-    text(s, Inches(1.5), Inches(4.65), Inches(10.33), Inches(1.4), [
-        ("Thank you", 26, WHITE, True, PP_ALIGN.CENTER),
+    text(s, Inches(1.5), Inches(3.55), Inches(10.33), Inches(2.0), [
+        ("Thank you", 54, WHITE, True, PP_ALIGN.CENTER),
         ("github.com/shubro18202758/sahoshi", 14, T2, False, PP_ALIGN.CENTER),
     ])
     text(s, Inches(1.5), Inches(7.05), Inches(10.33), Inches(0.3), [(credit("hooghly-dusk"), 9, T3, False, PP_ALIGN.CENTER)])

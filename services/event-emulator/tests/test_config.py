@@ -9,6 +9,7 @@ import pytest
 from event_emulator.config import (
     get_settings,
     parse_deck_origins,
+    parse_density,
     parse_flag,
     parse_puja_nights,
 )
@@ -91,5 +92,27 @@ class TestPujaNights:
         assert get_settings().puja_nights == (
             date(2027, 10, 6), date(2027, 10, 7), date(2027, 10, 8))
         monkeypatch.setenv("EMULATOR_PUJA_NIGHTS", "not-a-date")
+        with pytest.raises(ValueError):
+            get_settings()
+
+
+class TestLivingDensity:
+    @pytest.mark.parametrize("raw, level", [("1", 1), (" 2 ", 2), ("3", 3)])
+    def test_accepted(self, raw, level):
+        assert parse_density(raw) == level
+
+    @pytest.mark.parametrize("raw", ["0", "4", "-1", "two", "2.5", "high"])
+    def test_refused(self, raw):
+        with pytest.raises(ValueError):
+            parse_density(raw)
+
+    def test_env(self, monkeypatch):
+        monkeypatch.delenv("EMULATOR_LIVING_DENSITY", raising=False)
+        assert get_settings().living_density == 1           # the baseline city
+        monkeypatch.setenv("EMULATOR_LIVING_DENSITY", " ")   # blank: the default
+        assert get_settings().living_density == 1
+        monkeypatch.setenv("EMULATOR_LIVING_DENSITY", "2")
+        assert get_settings().living_density == 2
+        monkeypatch.setenv("EMULATOR_LIVING_DENSITY", "9")   # a typo fails closed
         with pytest.raises(ValueError):
             get_settings()

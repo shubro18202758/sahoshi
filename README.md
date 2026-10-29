@@ -5,8 +5,8 @@
   </picture>
 </p>
 
-<h3 align="center">থামিয়ে নয়, সামলে।</h3>
-<p align="center"><em>Not by stopping — by steering. Keep Kolkata moving.</em></p>
+<h3 align="center">Not by stopping. By steering.</h3>
+<p align="center"><em>Keep Kolkata moving.</em></p>
 
 <p align="center">
   <strong>One live picture of Kolkata's roads, rain and crowds for traffic police, the city corporation, disaster
@@ -17,7 +17,7 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square">
   <img alt="City: Kolkata, West Bengal" src="https://img.shields.io/badge/city-Kolkata%2C%20West%20Bengal-111111?style=flat-square">
   <img alt="Languages: Bengali, English, Hindi" src="https://img.shields.io/badge/languages-%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%20%C2%B7%20EN%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%82%E0%A4%A6%E0%A5%80-111111?style=flat-square">
-  <img alt="Tests: 6,212 pytest and 121 cargo" src="https://img.shields.io/badge/tests-6%2C212%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
+  <img alt="Tests: 6,310 pytest and 121 cargo" src="https://img.shields.io/badge/tests-6%2C310%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
   <img alt="Status: prototype on one on-premises server" src="https://img.shields.io/badge/status-prototype%20on%20one%20on--premises%20server-555555?style=flat-square">
 </p>
 
@@ -40,7 +40,8 @@
 </p>
 
 <p align="center">
-  <img width="900" alt="Sahoshi's landing page in Bengali" src="docs/screenshots/landing.jpg" />
+  <img width="900" alt="The live map of Kolkata in photoreal 3D over the Hooghly and Howrah Bridge" src="docs/screenshots/map-live-3d.jpg" /><br/>
+  <sub>The live map, 29 Oct 2026: roads coloured by load with moving traffic (simulated), the evening's events (simulated), field units on real roads (emulated) and live rain, tide and city feeds, over Google's photoreal 3D city (not a live image).</sub>
 </p>
 
 <p align="center">
@@ -61,7 +62,7 @@
 
 ## What Sahoshi is
 
-**Sahoshi (সাহসী, "brave")** is a city-scale traffic, rain and crowd operations platform for Kolkata.
+**Sahoshi** (Bengali for "brave") is a city-scale traffic, rain and crowd operations platform for Kolkata.
 
 When a cloudburst meets a high tide on the Hooghly, when lakhs of people walk between Durga Puja pandals, or when a
 bus breaks down on Howrah Bridge, each agency sees one piece of the city. Sahoshi puts the pieces on one screen:
@@ -78,10 +79,30 @@ bus breaks down on Howrah Bridge, each agency sees one piece of the city. Sahosh
 - **Camera stills, read for the road.** Waterlogged, blocked, tree fall, stalled vehicle: vehicles and roads only,
   never people.
 
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="Home: the featured decision, the city pulse and the next two hours" src="docs/screenshots/home.jpg"><br/><sub><b>Home.</b> What needs an officer now, the city's band and four counts, and the next two hours (modelled).</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="The waterlogging layer on the replay of 23 Sep 2025" src="docs/screenshots/map-waterlogging.jpg"><br/><sub><b>Map: waterlogging, 23 Sep 2025.</b> The 2025 storm replayed: roads by risk class, a road's depth band and when it went deep (Hindsight, MODELLED).</sub></td>
+</tr>
+</table>
+
 Every output is a **proposal**. A **named duty officer** approves or rejects it; if nobody answers, the current plan
 holds. Everything runs on **one on-premises server** with open-source AI and no cloud, so it keeps working when a
 cyclone cuts the internet. Anything that is not from a live feed says so: **EMULATED**, **SIMULATED**,
 **MODELLED**, or "Reference photo · not live".
+
+Four of the rules, on screen:
+
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="Decide: the stolen-vehicle sheet with the mark masked" src="docs/screenshots/decide-masked.jpg"><br/><sub><b>Decide: the mark masked until an officer is named.</b> No officer named: the mark is masked and every button waits for a name.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="The page of the watchlisted exercise vehicle" src="docs/screenshots/object-vehicle.jpg"><br/><sub><b>A vehicle's page.</b> The stolen exercise vehicle: its lawful basis and retention, and evidence only: no e-challan for its owner.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="The assistant answering a question about a person with vehicle facts only" src="docs/screenshots/assistant-refusal.jpg"><br/><sub><b>Assistant: vehicles, never people.</b> Asked about the driver, it answers about the vehicle only: no owner or personal details exist.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="The audit trail in the Analyst workspace" src="docs/screenshots/audit.jpg"><br/><sub><b>Audit trail.</b> Every action with its time, actor and object; filters for officers, machines and the system.</sub></td>
+</tr>
+</table>
 
 **Where it stands today.** Sahoshi is a working prototype on one server. Roads (OpenStreetMap), the rain nowcast,
 every decision and its audit trail, and the AI models are real. **Traffic is simulated until real Kolkata traffic is
@@ -95,10 +116,55 @@ The full list is in [PRODUCT.md §12](PRODUCT.md#12-honest-status).
 | **Kolkata Traffic Police duty officer** (Bidhannagar and Howrah City Police for their areas) | One queue of decisions, each with its reason, its modelled effect and its labels; movement planning; voice reports |
 | **KMC and WBSDMA control room** | Rain, tide, pumps and waterlogging risk by road, with lead times and advisory drafts in Bengali and English |
 | **Ambulance (108) crews** | A one-tap corridor request and "ambulance windows" through waterlogged roads |
-| **Citizens** | "Check your road" in বাংলা, English or हिंदी, with a Listen button; no sign-in, no location |
+| **Citizens** | "Check your road" in English, Bengali or Hindi, with a Listen button; no sign-in, no location |
+
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="Decide: an ambulance (108) corridor request" src="docs/screenshots/decide-corridor.jpg"><br/><sub><b>Decide: a 108 corridor request.</b> A 108 crew's corridor request: the golden hour left and what changes if approved, for a named officer.</sub></td>
+<td width="25%" valign="top"><img width="100%" alt="The ambulance crew page on a phone" src="docs/screenshots/driver.jpg"><br/><sub><b>Ambulance (108) crew.</b> One request for a corridor window, its four steps; a duty officer decides.</sub></td>
+<td width="25%" valign="top"><img width="100%" alt="The citizen page on a phone" src="docs/screenshots/citizen.jpg"><br/><sub><b>Citizen.</b> Check your road: the status in plain words (modelled), Listen, the tide; no sign-in, no location.</sub></td>
+</tr>
+</table>
+
+### Everything it does
+
+Beside the Kolkata AI above, Sahoshi carries a full city-operations platform. Every row runs on the Sahoshi stack
+today, with its label:
+
+| Capability | What it does in Kolkata | Status |
+|---|---|---|
+| Movement planning | Routes for a protected movement (for example Nabanna → Kolkata Airport) checked against the protection class's lane floor (Z+, Z, Y, X), with a closure and detour plan for each road | Real engine; traffic SIMULATED |
+| Rolling holds and escort | Roads close 60–180 s ahead of the convoy and reopen behind it; any change of plan (a hold, the alternate, a re-route) is one proposal a named officer approves; no answer in 90 s and the plan holds | Real engine; convoy GPS EMULATED |
+| Corridor events | One engine for VIP movements, Durga Puja crowds, processions, the Kolkata Marathon, the Red Road parade, Eden Gardens egress, waterlogging evacuations, metro work zones and the stolen-vehicle sweep | Real engine; scenarios SIMULATED |
+| Situation bands and city signal plans | GREEN / AMBER / RED / BLACK for each movement and event, with protocol floors and hysteresis; a band-driven green-split plan that refuses to write until the twin is calibrated on field data | Real, gated; no field controller connected |
+| Stolen-vehicle chain | FIR earmark → camera reads → evidence (never a fine for the theft victim) → a named officer's approval → one pursuit → interception choke points | Real rules and audit; ANPR reads EMULATED |
+| E-challan support | Speed, signal and closed-corridor rules file recommendations that wait for an officer | Real rules; reads EMULATED |
+| Dispatch | Civic Volunteers, Police Control, Traffic Police, Ambulance (108), Fire & Emergency: request → approved → en route → on scene → completed | Real records; units EMULATED, no CAD link |
+| Ambulance (108) green corridor | A crew's one-tap request; a named officer approves; a timed window opens ahead of the ambulance | Real flow |
+| Event intelligence | Official alerts, news and aggregate social signals become redacted situations at places with a credibility score: road, crowd, weather, hazard, closure and service situations only (crime reports, clashes and politics are dropped); only an officer promotes one to an event | Real when enabled |
+| Decision support | Ranked courses of action (monitor, advisory, standard response, closure, verify first), each tested on the twin | Real engine; outputs MODELLED |
+| Assistant | Grounded, read-only answers about the live picture; proposals arrive as cards | Real, local models |
+| Advisories | One fact for citizens, zone officers, ambulance control and KMC, in English, Bengali and Hindi, drafted for an officer to send | Real drafts; not delivered |
+| 3D city | Photoreal Kolkata with the live picture on it; thermal-style view, measure, follow, replay of recorded runs | Imagery not live; overlays real or labelled |
+| Audit, operator gate and privacy | Every decision with the officer's name; PIN sign-in; plates masked until an officer is named; camera reads kept 30 days (a watchlisted vehicle's up to 90) | Real |
 
 The full product description, with the Kolkata problems and their sources, the journeys, every screen, the modelled
 impact, the cost and the pilot plan, is [`PRODUCT.md`](PRODUCT.md).
+
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="The map focused on a live protected movement" src="docs/screenshots/map-escort.jpg"><br/><sub><b>A protected movement on the map.</b> A protected movement live on the map: its route, the emulated convoy and units, Follow and Details.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="Decide: the stolen-vehicle chain at Open the pursuit" src="docs/screenshots/decide-stolen.jpg"><br/><sub><b>Decide: the stolen-vehicle chain.</b> Authorise, then Open the pursuit as a separate decision; the reads on the map (emulated ANPR); vehicles only.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="Decide: decision-support options" src="docs/screenshots/decide-dss.jpg"><br/><sub><b>Decide: choose a response.</b> Ranked responses, the recommended one first (MODELLED); approval only creates dispatch requests.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="A reported road diversion situation at Tiljala" src="docs/screenshots/object-osint.jpg"><br/><sub><b>A reported situation.</b> An official diversion notice as a situation at a place, with how sure we are; names are removed before storage.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="The situation wall with the live band and the dispatch panel" src="docs/screenshots/dispatch.jpg"><br/><sub><b>Dispatch and the live band.</b> The live band while a movement runs, and Dispatch: one request per unit, each with its status (emulated units).</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="The Analyst 3D city map" src="docs/screenshots/analyst-city-map.jpg"><br/><sub><b>Analyst city map.</b> The analysts' 3D city with its vitals; roads simulated, units emulated, imagery not live.</sub></td>
+</tr>
+</table>
 
 ---
 
@@ -122,7 +188,7 @@ where it is answered.
 | 7 | Timeline | Prototype running now; pilot about 12 months; roadmap by quarter | [PRODUCT §9.2](PRODUCT.md#92-pilot-plan), [§10 Roadmap](PRODUCT.md#10-roadmap) |
 | 8 | Expected Impact | MODELLED: about 100× fewer commuter-minutes per VIP movement with rolling holds (357,188 → 3,572 on Nabanna → airport); deep water flagged 45–120 min ahead in a hindsight run of the 2025 storm | [PRODUCT §8](PRODUCT.md#8-modelled-impact); [`IMPACT_REPORT.md`](IMPACT_REPORT.md) with its assumptions ledger |
 | 9 | Scalability | A city is a folder: a new district is a new City Pack and one build; next packs Siliguri, Asansol–Durgapur, Patna, Ranchi | [PRODUCT §9.3](PRODUCT.md#93-scale-a-city-is-a-folder); [The City Pack](#the-city-pack-a-city-is-a-folder); [design §6](docs/TECHNICAL_DESIGN.md#6-the-city-pack), [§15](docs/TECHNICAL_DESIGN.md#15-deployment-and-capacity) |
-| 10 | Prototype or Pilot (with evidence) | A running prototype: 22 screenshots, 6,212 Python and 121 Rust tests green, evaluations with their raw results, a replay of the 2025 storm | [The screens](#the-screens); [tests and 48 test cases](docs/SAMPLE_DATA_AND_TESTS.md); [evidence PDF](docs/evidence/Sahoshi_Evidence.pdf); [deck](docs/deck/Sahoshi_Deck.pdf); [sample API answers](docs/samples/) |
+| 10 | Prototype or Pilot (with evidence) | A running prototype: 36 screenshots end to end, 6,310 Python and 121 Rust tests green, evaluations with their raw results, a replay of the 2025 storm | [The screens](#the-screens); [tests and 48 test cases](docs/SAMPLE_DATA_AND_TESTS.md); [evidence PDF](docs/evidence/Sahoshi_Evidence.pdf); [deck](docs/deck/Sahoshi_Deck.pdf); [sample API answers](docs/samples/) |
 
 **The jury's criteria**
 
@@ -159,6 +225,21 @@ offline; none is in this repository.
 How each model was chosen, evaluated and limited: [`docs/ai/`](docs/ai/). Licences and attributions for everything
 third-party: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="A selected road with its two-hour forecast band" src="docs/screenshots/map-forecast.jpg"><br/><sub><b>Map: a road's forecast.</b> A road's card: waterlogging now (modelled) and its two-hour V/C band against 0.8 (simulated traffic).</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="Decide: a signal-timing proposal tested in the twin" src="docs/screenshots/decide-ai.jpg"><br/><sub><b>Decide: signal timing.</b> A signal change tested in the twin against doing nothing, the cross street's cost shown too (MODELLED).</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="A field report spoken in English" src="docs/screenshots/voice-report-en.jpg"><br/><sub><b>Field report by voice.</b> Speech becomes place, kind and severity with the words that decided it; unverified until an officer confirms.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="Camera road state read from a sample still" src="docs/screenshots/road-state.jpg"><br/><sub><b>Road state from a still.</b> A still read on the server as a road state with a depth band, unverified until an officer confirms.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img width="100%" alt="The replay of the 22–23 Sep 2025 storm" src="docs/screenshots/replay-2025-09-23.jpg"><br/><sub><b>Replay of 23 Sep 2025.</b> The 2025 storm night step by step: IMD's observed rain, modelled ponding, the roads flagged at 04:00 IST.</sub></td>
+<td width="50%" valign="top"><img width="100%" alt="The assistant answering in English" src="docs/screenshots/assistant.jpg"><br/><sub><b>Assistant.</b> A grounded, read-only answer that says its traffic is synthetic; it cannot approve, unmask or dispatch.</sub></td>
+</tr>
+</table>
+
 ---
 
 ## State of the art, open and on premises
@@ -173,7 +254,7 @@ flowchart LR
         rain["Rain nowcast<br/>Open-Meteo · LIVE"]
         tide["Hooghly tide<br/>MODELLED"]
         traffic["Traffic<br/>SIMULATED until recorded"]
-        voice["Officer's voice<br/>বাংলা · English · हिंदी"]
+        voice["Officer's voice<br/>English · Bengali · Hindi"]
         still["Camera still"]
         news["Alerts and news<br/>aggregate only"]
     end
@@ -187,7 +268,7 @@ flowchart LR
         mem["memory<br/>pplx-embed · PII-Tracer"]
     end
     officer(["Named duty officer<br/>approves or rejects"])
-    out["Audit trail<br/>advisories in বাংলা, English, हिंदी"]
+    out["Audit trail<br/>advisories in English, Bengali, Hindi"]
     rain --> hy
     tide --> hy
     hy -->|"rain, gate closure"| fc
@@ -250,53 +331,82 @@ flowchart LR
 
 ## The screens
 
-Every screenshot is of the running Sahoshi stack on the Kolkata City Pack; exercise data is labelled as such on screen. More:
-[`docs/screenshots/`](docs/screenshots/) · wireframes: [`docs/wireframes/`](docs/wireframes/).
+Every screenshot is of the live Sahoshi stack on the Kolkata City Pack, taken on 29 Oct 2026 in English (one
+shot shows the Bengali console); simulated, emulated and modelled data is labelled as such on screen. How they were
+taken and what each shows: [`docs/screenshots/`](docs/screenshots/) · wireframes: [`docs/wireframes/`](docs/wireframes/).
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/landing.jpg" alt="Landing page"><br/><b>Landing.</b> The public front door, Bengali first: the tagline, the two ways in and a credited reference photo.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/home.jpg" alt="Home"><br/><b>Home.</b> What needs an officer now, the city in four counts, the next two hours and the 2025 storm replay.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/landing.jpg" alt="Sahoshi's landing page in English"><br/><b>Landing.</b> The public front door in English, with हिंदी and বাংলা one tap away at the top: the neutral Sahoshi mark, the tagline "Not by stopping. By steering.", Open the console and Check your road, "Vehicles only. Plates stay masked until an officer is named.", a console screenshot labelled "exercise data", over a credited night photograph of Howrah Bridge labelled "Reference photo · not live".</td>
+<td width="50%" valign="top"><img src="docs/screenshots/home.jpg" alt="Home: the featured decision, the city pulse and the next two hours"><br/><b>Home.</b> What needs an officer now (the featured decision, a 108 corridor request with its time left and Review now: "It keeps waiting until an officer decides"), the city's band and four counts, the systems line (traffic simulated on 65 roads), the next two hours (MODELLED: roads over 0.8 V/C, waterlogging risk, the tide and the outfall gates) and the 2025 storm replay.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/home-bn.jpg" alt="Home in Bengali"><br/><b>Home in বাংলা.</b> The same screen in Bengali; every value keeps its label.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/map-waterlogging.jpg" alt="Map with the waterlogging layer"><br/><b>Map: waterlogging.</b> Roads coloured by modelled risk; a road's card gives the depth, when it goes deep and the rain behind it.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-live-3d.jpg" alt="The live map of Kolkata in photoreal 3D over the Hooghly and Howrah Bridge"><br/><b>The live map, photoreal 3D.</b> Kolkata over the Hooghly from the south, Howrah Bridge at the centre: the roads drawn in their load colours with moving traffic dots (traffic SIMULATED), place names, road speeds and V/C, the evening's events titled where they happen (Durga Puja night, Bijoya immersion, Eden Gardens egress; SIMULATED), Kolkata Traffic Police and ambulance units on real roads (EMULATED), the stolen exercise vehicle's last read, the official weather warning (LIVE), Rain · Tide · Pumps and the City panel with their labels, and the Now panel's live operations. Photoreal 3D city from Google via Cesium ion, "not a live image".</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-live-3d-close.jpg" alt="A closer view of the live map over Central Kolkata"><br/><b>The live map, closer.</b> Closer, from Esplanade and Eden Gardens towards Howrah Bridge and College Street: each road's speed and V/C (simulated), events titled where they happen, emulated patrol and ambulance units with their state, the stolen exercise vehicle's last read on Chittaranjan Avenue, places from Lalbazar to Kolkata Medical College.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/map-forecast.jpg" alt="Map with a road's forecast"><br/><b>Map: a road's forecast.</b> Rain, tide and pumps, and the road's two-hour band (median with p10–p90), each with its label.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/map-air.jpg" alt="Map with air quality"><br/><b>Map: air and city feeds.</b> Air-quality sites on the map; air, heat, cyclone, river and earthquake in one panel.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-live-2d.jpg" alt="The live map on the 2D city map"><br/><b>The live map, 2D city map.</b> The same live picture on the flat city map, Shyambazar to Rashbehari: the road network in its load colours with moving dots (simulated), the City Pack's places, air sites (modelled), events with their pulses and timers, emulated units with their state, and the legend that names every mark.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-layers.jpg" alt="The map's Layers sheet"><br/><b>Map: layers.</b> The Layers sheet over the 2D city map: the base map (Satellite 3D or City map) and its style, then each layer with its honest label and count: units and dispatches EMULATED, ANPR cameras EMULATED ("read registration marks only"), traffic flow SIMULATED on 65 roads, 191 City Pack places.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/map-3d.jpg" alt="3D city map"><br/><b>3D city.</b> Kolkata in 3D with the live picture on it: routes, camera sites and the city panel.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/replay-2025-09-23.jpg" alt="Replay of 23 Sep 2025"><br/><b>Replay of 23 Sep 2025.</b> The storm night step by step: IMD's observed rain, the modelled ponding, the roads flagged at each time.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-forecast.jpg" alt="A selected road with its two-hour forecast band"><br/><b>Map: a road's forecast.</b> Rash Behari Avenue picked on the 2D map (roads only): waterlogging risk 0 · dry with its depth band and the rain in the next 2 h (MODELLED), and the +30 / +60 / +120 min V/C forecast, each the median with its p10–p90 band against 0.8 (Chronos-2 on SIMULATED traffic).</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-air.jpg" alt="The air-quality layer and the City panel"><br/><b>Map: air and city feeds.</b> The air layer over the whole city on the 2D map: each air-quality site as a circle in its National AQI band (modelled where no station reads), the protected movements' routes, and the City panel: air, heat, cyclone, river and earthquake, each with its label (Modelled or Live).</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/decide-ai.jpg" alt="Decide: a signal-timing proposal"><br/><b>Decide: signal timing.</b> The twin's proposal against doing nothing, at the junction, on the cross street and across the network, for a named officer.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/decide-waterlogging.jpg" alt="Decide: waterlogging"><br/><b>Decide: waterlogging.</b> A reroute around deep water and what changes if the officer approves; ambulance and live-wire cards wait in the queue.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-waterlogging.jpg" alt="The waterlogging layer on the replay of 23 Sep 2025"><br/><b>Map: waterlogging, 23 Sep 2025.</b> Kolkata was dry, so the replay of the 2025 storm (Hindsight: IMD's observed rain, modelled ponding): the flagged roads, and Bidhan Sarani's card: risk 2 · deep water, 10–30 cm modelled peak, first deep at 03:30, 203 mm observed, with its V/C band.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/replay-2025-09-23.jpg" alt="The replay of the 22–23 Sep 2025 storm"><br/><b>Replay of 23 Sep 2025.</b> "Hindsight: 23 Sep 2025" with its time steps (02:00 to 05:30): at 04:00 IST 56 roads deep and 4 impassable across Central and South Kolkata, from IMD's observed rain and the modelled tide. "Not today's city", with Back to live.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/object-segment.jpg" alt="A road's page"><br/><b>A road's page.</b> Limit, lanes, the two-hour forecast band against the 0.8 line, key facts and the record.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/plan.jpg" alt="Plan a movement"><br/><b>Plan a movement.</b> Where to, the protection class and the departure; nothing moves until a named officer starts it.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-corridor.jpg" alt="Decide: an ambulance (108) corridor request"><br/><b>Decide: a 108 corridor request.</b> An ambulance (108) crew's corridor request from the driver app (unit 108-EM04, emulated): the golden hour left, what changes if approved (its dispatch goes from Requested to Approved, with the officer's name), "It keeps waiting until an officer decides", and Approve the corridor or Defer.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-stolen.jpg" alt="Decide: the stolen-vehicle chain at Open the pursuit"><br/><b>Decide: the stolen-vehicle chain.</b> The exercise vehicle reported stolen (demo FIR 4401/2026): four reads by four cameras over 15 min on the map, Strand Road to Chittaranjan Avenue (ANPR EMULATED); the chain Authorise, then Open the pursuit, where an officer authorised the sighting earlier that evening and opening the pursuit is a second, separate decision; the mark shown only because a named officer is on this console.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/assistant.jpg" alt="Assistant"><br/><b>Assistant.</b> A read-only answer built from the tools, with its caveats and a card that opens in Decide; it cannot approve or unmask.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/advisories.jpg" alt="Advisories"><br/><b>Advisories.</b> One draft in English, हिंदी and বাংলা, labelled, for an officer to copy and send; nothing is sent on its own.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-masked.jpg" alt="Decide: the stolen-vehicle sheet with the mark masked"><br/><b>Decide: the mark masked until an officer is named.</b> The same stolen-vehicle sheet on a console where no officer has been named: the mark masked with a lock, "Full mark shows when a duty officer is named", and the buttons waiting for a name. Taken on a development deck reading the same live stack with the operator gate off (the live deck needs a signed-in officer for any console page); writes refused.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-dss.jpg" alt="Decide: decision-support options"><br/><b>Decide: choose a response.</b> Decision support for a reported night-shift change on Salt Lake Bypass (Sector V), unverified: the responses ranked, the recommended one first, each with what it sends and how soon it takes effect (MODELLED); Approve, Reject or Defer for a named officer.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/voice-report.jpg" alt="Field report by voice"><br/><b>Field report by voice.</b> Spoken Bengali becomes place, kind and severity, with the words that decided it; it goes on the board as unverified.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/road-state.jpg" alt="Road state from a sample still"><br/><b>Road state from a still.</b> A credited sample still read on the server: state, depth band and vehicles, unverified until an officer confirms.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-ai.jpg" alt="Decide: a signal-timing proposal tested in the twin"><br/><b>Decide: signal timing.</b> The twin's proposal for Howrah Bridge, Kolkata end: max-pressure control for 30 min, tested over 45 min against doing nothing: delay at the junction −19.2 %, longest queue −24.0 %, the cross street +17.0 % (shown, not hidden), the network −6.6 %; AI proposal · MODELLED · EMULATED; Reject or Approve for the signed-in officer.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/decide-waterlogging.jpg" alt="Decide: waterlogging proposals in the exercise"><br/><b>Decide: waterlogging.</b> The 2025 storm as an exercise: Gariahat crossing, reroute around water (Rash Behari Avenue at risk 3, > 30 cm, deep water in about 45 min, as the model would have seen it at 02:00 IST on 23 Sep 2025), what changes if approved (in the exercise, on this console only), tagged AI proposal · Exercise · MODELLED · Hindsight; the ambulance-window and live-wire cards wait in the queue.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/road-state-street.jpg" alt="Road state from a street photo"><br/><b>Road state from a street photo.</b> The nearest public Mapillary photo, dated and credited, read the same way.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/citizen.jpg" alt="Citizen page in Bengali"><br/><b>Citizen.</b> Bengali first, with Listen in a synthetic voice; no sign-in and no location.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/plan.jpg" alt="Plan a movement: where to and the protection class"><br/><b>Plan a movement.</b> Nabanna → Kolkata Airport, the protection class (Z+: 6-lane floor, roads close 3 min ahead; Z, Y, X with theirs) and the departure, over the satellite map. "Finding routes registers the movement with the planner. Nothing moves until a named officer starts the escort": that press is the officer's, so the camera stops here.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/map-escort.jpg" alt="The map focused on a live protected movement"><br/><b>A protected movement on the map.</b> The VIP Movement base case (Nabanna → Kolkata Airport, class Z+) focused from the Now panel: its route over VIP Road and Salt Lake with the convoy and patrol units (EMULATED), "Live · Emulated", Follow and Details; any hold or re-route arrives as one proposal for a named officer.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/driver.jpg" alt="Ambulance crew page"><br/><b>Ambulance (108) crew.</b> One request for a corridor, and its steps while a duty officer decides.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/analyst-workspace.jpg" alt="Analyst workspace"><br/><b>Analyst workspace.</b> The map, the events and the decision inbox side by side, with the timeline below.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/dispatch.jpg" alt="The situation wall with the live band and the dispatch panel"><br/><b>Dispatch and the live band.</b> The live band (a protected movement live, a 108 corridor to review, the city band red during the movement), the decisions, the city map and the Dispatch panel: request a unit for an agency at a waypoint; each request with its status (units EMULATED); the audit stream below.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/situation-wall.jpg" alt="The situation wall"><br/><b>Situation wall.</b> One screen for the shift: the counts (active events, decisions waiting, corridor speed on the simulated feed, congested roads, emulated ANPR reads), the decision list, the city map, the city band over time, the city signal plans (writer off; Apply refused until the twin is field-calibrated) and the audit stream with Ask why.</td>
 </tr>
 <tr>
-<td width="50%" valign="top"><img src="docs/screenshots/situation-wall.jpg" alt="Situation wall"><br/><b>Situation wall.</b> City counts, decisions, the city band, signal plans and the audit trail on one screen.</td>
-<td width="50%" valign="top"><img src="docs/screenshots/imagery.jpg" alt="Reference photographs"><br/><b>Reference photographs.</b> The Kolkata photos the console uses, each labelled "Reference photo · not live" (<a href="services/command-deck/static/photos/NOTICE.md">credits</a>).</td>
+<td width="50%" valign="top"><img src="docs/screenshots/object-segment.jpg" alt="The object page of Rash Behari Avenue"><br/><b>A road's page.</b> Rash Behari Avenue: limit 40 km/h, 6 lanes, 1,388 m, source "Simulated traffic feed"; the next two hours of V/C against the 0.8 line: the Chronos-2 forecast (0.24 now, 0.15 in 2 hours, likely 0.09 to 0.21) with its p10–p90 band and the seasonal baseline, labelled Simulated traffic · Model chronos-2.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/object-vehicle.jpg" alt="The page of the watchlisted exercise vehicle"><br/><b>A vehicle's page.</b> The exercise vehicle reported stolen, WB06EM9001 (an emulated mark, shown in full to the named duty officer; every view is recorded): lawful basis Stolen vehicle (FIR), kept 29 more days, its last lawful read and reads; "Evidence only. No e-challan for a stolen vehicle's owner; a sighting can only authorise one pursuit"; the decision waiting for an officer.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/object-osint.jpg" alt="A reported road diversion situation at Tiljala"><br/><b>A reported situation.</b> An official Kolkata Traffic Police notice ("Traffic Diversion at Picnic Garden Road under Tiljala Traffic Guard") as a situation at a place: Official, credibility 0.90 and why, the verification ladder, "Names and ages are removed from every report before it is stored"; only an officer turns it into an event.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/road-state.jpg" alt="Camera road state read from a sample still"><br/><b>Road state from a still.</b> Camera EM-J12 (emulated) on the Jawaharlal Nehru Road approach: a credited sample still ("Sample still · not live", faces pixelated) read by Qwen3-VL-8B on this server in 14 s: Waterlogged, water up to the wheel hubs, confidence 0.98 (the model's own number, not calibrated), "Unverified camera reading", Send to the board; "Roads and vehicles only: it never describes people and never reads number plates."</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/road-state-street.jpg" alt="Camera road state read from a public street photo"><br/><b>Road state from a street photo.</b> Camera EM-CAM-04 on Chittaranjan Avenue: the nearest public Mapillary photo (taken 6 Aug 2026, 39 m from the camera, credited, "Reference photo · not live") read by Qwen3-VL-8B on this server in 12 s: Clear, below the kerb, "Road surface wet but clear", confidence 0.95 (not calibrated); a clear road is not sent to the board.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/voice-report-en.jpg" alt="A field report spoken in English"><br/><b>Field report by voice.</b> A spoken English report (a synthetic voice played into the microphone, 9.5 s) transcribed on this server: "Water logging at Park Circus Crossing. The water is knee deep and a bus has stalled in the left lane." Matched to Park Circus seven-point crossing (shown in Bengali and English), Waterlogging, Medium, the words that decided it, "Unverified field report"; Send to the board stays the officer's press. Audio is not stored.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/voice-report.jpg" alt="A field report spoken in Bengali"><br/><b>Field report in Bengali.</b> The same sheet with বাংলা picked: a Bengali report in a synthetic voice ("Water has collected at Gariahat crossing; vehicles are getting stuck") transcribed on this server, matched to Gariahat crossing (96 %), kind Waterlogging, severity Medium, the words that decided it, "Unverified field report"; Send to the board stays the officer's press.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/assistant.jpg" alt="The assistant answering in English"><br/><b>Assistant.</b> Asked how traffic is on Howrah Bridge, a grounded, read-only answer from the live-traffic tool: average speed and congestion index, "the data is from a synthetic feed"; how it worked it out is one click away. It cannot approve, unmask or dispatch.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/assistant-refusal.jpg" alt="The assistant answering a question about a person with vehicle facts only"><br/><b>Assistant: vehicles, never people.</b> Asked who is driving the stolen vehicle and where they live, the assistant answers about the vehicle only: "Sahoshi holds no owner or other personal details — it works with vehicles, never people"; the mark stays masked in its answer, the grounding check removed one statement no tool reported, and the decision opens in Decide.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/advisories.jpg" alt="Advisories in three languages"><br/><b>Advisories.</b> Advisories for the cloudburst at high tide (SIMULATED feed · emulated): the four audiences (citizens by SMS / WhatsApp, zone officers, 108 control, the municipality), one draft in English, हिंदी and বাংলা, each marked as exercise text, "Drafted — not delivered"; no message gateway is deployed, so an officer copies and sends.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/analyst-workspace.jpg" alt="The Analyst workspace"><br/><b>Analyst workspace.</b> The Analyst workspace under the live band: the photoreal map with every layer (traffic SIMULATED, units EMULATED), the active events (scenarios tagged Test), the selected protected movement's figures, and the timeline with its six-hour histogram, Audit and AI trace below.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/analyst-city-map.jpg" alt="The Analyst 3D city map"><br/><b>Analyst city map.</b> The analysts' 3D city from Howrah Bridge to Sealdah: roads with speed and V/C (simulated), cameras at modelled positions, units with their state (emulated), the stolen exercise vehicle's last read, and the City vitals (open events, decisions waiting, watchlisted vehicles, cameras answering, feed anomalies, traffic feed SIMULATED); photoreal imagery, not live.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/audit.jpg" alt="The audit trail in the Analyst workspace"><br/><b>Audit trail.</b> The audit trail in the Analyst workspace, under the live band: every row with its time, kind, actor, what happened and the object (here the emulated 108 control's corridor requests), exportable; the whole-city view and the officer, machine and system filters.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/citizen.jpg" alt="The citizen page on a phone"><br/><b>Citizen.</b> Check your road on a phone, in English with हिं and বাং one tap away: Bidhan Sarani picked, "Dry: no water is expected on this road in the next 2 hours" (MODELLED, from rain, the Hooghly tide, ground level and drains), Listen in a synthetic voice, and the tide on the Hooghly with the level at which the outfall gates shut. No sign-in, no location, no plates.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/screenshots/driver.jpg" alt="The ambulance crew page on a phone"><br/><b>Ambulance (108) crew.</b> The ambulance (108) crew's page on a phone: the green-corridor request, its four steps (idle → awaiting duty officer → approved → window open), "Follow ambulance (108) control until it is approved", and every status change recorded in the dispatch audit trail.</td>
+<td width="50%" valign="top"><img src="docs/screenshots/home-bn.jpg" alt="Home in Bengali"><br/><b>Home, also in Bengali.</b> The same Home switched to বাংলা from the language menu: the featured decision, the city's band and counts, and the next two hours with their মডেল-ভিত্তিক (modelled) label. Hindi is the third choice.</td>
 </tr>
 </table>
 
@@ -357,7 +467,7 @@ on 127.0.0.1:8199) also run as systemd user units under `sahoshi-ai.target`
 
 | URL | What |
 |---|---|
-| `http://<server>:5373/welcome` | The public landing page (Bengali first) |
+| `http://<server>:5373/welcome` | The public landing page (English first; Bengali and Hindi one tap away) |
 | `http://<server>:5373/` | The officer console: sign in with your name and the duty PIN |
 | `http://<server>:5373/citizen` | "Check your road", no sign-in |
 | `http://<server>:5373/driver` | The ambulance (108) crew page |
@@ -437,7 +547,7 @@ Everything specific to Kolkata lives in [`cities/kolkata/`](cities/kolkata/):
 
 | File | Contents |
 |---|---|
-| `city.json` | Names in English, বাংলা and हिंदी; bbox; centre; the plate format `WB NN X[X] NNNN`; emergency numbers (112, 100, 108, 101); 18 agencies; the Hooghly tide station; population |
+| `city.json` | Names in English, Bengali and Hindi; bbox; centre; the plate format `WB NN X[X] NNNN`; emergency numbers (112, 100, 108, 101); 18 agencies; the Hooghly tide station; population |
 | `landmarks.json` | 48 canonical places, from Howrah Bridge and Nabanna to Gariahat, Park Circus and Ultadanga |
 | `corridors.json` | The curated corridors: Howrah Bridge – BBD Bag, Vidyasagar Setu, Chowringhee, Park Street, AJC Bose Road, Red Road, EM Bypass, VIP Road, Biswa Bangla Sarani, Rashbehari – Gariahat, Diamond Harbour Road and more |
 | `osm/` | The committed OpenStreetMap extracts (ODbL) |
@@ -454,17 +564,23 @@ python3 scripts/city_build.py kolkata --check    # rebuild into a temporary fold
 A second, reference pack for another city is kept, and a test builds both. A new district is a new folder; the next
 packs named for the region are Siliguri, Asansol–Durgapur, Patna and Ranchi.
 
+<table>
+<tr>
+<td width="100%" valign="top"><img width="100%" alt="The live map on the 2D city map" src="docs/screenshots/map-live-2d.jpg"><br/><sub><b>The live map, 2D city map.</b> The City Pack drawn live: roads in their load colours (simulated), places, events, emulated units and the legend.</sub></td>
+</tr>
+</table>
+
 ---
 
 ## Tests
 
-Measured on 29 Oct 2026, every suite offline: **68 of 68 gates green**.
+Measured on 29 Oct 2026, every suite offline: **69 of 69 gates green**.
 
 | Suite | Result |
 |---|---|
-| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **6,212 passed**, 160 skipped (they need a database sandbox or real models) |
+| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **6,310 passed**, 163 skipped (they need a database sandbox or real models) |
 | Rust (`signal-ingress`) | **121 passed** |
-| Deck | `svelte-check` 0 errors in 1,027 files; design-token, English copy (4,908 strings) and Bengali-script lints pass; contract replay passes; 45 unit suites pass |
+| Deck | `svelte-check` 0 errors in 1,037 files; design-token, English copy (4,935 strings) and Bengali-script lints pass; contract replay passes; 46 unit suites pass |
 | OSINT offline smoke | PASS: 32 signals, 26 geo-tagged, 4 situations surfaced |
 | City Pack | `city_build.py kolkata --check`: every derived file is current |
 

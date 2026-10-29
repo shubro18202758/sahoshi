@@ -62,14 +62,15 @@
 	--v-act-veil: rgba(200, 118, 25, 0.2);
 	--v-act-text: #fbb360;
 
-	/* band ladder — situation state only; amber is gold 4, distinct from the
-	 * act orange; BLACK is a dark fill AND a 1 px red hairline everywhere */
+	/* band ladder — situation state only; amber is the console's orange-amber (the V3 meaning palette: Home draws the
+	 * amber band in the decide family), a lighter step than the act orange and never the old brand gold; the word
+	 * "Amber" always rides with it; BLACK is a dark fill AND a 1 px red hairline everywhere */
 	--v-band-green: #32a467;
-	--v-band-amber: #f0b726;
+	--v-band-amber: #ffb257;
 	--v-band-red: #e76a6e;
 	--v-band-black-fill: rgba(17, 17, 17, 0.85);
 	--v-band-black-hairline: #e76a6e;
-	--v-band-veil: rgba(240, 183, 38, 0.14);
+	--v-band-veil: rgba(255, 178, 87, 0.14);
 
 	/* legacy accents: --v-data is the map-select blue, --v-tool the AI indigo */
 	--v-data: #4c90f0;

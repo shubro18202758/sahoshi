@@ -4,7 +4,7 @@ These are **low-fidelity wireframes**: greyscale boxes, placeholder figures and 
 
 Conventions in every file:
 
-- Greyscale. Colour carries meaning only: orange = waits for a named officer's decision; red = danger (impassable water, a stolen vehicle); green = approved or healthy; blue = a link, or text an AI wrote. Kolkata-taxi yellow appears only in the Sahoshi mark.
+- Greyscale. Colour carries meaning only: orange = waits for a named officer's decision; red = danger (impassable water, a stolen vehicle); green = approved or healthy; blue = a link, or text an AI wrote. No yellow anywhere: the Sahoshi mark is white (black on paper) with one blue dot.
 - A dashed outline means modelled, simulated, emulated or unverified (or a panel shown only when needed). Every such figure carries its honest label: `Live`, `Modelled`, `Simulated`, `Emulated`, "Field report · unverified", "Camera · AI reading · unverified", "Reference photo · not live".
 - Hatched areas are maps or pictures.
 - Console screens are drawn at 1440 px wide (rail 76 px, top bar 60 px); phone screens at 400 px wide.
@@ -19,7 +19,7 @@ Conventions in every file:
 | [wf-decide.svg](wf-decide.svg) | Decide | `(v3)/decide`, `(v3)/decide/[unit]` | One proposal at a time: +6 s green at Ultadanga for 30 min with the twin's metrics (delay −7.0%, cross street +18.5%, network −0.2%, confidence medium), all modelled; "If no one decides, the current plan holds"; Approve / Edit / Reject only with a named officer; the audit line. |
 | [wf-object.svg](wf-object.svg) | Object page for `segment:1033`, Rash Behari Avenue → Gariahat crossing | `(v3)/o/[urn]` | Identity and tags, live state with a label per figure, the p10–p90 forecast band with the 0.8 V/C threshold, waterlogging class and drivers, the hindsight replay of the 2025 cloudburst, related proposals, a nearby camera's unverified AI reading, and the audit trail. |
 | [wf-voice.svg](wf-voice.svg) | Field report by voice (the sheet behind "Report" in the top bar) | top bar entry on any operator screen; the board entry opens at `(v3)/o/[urn]` | Speak in Bengali (গড়িয়াহাট মোড়ে জল জমেছে, গাড়ি আটকে যাচ্ছে), read back the transcript, matched place and candidates, kind, severity and cue words, send as "Field report · unverified"; a named officer then confirms, edits or dismisses it. |
-| [wf-citizen.svg](wf-citizen.svg) | Citizen: check your road | `(public)/citizen` | Bengali first, no sign-in, no location: road search, the road's waterlogging status in plain Bengali (modelled), the Listen button with its "synthetic voice" note, tide and rain with their labels, an officer-approved advisory, 112 and ambulance (108). |
+| [wf-citizen.svg](wf-citizen.svg) | Citizen: check your road | `(public)/citizen` | English by default (Bengali and Hindi one press away), no sign-in, no location: road search, the road's waterlogging status in plain words (modelled), the Listen button with its "synthetic voice" note, tide and rain with their labels, an officer-approved advisory, 112 and ambulance (108). |
 | [wf-driver.svg](wf-driver.svg) | Driver: ambulance (108) green corridor | `(public)/driver` | Unit, stretch and urgency, one request button, the status in orange while it waits for a named duty officer, the corridor map, and the line that the crew always follows 108 control. |
 | [wf-plan.svg](wf-plan.svg) | Plan a movement | `(v3)/plan` | The four steps (Where to · Routes · Launch · Live), the trip and protection class, routes ranked with twin estimates on simulated traffic, and a launch that needs a named officer. |
 

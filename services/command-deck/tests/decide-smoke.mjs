@@ -537,7 +537,7 @@ async function smoke() {
 		await page2.goto(`${base}/decide/${encodeURIComponent(K.dss)}`, { waitUntil: 'networkidle2', timeout: 120_000 });
 		await page2.waitForFunction(() => window.__V3_DECIDE__?.mode === 'sheet', { timeout: 30_000 }).catch(() => {});
 		const d1 = await hook(page2);
-		ok('deep link /decide/<kind>:<id> opens that unit (at 1366 the queue is art only)', d1?.selected === K.dss && (await page2.evaluate(() => getComputedStyle(document.querySelector('[data-testid="queue-card"] .txt')).display)) === 'none', d1?.selected);
+		ok('deep link /decide/<kind>:<id> opens that unit (at 1366 the queue stays labelled: art only below 1280)', d1?.selected === K.dss && (await page2.evaluate(() => getComputedStyle(document.querySelector('[data-testid="queue-card"] .txt')).display)) !== 'none', d1?.selected);
 		await page2.goto(`${base}/decide/${encodeURIComponent('<img src=x onerror=alert(1)>')}`, { waitUntil: 'networkidle2', timeout: 120_000 });
 		await page2.waitForFunction(() => window.__V3_DECIDE__?.mode === 'sheet', { timeout: 30_000 }).catch(() => {});
 		const d2 = await hook(page2);

@@ -171,6 +171,7 @@ def create_app(
             reserved_routes=registry.reserved_routes,
             violators=settings.living_violators,
             puja_nights=getattr(settings, "puja_nights", None),
+            density=getattr(settings, "living_density", 1),
         )
         registry.on_start = living.on_run_started
         reaper = Reaper(

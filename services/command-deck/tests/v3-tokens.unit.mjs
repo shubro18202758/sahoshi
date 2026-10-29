@@ -155,6 +155,15 @@ for (const theme of ['night', 'day']) {
 			for (const ink of ['--v3-t1', '--v3-t2'])
 				if (ratio(rgba(k[ink]).slice(0, 3), glass(mapPx)) < 4.5) bad.push(`${ink} over glass on map ${mapPx}`);
 		ok('night: tag ink over the glass ground stays ≥ 4.5:1 on the darkest and lightest graded map', bad.length === 0, bad.join(' | ') || 'both');
+		// the floating-panel glass (Decide's sheet, Home's inset): every text ink over it, even with no blur, over a black and a white pixel
+		const panel = (px) => over(rgba(k['--v3-glass-bg']), px);
+		const badPanel = [];
+		for (const px of [[0, 0, 0], [255, 255, 255]]) for (const ink of ['--v3-t1', '--v3-t2', '--v3-t3']) if (ratio(rgba(k[ink]).slice(0, 3), panel(px)) < 4.5) badPanel.push(`${ink} over panel glass on ${px}`);
+		ok('night: every text ink over the panel glass ≥ 4.5:1 on a black and a white pixel', badPanel.length === 0, badPanel.join(' | ') || 'all');
+		// one material: the panel glass is the map's glass (glass.ts GLASS), never a fork
+		const gsrc = readFileSync(path.join(V3, 'map/glass.ts'), 'utf8');
+		const gv = (name) => new RegExp(`${name}: '([^']+)'`).exec(gsrc)?.[1];
+		ok('the panel glass tokens equal the map glass (bg, solid, border, blur)', gv('bg') === k['--v3-glass-bg'] && gv('solid') === k['--v3-glass-solid'] && gv('border') === k['--v3-glass-border'] && gv('blur') === k['--v3-glass-blur'], JSON.stringify([gv('bg'), gv('solid'), gv('border'), gv('blur')]));
 	}
 }
 
@@ -243,7 +252,8 @@ for (const theme of ['night', 'day']) {
 	walk(V3);
 	walk(path.join(DECK, 'src/routes/(v3)'));
 	ok('no hex colour literal in V3 code outside tokens.css / tokens.ts', hits.length === 0, hits.slice(0, 6).join(' | '));
-	// Kolkata-taxi yellow belongs to the mark and the landing hero: no console or public screen may use it as a colour
+	// Neutral grounds, colour only for meaning: no yellow anywhere (no token, no V3 colour, no brand file). Yellow is
+	// hue 40–70° with real saturation; the decision orange (≈ 30°) sits clear of it.
 	const walkSrc = (d = path.join(DECK, 'src'), out = []) => {
 		for (const f of readdirSync(d)) {
 			const p = path.join(d, f);
@@ -252,8 +262,22 @@ for (const theme of ['night', 'day']) {
 		}
 		return out;
 	};
-	const taxiUsers = walkSrc().filter((f) => /--v3-land-taxi/.test(readFileSync(f, 'utf8')) && !/src\/lib\/v3\/(landing\/|tokens\.(css|ts)$)/.test(f.replace(/\\/g, '/')));
-	ok('Kolkata-taxi yellow (--v3-land-taxi) is used by the landing page only', taxiUsers.length === 0 && T.V3_SHARED['--v3-land-taxi'] === '#FFC800', taxiUsers.join(', '));
+	const taxiUsers = walkSrc().filter((f) => /--v3-land-taxi/.test(readFileSync(f, 'utf8')));
+	ok('no Kolkata-taxi token (--v3-land-taxi) anywhere: the brand is neutral', taxiUsers.length === 0 && !Object.keys(T.V3_SHARED).some((k) => /taxi/.test(k)), taxiUsers.join(', '));
+	const yellowish = (hex) => {
+		const n = parseInt(hex.slice(1, 7), 16);
+		const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+		const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+		if (d < 0.15) return false;
+		let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+		h = (h * 60 + 360) % 360;
+		return h >= 40 && h <= 70;
+	};
+	const css = readFileSync(path.join(V3, 'tokens.css'), 'utf8');
+	const yellowTokens = [...css.matchAll(/#[0-9a-fA-F]{6}\b/g)].map((m) => m[0]).filter(yellowish);
+	const brandDir = path.join(DECK, 'static/brand');
+	const yellowBrand = readdirSync(brandDir).filter((f) => f.endsWith('.svg')).filter((f) => [...readFileSync(path.join(brandDir, f), 'utf8').matchAll(/#[0-9a-fA-F]{6}\b/g)].some((m) => yellowish(m[0])));
+	ok('no yellow in the V3 tokens or the brand files', yellowTokens.length === 0 && yellowBrand.length === 0, [...yellowTokens, ...yellowBrand].join(', '));
 }
 
 console.log(failures ? `\n${failures} FAILED` : '\nv3-tokens: ALL OK');

@@ -17,7 +17,7 @@
   <rect x="20" y="78" width="1440" height="900" rx="0" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1.5"/>
   <!-- AppRail: 76 px below 1500 px wide (88 px at &gt;= 1500); icon + label, never icon-only -->
   <rect x="20" y="78" width="76" height="900" rx="0" fill="#E8E8E8" stroke="#A2A2A2" stroke-width="1.2"/>
-  <rect x="36" y="90" width="44" height="44" rx="10" fill="#F7C600" stroke="#8A6D00" stroke-width="1.2"/>
+  <rect x="36" y="90" width="44" height="44" rx="10" fill="#1A1A1A" stroke="#4A4A4A" stroke-width="1.2"/>
   <text x="58" y="119" font-size="20" font-weight="700" text-anchor="middle" fill="#262626">স</text>
   <rect x="28" y="148" width="60" height="56" rx="10" fill="#DCDCDC" stroke="#989898" stroke-width="1.6"/>
   <circle cx="58" cy="168" r="8" fill="#CFCFCF" stroke="#8E8E8E" stroke-width="1"/>
@@ -91,7 +91,7 @@
   <circle cx="130" cy="510" r="10" fill="#4A4A4A"/>
   <text x="130" y="514" font-size="11" font-weight="700" text-anchor="middle" fill="#FFFFFF">1</text>
   <text x="150" y="514" font-size="12.5" font-weight="400" fill="#262626">Rail, in the order of the officer's jobs: Home · Map · Decide · Plan · Assistant · Advisories; Analyst separated at the bottom</text>
-  <text x="150" y="531.5" font-size="12.5" font-weight="400" fill="#262626">(visible to every officer). The Sahoshi mark sits on top: the only yellow on the console.</text>
+  <text x="150" y="531.5" font-size="12.5" font-weight="400" fill="#262626">(visible to every officer). The Sahoshi mark sits on top: white, with its one blue dot.</text>
   <circle cx="130" cy="553" r="10" fill="#4A4A4A"/>
   <text x="130" y="557" font-size="11" font-weight="700" text-anchor="middle" fill="#FFFFFF">2</text>
   <text x="150" y="557" font-size="12.5" font-weight="400" fill="#262626">Decide carries the only badge, in orange: the decisions waiting for a named officer (also spoken in words for screen</text>
@@ -156,8 +156,8 @@
   <text x="1024" y="834" font-size="12" font-weight="400" fill="#262626">Green: approved, healthy</text>
   <rect x="1000" y="846" width="14" height="14" rx="7" fill="#1D5FD1"/>
   <text x="1024" y="857" font-size="12" font-weight="400" fill="#262626">Blue: a link, or text an AI wrote</text>
-  <rect x="1000" y="869" width="14" height="14" rx="7" fill="#F7C600" stroke="#8A6D00" stroke-width="1.2"/>
-  <text x="1024" y="880" font-size="12" font-weight="400" fill="#262626">Kolkata-taxi yellow: the Sahoshi mark only</text>
+  <rect x="1000" y="869" width="14" height="14" rx="7" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1.2"/>
+  <text x="1024" y="880" font-size="12" font-weight="400" fill="#262626">White and grey: everything else (no yellow)</text>
   <rect x="1032" y="142" width="270" height="168" rx="12" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1.2" stroke-dasharray="6 5"/>
   <text x="1048" y="166" font-size="12.5" font-weight="650" fill="#262626">Language and data</text>
   <text x="1048" y="188" font-size="11" font-weight="600" fill="#5E5E5E">Language</text>

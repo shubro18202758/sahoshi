@@ -42,6 +42,8 @@ __all__ = [
     "Settings",
     "get_settings",
     "parse_deck_origins",
+    "LIVING_DENSITIES",
+    "parse_density",
     "parse_flag",
     "parse_puja_nights",
 ]
@@ -93,6 +95,23 @@ def parse_flag(raw: str | None) -> bool:
     return (raw or "").strip().lower() in ("1", "true", "yes", "on")
 
 
+#: The living city's density levels (ambient.DENSITY_LEVELS).
+LIVING_DENSITIES = (1, 2, 3)
+
+
+def parse_density(raw: str) -> int:
+    """'1' / '2' / '3' → that density; fail closed on anything else (a typo
+    must not silently run the baseline city)."""
+    item = raw.strip()
+    try:
+        level = int(item)
+    except ValueError:
+        raise ValueError(f"EMULATOR_LIVING_DENSITY: not an integer: {item!r}") from None
+    if level not in LIVING_DENSITIES:
+        raise ValueError(f"EMULATOR_LIVING_DENSITY must be one of {LIVING_DENSITIES}, not {level}")
+    return level
+
+
 def parse_puja_nights(raw: str) -> tuple[date, ...]:
     """'2026-10-17, 2026-10-18,2026-10-19' → sorted dates; fail closed on
     anything that is not an ISO date (and on an empty list)."""
@@ -139,6 +158,11 @@ class Settings(BaseSettings):
     city_seed: int = 700001            # env EMULATOR_CITY_SEED
     living_violators: bool = True      # env EMULATOR_LIVING_VIOLATORS (0 = none)
     puja_nights: tuple[date, ...] | None = None   # env EMULATOR_PUJA_NIGHTS
+    # env EMULATOR_LIVING_DENSITY: 1 = the baseline city (two beats, two to
+    # three causes), 2 = denser (every beat and standby circuit rides, two
+    # more intermittent cause lanes, 108 and violators more often), 3 =
+    # densest (four more lanes).  ambient.DENSITY_LEVELS holds the numbers.
+    living_density: int = 1
 
     def validate_internal_endpoints(self) -> None:
         """Fail closed on an illegal endpoint override."""
@@ -159,5 +183,7 @@ def get_settings() -> Settings:
         s.living_violators = parse_flag(os.environ["EMULATOR_LIVING_VIOLATORS"])
     if os.environ.get("EMULATOR_PUJA_NIGHTS", "").strip():
         s.puja_nights = parse_puja_nights(os.environ["EMULATOR_PUJA_NIGHTS"])
+    if os.environ.get("EMULATOR_LIVING_DENSITY", "").strip():
+        s.living_density = parse_density(os.environ["EMULATOR_LIVING_DENSITY"])
     s.validate_internal_endpoints()
     return s

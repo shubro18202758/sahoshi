@@ -19,7 +19,7 @@
  */
 import { DARK_REGRADE, OSM_TILE_URL } from '$lib/gods-eye/layers/basemap';
 import { MAP_PALETTE } from '../tokens';
-import { SatelliteSource, browserFetchJson, browserFetchTile, sessionStore } from './satellite';
+import { SatelliteSource, browserFetchJson, browserFetchTile, sessionStore, type SatPriority } from './satellite';
 
 export type Grade = 'night' | 'day';
 
@@ -112,12 +112,17 @@ const cache = new Map<string, Promise<CanvasImageSource | null>>();
 let inFlight = 0;
 const queue: (() => void)[] = [];
 
-function slot(): Promise<void> {
+/** A slot of the shared queue; `first` jumps the waiting line (the night tiles laid under a slow satellite picture). */
+function slot(first = false): Promise<void> {
 	if (inFlight < MAX_IN_FLIGHT) {
 		inFlight++;
 		return Promise.resolve();
 	}
-	return new Promise((resolve) => queue.push(() => (inFlight++, resolve())));
+	return new Promise((resolve) => {
+		const go = () => (inFlight++, resolve());
+		if (first) queue.unshift(go);
+		else queue.push(go);
+	});
 }
 
 function release(): void {
@@ -125,8 +130,28 @@ function release(): void {
 	queue.shift()?.();
 }
 
-async function loadTile(z: number, x: number, y: number, grade: Grade): Promise<HTMLCanvasElement | null> {
+/**
+ * Satellite requests hold at most SAT_SHARE of the four slots, so a slow imagery source can never starve the night
+ * tiles a thumb falls back to (one slot always turns over). Still ≤ 4 in flight in all.
+ */
+const SAT_SHARE = 3;
+let satInFlight = 0;
+const satQueue: (() => void)[] = [];
+
+async function satSlot(): Promise<void> {
+	while (satInFlight >= SAT_SHARE) await new Promise<void>((r) => satQueue.push(r));
+	satInFlight++;
 	await slot();
+}
+
+function satRelease(): void {
+	release();
+	satInFlight--;
+	satQueue.shift()?.();
+}
+
+async function loadTile(z: number, x: number, y: number, grade: Grade, first = false): Promise<HTMLCanvasElement | null> {
+	await slot(first);
 	try {
 		const img = new Image();
 		img.crossOrigin = 'anonymous';
@@ -176,9 +201,9 @@ function recall(key: string): Promise<CanvasImageSource | null> | undefined {
 }
 
 /** One graded tile (shared; least-recently-used tiles leave the cache past 192). */
-export function gradedTile(z: number, x: number, y: number, grade: Grade): Promise<CanvasImageSource | null> {
+export function gradedTile(z: number, x: number, y: number, grade: Grade, first = false): Promise<CanvasImageSource | null> {
 	const key = `${grade}:${z}/${x}/${y}`;
-	return recall(key) ?? remember(key, loadTile(z, x, y, grade));
+	return recall(key) ?? remember(key, loadTile(z, x, y, grade, first));
 }
 
 /**
@@ -188,14 +213,18 @@ export function gradedTile(z: number, x: number, y: number, grade: Grade): Promi
 export const satellite = new SatelliteSource({
 	fetchJson: browserFetchJson,
 	fetchTile: browserFetchTile,
-	limiter: { acquire: slot, release },
+	limiter: { acquire: satSlot, release: satRelease },
 	store: sessionStore(),
 });
 
-/** One natural-colour satellite tile (ungraded), from the same LRU; null when satellite is off or there is no imagery. */
-export function satelliteTile(z: number, x: number, y: number): Promise<CanvasImageSource | null> {
+/**
+ * One natural-colour satellite tile (ungraded), from the same LRU; null when satellite is off or there is no imagery.
+ * A card asks with priority 'card' (it yields the hero reserve, satellite.ts); a null is never cached, so the same tile
+ * can still come for a hero.
+ */
+export function satelliteTile(z: number, x: number, y: number, priority: SatPriority = 'hero'): Promise<CanvasImageSource | null> {
 	const key = `sat:${z}/${x}/${y}`;
-	return recall(key) ?? remember(key, satellite.tile(z, x, y));
+	return recall(key) ?? remember(key, satellite.tile(z, x, y, priority));
 }
 
 /** How many tiles the cache holds (tests and the gallery). */

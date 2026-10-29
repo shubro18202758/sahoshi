@@ -74,6 +74,10 @@ import { cssVar, withAlpha } from '../theme';
 import { DRAPE_Z, drapeAudit, drapedPolyline, groundPath } from './draping';
 import { chromeOf, flowDim, kindShown, viewOf } from '../hud/map/view';
 import { flowInk, flowStop, inkAlpha } from '../hud/map/symbols';
+import { ops } from '$lib/ops/store.svelte';
+import { aiJson } from '$lib/ai/client';
+import { createFlowMotion, type FlowRoad } from './flow-motion';
+import { liveClock } from '../hud/map/live-clock';
 
 export const TRAFFIC_FLOW_PICK_PREFIX = 'seg:';
 
@@ -139,16 +143,17 @@ function v2Line(
 	obs: LiveObservation | undefined,
 	schematic: boolean,
 	dim: { alpha: number; thinPx: number },
+	rampIdx: number | null = null,
 ): { width: number; material: unknown } {
 	if (!obs) {
 		const trace = flowInk(0);
 		return { width: FLOW_V2.noData, material: cesium.Color.fromCssColorString(inkAlpha(trace.color, FLOW_V2.noDataAlpha * dim.alpha)) };
 	}
-	const ramp = flowInk(obs.congestion_idx);
+	const ramp = vcInk(rampIdx ?? obs.congestion_idx);
 	const alpha = (ramp.stop === 1 ? FLOW_V2.freeAlpha : FLOW_V2.alpha) * dim.alpha;
 	const core = Math.max(1, ramp.width - dim.thinPx);
 	const color = cesium.Color.fromCssColorString(inkAlpha(ramp.color, alpha));
-	const casing = cesium.Color.fromCssColorString(inkAlpha(ramp.casing ?? FLOW_V2.groundCasing, Math.min(1, 0.85 * dim.alpha)));
+	const casing = cesium.Color.fromCssColorString(inkAlpha(FLOW_V2.groundCasing, Math.min(1, 0.85 * dim.alpha)));
 	if (schematic) {
 		// a chord is not the road's true shape: dashed, its gaps the casing (or clear)
 		return { width: core, material: new cesium.PolylineDashMaterialProperty({ color, gapColor: casing ?? undefined, dashLength: 12 }) };
@@ -161,6 +166,27 @@ function v2Line(
 		};
 	}
 	return { width: core, material: new cesium.ColorMaterialProperty(color) };
+}
+
+/**
+ * Chrome v2 (live map, 29 Oct): a road's congestion reads in the band ladder the map already uses for meaning —
+ * green free (stops 1–2), amber slow (3), red jammed (4–5) — and in WIDTH (the neutral ramp's widths, never under
+ * 3 px so a free road still reads on the photoreal city). Never orange (a decision waits) or blue (AI, a route).
+ */
+export function vcInk(congestionIdx: number): { stop: number; color: string; width: number; token: string } {
+	const stop = flowStop(congestionIdx);
+	const token = stop <= 2 ? '--v-band-green' : stop === 3 ? '--v-band-amber' : '--v-band-red';
+	const fallback = stop <= 2 ? '#32a467' : stop === 3 ? '#ffb257' : '#e76a6e';
+	return { stop, token, color: cssVar(token) || fallback, width: Math.max(3, flowInk(congestionIdx).width) };
+}
+
+/**
+ * A road's volume/capacity as a point on the ramp (so V/C drives the colour when the forecast service has it):
+ * under 0.6 free (stop 1), 0.6–0.8 slow (3), 0.8–1.0 heavy (4), 1.0 and over jammed (5) — the usual V/C service
+ * bands. Pure; exported for tests.
+ */
+export function vcRampIdx(vc: number): number {
+	return vc < 0.6 ? 0.1 : vc < 0.8 ? 0.5 : vc < 1 ? 0.7 : 0.9;
 }
 
 /** Chrome v2: the segment's pick text in plain words (no stacked status words). */
@@ -217,6 +243,31 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 	/** Each drawn segment's look (its ramp step) as drawn: a waiting picture never rewrites a text its line contradicts. */
 	const drawnStyles = new Map<string, string>();
 	let detail: Record<string, number> = {};
+	/** The moving dots and the road names (flow-motion.ts); created on activate. */
+	let motion: ReturnType<typeof createFlowMotion> | null = null;
+	/** The forecast service's current V/C per road (its 15-minute "now"; simulated history). */
+	let vcById = new Map<number, number>();
+	let vcTimer: ReturnType<typeof setInterval> | null = null;
+	/** The first V/C answer (or its failure) has landed: the first picture waits for it (≤ VC_WAIT_MS) so the
+	 *  draped network is built once, in its V/C colours, instead of twice. */
+	let vcTried = false;
+	let activatedAt = 0;
+	const VC_WAIT_MS = 4000;
+
+	async function pollVc() {
+		try {
+			const body = (await aiJson<{ segments?: Array<{ segment_id?: number; now?: { vc?: number } }> }>('/api/forecast/forecast/segments', {}, 30_000)) ?? {};
+			const m = new Map<number, number>();
+			for (const r of body.segments ?? []) if (typeof r.segment_id === 'number' && typeof r.now?.vc === 'number') m.set(r.segment_id, r.now.vc);
+			vcById = m;
+			lastSignature = '';
+			liveClock.mark('forecast');
+		} catch {
+			// no forecast service: the labels carry the speed only
+		} finally {
+			vcTried = true;
+		}
+	}
 
 	/** Fixed-endpoint POST to the oracle hot cache (ids come from the
 	 * shared segment store — never operator input). */
@@ -237,6 +288,7 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 			// an oracle before C-P has no emulated plane: nothing to draw from it
 			emuById = planeOf(body.emulated_observations);
 			obsFeed = obsById.size || emuById.size ? 'ok' : 'empty';
+			if (obsFeed === 'ok') liveClock.mark('flow');
 		} catch {
 			// Leave last-good observations on the canvas: each one greys out by
 			// itself once it is older than STALE_OBS_SEC; the hint degrades.
@@ -260,6 +312,7 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 	 */
 	function draw() {
 		if (!ctx || !active) return;
+		if (!vcTried && Date.now() - activatedAt < VC_WAIT_MS) return;
 		const { cesium, viewer } = ctx;
 		const segments = godsEye.segments;
 		const now = Date.now();
@@ -298,20 +351,13 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 			if (css === undefined) bands.set(band, (css = rampColor(idx)));
 			return css;
 		};
-		const stops = new Map<number, ReturnType<typeof flowInk>>();
-		const v2Ink = (idx: number) => {
-			const stop = flowStop(idx);
-			let ink = stops.get(stop);
-			if (!ink) stops.set(stop, (ink = flowInk(idx)));
-			return ink;
-		};
 		let coloured = 0;
 		let simulated = 0;
 		let emulatedCount = 0;
 		let stale = 0;
 		let osmCount = 0;
 		let schematicCount = 0;
-		const rows: Array<{ seg: (typeof segments)[number]; obs: LiveObservation | undefined; schematic: boolean; style: unknown; description: string }> = [];
+		const rows: Array<{ seg: (typeof segments)[number]; obs: LiveObservation | undefined; schematic: boolean; style: unknown; description: string; rampIdx: number | null }> = [];
 
 		for (const seg of segments) {
 			if (seg.coordinates.length < 2) continue;
@@ -358,15 +404,40 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 						? `${road} · NO DATA — last observation ${ageSec}s ago (older than ${STALE_OBS_SEC}s, neutral)`
 						: `${road} · NO DATA — no observation in the hot cache (neutral)`;
 			// what the segment LOOKS like: its ink (the ramp step), its basis, whether it has data
+			// chrome v2 colours a road by its V/C when the forecast service has it (else by the live congestion index)
+			const vc = vcById.get(seg.segmentId);
+			const rampIdx = obs ? (vc != null ? vcRampIdx(vc) : obs.congestion_idx) : null;
 			let style: unknown = null;
 			if (obs) {
 				if (dim) {
-					const ink = v2Ink(obs.congestion_idx);
-					style = [ink.stop, ink.color, ink.casing, ink.width];
+					const ink = vcInk(rampIdx ?? obs.congestion_idx);
+					style = [ink.stop, ink.color, ink.width];
 				} else style = legacyInk(obs.congestion_idx);
 			}
-			rows.push({ seg, obs, schematic, style, description });
+			rows.push({ seg, obs, schematic, style, description, rampIdx });
 		}
+
+		// the moving dots and the road names: every road with a current reading (none while the filter hides roads)
+		motion?.update(
+			hidden
+				? []
+				: rows
+						.filter((r) => r.obs)
+						.map(
+							(r): FlowRoad => ({
+								segmentId: r.seg.segmentId,
+								name: r.seg.roadName ?? r.obs?.road_name ?? `segment ${r.seg.segmentId}`,
+								coordinates: r.seg.coordinates,
+								oneway: r.seg.oneway === true,
+								speedKmh: r.obs!.speed_kmh,
+								congestion: r.obs!.congestion_idx,
+								vc: vcById.get(r.seg.segmentId) ?? null,
+								simulated: r.obs!.data_quality === 'synthetic' || r.obs!.origin === 'emulated',
+								ink: vcInk(r.rampIdx ?? r.obs!.congestion_idx).color,
+							}),
+						),
+			ops.lang ?? 'en',
+		);
 
 		// the STRUCTURE (segments, basis, the view's dim, the filter, the inks) and the PICTURE (+ each segment's step)
 		const structure = JSON.stringify([rows.map((r) => [r.seg.segmentId, r.schematic ? 1 : 0]), dim ? [dim.alpha, dim.thinPx] : null, hidden, neutral, casingCss]);
@@ -412,13 +483,13 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 			drawnStyles.clear();
 			if (!hidden) {
 				const casing = cesium.Color.fromCssColorString(casingCss);
-				for (const { seg, obs, schematic, style, description } of rows) {
+				for (const { seg, obs, schematic, style, description, rampIdx } of rows) {
 					// ground positions: the draped line takes its height from the surface
 					const positions = groundPath(cesium, seg.coordinates);
 					let width: number;
 					let material: unknown;
 					if (dim) {
-						({ width, material } = v2Line(cesium, obs, schematic, dim));
+						({ width, material } = v2Line(cesium, obs, schematic, dim, rampIdx));
 					} else {
 						width = obs ? FLOW_WIDTH.coloured : FLOW_WIDTH.noData;
 						const colour = cesium.Color.fromCssColorString(obs ? legacyInk(obs.congestion_idx) : neutral);
@@ -479,16 +550,23 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 		},
 		activate() {
 			active = true;
+			if (ctx && !motion) motion = createFlowMotion(ctx);
+			activatedAt = Date.now();
 			poll();
+			void pollVc().then(() => draw());
 			draw();
 			pollTimer = setInterval(poll, 8000);
 			drawTimer = setInterval(() => draw(), 2000);
+			vcTimer = setInterval(() => void pollVc(), 300_000);
 		},
 		deactivate() {
 			active = false;
 			if (pollTimer) clearInterval(pollTimer);
 			if (drawTimer) clearInterval(drawTimer);
-			pollTimer = drawTimer = null;
+			if (vcTimer) clearInterval(vcTimer);
+			pollTimer = drawTimer = vcTimer = null;
+			motion?.destroy();
+			motion = null;
 			if (ctx) for (const id of entityIds) ctx.viewer.entities.removeById(id);
 			entityIds.length = 0;
 			lastSignature = '';
@@ -525,7 +603,7 @@ function createTrafficFlowLayer(): GodsEyeLayerInstance {
 				loading: godsEye.segmentsFeed.status === 'empty',
 				hint,
 				error: obsFeed === 'down' ? 'traffic/live feed down' : null,
-				detail: ctx ? { ...detail, ...drapeAudit(ctx.viewer, entityIds) } : detail,
+				detail: ctx ? { ...detail, dots: motion?.dots ?? 0, vc: vcById.size, ...drapeAudit(ctx.viewer, entityIds) } : detail,
 				via: 'traffic/live',
 			};
 		},

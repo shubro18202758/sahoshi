@@ -54,7 +54,7 @@ def build() -> str:
 <section class="cover">
   {img(ROOT / 'docs/deck/assets/lockup-night.png', 'Sahoshi', 'lockup')}
   <h1>Prototype evidence</h1>
-  <p class="tag">থামিয়ে নয়, <b>সামলে।</b></p>
+  <p class="tag">Not by stopping. <b>By steering.</b></p>
   <p class="sub">One live picture of Kolkata's roads, rain and crowds for the traffic police, KMC, disaster response and
   ambulance (108) crews. On-premises open-source AI proposes; a named officer decides.</p>
   <p class="meta">{e(f['as_of'])} · github.com/shubro18202758/sahoshi · MIT licence</p>
@@ -98,7 +98,7 @@ def build() -> str:
     {shot('voice-report.jpg', 'A field report spoken in Bengali becomes a structured, unverified report')}
     {shot('road-state.jpg', 'Camera road state — roads and vehicles only; person questions are refused')}
     {shot('replay-2025-09-23.jpg', 'Replay of the 22–23 Sep 2025 storm (IMD-observed rain, modelled ponding)')}
-    {shot('citizen.jpg', 'Citizen page in বাংলা — waterlogging on your road, Listen')}
+    {shot('citizen.jpg', 'Citizen page — waterlogging on your road, with Listen')}
     {shot('home-bn.jpg', 'The console in Bengali')}
   </div>
 </section>""")
@@ -186,7 +186,7 @@ h1 {{ font-size: 30pt; margin: 18mm 0 4mm; }} h2 {{ font-size: 15pt; margin: 0 0
 section {{ page-break-inside: avoid; margin-bottom: 8mm; }} section.cover {{ page-break-after: always; background: #000; color: #fff;
   margin: -14mm -13mm 0; padding: 22mm 18mm; height: 269mm; box-sizing: border-box; }}
 .cover .lockup {{ height: 15mm; }} .cover .tag {{ font-family: 'Noto Sans Bengali'; font-size: 34pt; font-weight: 700; margin: 6mm 0; }}
-.cover .tag b {{ color: #FFC800; }} .cover .sub {{ font-size: 13pt; color: #cbcbcb; max-width: 150mm; }} .cover .meta {{ margin-top: 120mm; color: #a6a6a6; }}
+.cover .tag b {{ color: #a6a6a6; }} .cover .sub {{ font-size: 13pt; color: #cbcbcb; max-width: 150mm; }} .cover .meta {{ margin-top: 120mm; color: #a6a6a6; }}
 table {{ border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.5pt; }} th, td {{ border-bottom: 1px solid #e3e3e3; text-align: left; padding: 1.6mm 2mm; vertical-align: top; }}
 th {{ background: #f3f3f3; }} .grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }}
 figure {{ margin: 0; }} figure img {{ width: 100%; max-height: 92mm; object-fit: contain; background: #f6f6f6; border: 1px solid #ddd; border-radius: 2mm; }} figcaption {{ font-size: 8.5pt; color: #555; margin-top: 1mm; }}

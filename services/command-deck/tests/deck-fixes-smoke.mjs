@@ -304,7 +304,7 @@ async function devChecks() {
 	await dr.reload({ waitUntil: 'networkidle2' }).catch(() => null);
 	await sleep(6000);
 	const drState = await dr.evaluate(() => ({ title: document.title, mode: document.querySelector('[data-screen="driver"]')?.getAttribute('data-mode'), sub: document.querySelector('[data-testid="driver-sub"]')?.innerText ?? null, started: document.querySelector('[data-testid="golden-hour"]')?.getAttribute('data-started') }));
-	ok('F-25: /driver\'s tab title is Bengali-first (its default)', /ગ્રીન/.test(drState.title), drState.title);
+	ok('F-25: /driver\'s tab title is English (the default with no language chosen)', /Green corridor/.test(drState.title), drState.title);
 	ok('F-08/F-09: /driver: the request clock is idle before a request; the officer-queue line only in the live flow, never "seconds"', drState.started === '0' && (drState.mode === 'scripted' ? drState.sub === null : !/સેકંડ|seconds/.test(drState.sub ?? '')), JSON.stringify(drState));
 	await dr.close();
 

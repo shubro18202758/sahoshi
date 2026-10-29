@@ -2,7 +2,7 @@
 	/**
 	 * PublicShell — the V3 chrome of the public pages (V3-SPEC §6.8; V3-P6A). Day theme (the server already renders these
 	 * routes with data-theme="daylight", so a phone never flashes dark; the (public) layout covers client-side arrival),
-	 * the Sahoshi day lockup (the Howrah-truss S with Sahoshi | সাহসী, black on paper), one column.
+	 * the Sahoshi day lockup (the S road and its blue dot, black on paper), one column.
 	 *
 	 * It replaces CitizenShell and keeps its whole contract: `data-shell="citizen"`, the bar `data-shell="citizen-bar"`
 	 * with the plain-language posture (`data-tier`; citizens see "Planned holds on", never a band code), the two public
@@ -57,7 +57,7 @@
 	<a class="skip" href="#pub-main">{t(lang, 'v3p_skip')}</a>
 
 	<header class="bar" data-shell="citizen-bar">
-		<img class="logo" src="/brand/sahoshi-lockup-day.svg" alt={t(lang, 'v3p_logo')} width="148" height="30" />
+		<img class="logo" src="/brand/sahoshi-lockup-day.svg" alt={t(lang, 'v3p_logo')} width="90" height="30" />
 
 		<div class="lang" role="group" aria-label={t(lang, 'shell_language')}>
 			{#each SUPPORTED as s (s.code)}

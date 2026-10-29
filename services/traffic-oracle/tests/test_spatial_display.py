@@ -87,9 +87,9 @@ def _row(sid: int, name: str, geom: dict, schematic: dict | None, source: str | 
 
 
 ROWS = [
-    _row(1001, "Ashram Road (South)", SCHEMATIC_1001, None, None, 1545.3),
-    _row(1005, "Relief Road", OSM_1005, None, None, 1993.9, geom_source="osm"),
-    _row(1014, "Station Road (Kalupur)", DISPLAY_1014, SCHEMATIC_1014, "osm_way_stitch",
+    _row(1001, "Howrah Bridge (Rabindra Setu)", SCHEMATIC_1001, None, None, 1545.3),
+    _row(1005, "Strand Road", OSM_1005, None, None, 1993.9, geom_source="osm"),
+    _row(1014, "Kidderpore Road", DISPLAY_1014, SCHEMATIC_1014, "osm_way_stitch",
          1111.7, 1302.4, geom_source="schematic"),
 ]
 

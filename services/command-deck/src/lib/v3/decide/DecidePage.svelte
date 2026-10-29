@@ -593,15 +593,25 @@
 		z-index: 4;
 	}
 
+	/* every panel floating over the map is the one glass (the map's material: tokens --v3-glass-*); without a blur the
+	   tint alone keeps every ink ≥ 4.5:1 (tests/v3-tokens.unit.mjs) */
+	.glass-tag,
+	.map-legend,
+	.sheet {
+		border-color: var(--v3-glass-border);
+		background: var(--v3-glass-bg);
+		-webkit-backdrop-filter: var(--v3-glass-blur);
+		backdrop-filter: var(--v3-glass-blur);
+	}
+
 	.glass-tag {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
 		height: 28px;
 		padding: 0 12px;
-		border: 1px solid var(--v3-line-1);
+		border: 1px solid var(--v3-glass-border);
 		border-radius: 14px;
-		background: var(--v3-glass);
 		color: var(--v3-t2);
 		font-size: var(--v3-text-meta);
 		font-weight: 600;
@@ -616,9 +626,8 @@
 		align-items: center;
 		gap: 14px;
 		padding: 10px 14px;
-		border: 1px solid var(--v3-line-1);
+		border: 1px solid var(--v3-glass-border);
 		border-radius: 14px;
-		background: var(--v3-glass);
 		font-size: var(--v3-text-meta);
 		color: var(--v3-t2);
 	}
@@ -671,10 +680,31 @@
 		flex-direction: column;
 		width: 540px;
 		overflow: hidden;
-		border: 1px solid var(--v3-line-2);
+		border: 1px solid var(--v3-glass-border);
 		border-radius: var(--v3-radius-xl);
-		background: var(--v3-scrim);
 		box-shadow: var(--v3-elev-2);
+	}
+
+	/* a new decision (or outcome) enters the sheet softly: 180 ms, a fade and a 6 px rise; none under reduced motion */
+	.sheet > :global(*) {
+		animation: v3d-enter 180ms var(--v3-ease) both;
+	}
+
+	@keyframes v3d-enter {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sheet > :global(*) {
+			animation: none;
+		}
 	}
 
 	.skel {
@@ -763,10 +793,10 @@
 		background: var(--v3-s1);
 	}
 
-	/* §6.10: the 1366 class — the queue is art only, the sheet 470 px */
+	/* §6.10: the 1366 class — a narrower labelled queue (title, kind, plate, time), the sheet 470 px */
 	@media (max-width: 1500px) {
 		.dec {
-			grid-template-columns: 92px minmax(0, 1fr);
+			grid-template-columns: 288px minmax(0, 1fr);
 		}
 
 		.sheet {
@@ -783,6 +813,13 @@
 
 		.map-legend {
 			display: none;
+		}
+	}
+
+	/* below 1280 px the queue is its art only (92 px): a labelled queue would leave the map no room */
+	@media (max-width: 1279px) {
+		.dec {
+			grid-template-columns: 92px minmax(0, 1fr);
 		}
 	}
 

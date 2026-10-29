@@ -77,7 +77,7 @@ export interface OfficerControl {
 
 /** The live movement segment of the LiveStrip. */
 export interface LiveMovement {
-	/** e.g. "VVIP movement · Z". */
+	/** e.g. "Protected movement · Z". */
 	label: string;
 	speedKmh: number | null;
 	nextJunction: string | null;

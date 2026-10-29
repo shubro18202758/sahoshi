@@ -22,7 +22,7 @@
 	import Mic from './Mic.svelte';
 	import { FieldApiError, reportFromAudio, reportFromText } from './api';
 	import { writeBoardEntry } from './board';
-	import { boardDraftFromReport, chosenPlace, cueRuns, nearestSegment, officerOf, placeRingM, SPOKEN_LANGS, type FieldReport, type ReportPlace, type SpokenLang } from './model';
+	import { boardDraftFromReport, chosenPlace, cueRuns, nearestSegment, officerOf, placeRingM, speakLang, SPOKEN_LANGS, type FieldReport, type ReportPlace, type SpokenLang } from './model';
 	import { Recorder } from './recorder.svelte';
 	import { SPOKEN_EXAMPLES } from './samples';
 
@@ -34,7 +34,16 @@
 	let dialog = $state<HTMLDialogElement | null>(null);
 	const rec = new Recorder();
 
-	let spoken = $state<SpokenLang>('bn');
+	/** The spoken language starts as the console's (English by default; বাংলা or हिंदी when the console is in it) each
+	 * time the sheet opens, until the officer picks one on the three-way switch (English reports go through the
+	 * speech service's multilingual model). */
+	let spoken = $state<SpokenLang>('en');
+	let spokenPicked = false;
+	$effect(() => {
+		if (open && !spokenPicked) spoken = speakLang(lang);
+	});
+	/** The switch lists English first, then the console's order. */
+	const SPOKEN_ORDER: readonly SpokenLang[] = (['en', 'hi', 'bn'] as const).filter((c) => (SPOKEN_LANGS as readonly string[]).includes(c));
 	let phase = $state<'idle' | 'recording' | 'reading' | 'result'>('idle');
 	let problem = $state<string | null>(null);
 	let report = $state<FieldReport | null>(null);
@@ -211,8 +220,8 @@
 		</header>
 
 		<div class="langs" role="group" aria-label={L('fld_lang_label')}>
-			{#each SPOKEN_LANGS as c (c)}
-				<button type="button" lang={c} class={['lang', spoken === c && 'is-pressed']} aria-pressed={spoken === c} onclick={() => (spoken = c)} disabled={phase === 'recording' || phase === 'reading'}>{SPOKEN_LABEL[c]}</button>
+			{#each SPOKEN_ORDER as c (c)}
+				<button type="button" lang={c} class={['lang', spoken === c && 'is-pressed']} aria-pressed={spoken === c} onclick={() => ((spoken = c), (spokenPicked = true))} disabled={phase === 'recording' || phase === 'reading'}>{SPOKEN_LABEL[c]}</button>
 			{/each}
 		</div>
 

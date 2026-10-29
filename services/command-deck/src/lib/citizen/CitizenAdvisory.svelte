@@ -141,14 +141,16 @@
 		</p>
 	{/if}
 	{#if anyEmulated && !preview}
-		<p class="feed-note" data-feed-note="emulated">
-			<PublicTag tone="dashed" glyph="flask" label={citizenT(lang, 'citizen_emulated_badge')} />
+		<!-- calm on the surface: the honest label as one quiet line; what it means one tap down (never hidden: the cards
+		     below carry the same label) -->
+		<details class="feed-note" data-feed-note="emulated">
+			<summary><Glyph name="flask" size={16} /><span class="note-label">{citizenT(lang, 'citizen_emulated_badge')}</span><Glyph name="chevD" size={14} /></summary>
 			<span class="note-text">
 				{citizenT(lang, 'citizen_emulated_note')}
 				<!-- the banner counts the very holds listed below (same derivation) -->
 				{#if emulatedHoldCount > 0}{emulatedHoldCount === 1 ? t(lang, 'asst_citizen_hold_one') : t(lang, 'asst_citizen_hold_many', emulatedHoldCount)}{/if}
 			</span>
-		</p>
+		</details>
 	{/if}
 
 	<!-- Waterlogging on your road (the hydro nowcast in plain words, MODELLED) with its Listen button. -->
@@ -506,6 +508,56 @@
 	.note-text {
 		flex: 1 1 14rem;
 		min-width: 0;
+	}
+
+	/* the emulated feed: one quiet dashed line (the honest label); what it means one tap down */
+	details.feed-note {
+		display: block;
+		padding: 10px 14px;
+		border-style: dashed;
+		border-color: var(--v3-dashed);
+		background: transparent;
+	}
+
+	details.feed-note summary {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 28px;
+		color: var(--v3-t2);
+		font-weight: 600;
+		list-style: none;
+		cursor: pointer;
+	}
+
+	details.feed-note summary::-webkit-details-marker {
+		display: none;
+	}
+
+	details.feed-note summary :global(.v3-glyph:last-child) {
+		margin-left: auto;
+		transition: transform var(--v3-dur-2) var(--v3-ease);
+	}
+
+	details.feed-note[open] summary :global(.v3-glyph:last-child) {
+		transform: rotate(180deg);
+	}
+
+	details.feed-note summary:focus-visible {
+		outline: 2px solid var(--v3-brand);
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
+
+	details.feed-note .note-text {
+		display: block;
+		margin-top: 6px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		details.feed-note summary :global(.v3-glyph:last-child) {
+			transition: none;
+		}
 	}
 
 	/* ── event cards ───────────────────────────────────────────────────── */

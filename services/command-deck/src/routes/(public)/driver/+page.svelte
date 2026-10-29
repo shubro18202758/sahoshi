@@ -28,7 +28,7 @@
 	import '$lib/i18n/strings.citizen';
 	import '$lib/i18n/packs.assistant';
 
-	let lang = $state('bn');
+	let lang = $state('en');
 
 	onMount(() => {
 		lang = readLangCookie() ?? lang;
@@ -36,7 +36,7 @@
 		return () => publicFeed.stop();
 	});
 
-	// R3 wiring: Bengali-first public surface; plain-language tier only.
+	// R3 wiring: English by default (the reader's saved choice wins); plain-language tier only.
 	$effect(() => {
 		commandBar.lang = lang;
 		commandBar.tier = publicFeed.tier;

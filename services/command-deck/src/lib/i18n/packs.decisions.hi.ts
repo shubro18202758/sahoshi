@@ -308,7 +308,7 @@ export const hi: Pack = {
 	dec_life_active: 'यह इवेंट सक्रिय करें',
 	dec_life_completed: 'यह इवेंट पूर्ण करें',
 	dec_life_cancelled: 'यह इवेंट रद्द करें',
-	dec_live_movement: (cls) => `VVIP मूवमेंट · ${s(cls)}`,
+	dec_live_movement: (cls) => `सुरक्षित वाहन काफ़िला · ${s(cls)}`,
 	dec_live_vehicle: 'वाहन',
 	dec_live_band: (band) => `मूवमेंट के दौरान बैंड ${s(band)}`,
 	dec_band_red: 'लाल',

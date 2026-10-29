@@ -54,7 +54,7 @@
 		return p && typeof p.none === 'string' ? p.none : null;
 	});
 	const draft = $derived(proposal?.text ? (proposal.text[lang as 'en' | 'bn' | 'hi'] ?? proposal.text.en ?? null) : null);
-	const others = $derived(proposal?.text ? (['bn', 'en', 'hi'] as const).filter((k) => k !== lang && proposal?.text?.[k]) : []);
+	const others = $derived(proposal?.text ? (['en', 'hi', 'bn'] as const).filter((k) => k !== lang && proposal?.text?.[k]) : []);
 	const feedSource = $derived((view?.feed as { source?: string; home?: string } | undefined) ?? null);
 </script>
 

@@ -1,21 +1,37 @@
 /**
- * showcase/console_shots.mjs — the README / deck / evidence screenshot set, taken on the running deck.
+ * showcase/console_shots.mjs — the README / docs screenshot set (docs/screenshots/README.md), taken on the running deck.
  *
  *   node scripts/showcase/console_shots.mjs [--origin http://127.0.0.1:5373] [--out docs/screenshots]
- *        [--only home,map-3d] [--signin 'Demo duty officer'] [--list]
+ *        [--only home,map-live-3d] [--skip a,b] [--signin 'Demo duty officer'] [--quality 85]
+ *        [--fake-audio-en report_en.wav] [--fake-audio-bn report_bn.wav] [--osint <osint_event id>]
+ *        [--swiftshader] [--list]
  *
- * NOT a test: a camera. Each shot opens one page of the deck (console pages at 1440 × 900 in a signed-in
- * context; the public pages /citizen and /driver at 390 × 844 in a separate, anonymous context), optionally
- * sets the language cookie (sahoshi_lang: bn | en | hi), performs the shot's few clicks (open a layer, start the
- * 23 Sep 2025 replay, hold the mic), waits for the page to settle and saves a JPEG (quality 88). Nothing is
- * edited afterwards.
+ * NOT a test: a camera. Each shot opens one page of the deck, in English unless it says otherwise (the language
+ * cookie sahoshi_lang: en | bn | hi): console pages at 1440 × 900 in a signed-in context, the hero map shots at
+ * 1920 × 1080, the public pages /welcome, /citizen and /driver in a separate, anonymous context (the phone pages at
+ * 390 × 844, rendered at 2×); `decide-masked` is a console page with no officer named, which only a deck with the
+ * operator gate off can show (a dev deck reading the live stack). It sets the map's base (2D city map or photoreal 3D) and legend the way an officer
+ * would (the per-browser preferences), performs the shot's few clicks (open the Layers sheet, pick a road, start the
+ * 23 Sep 2025 replay, pick a decision in the queue, hold the mic), waits for the page to settle — the live map gets
+ * 60–90 s to fill its roads, places, readings and units — and saves a JPEG (quality 85). Nothing is edited afterwards.
  *
- * SAFETY (the live deck, :5373): every non-GET /api/* request is answered 503 here and never reaches the deck,
+ * Staged states (the evening, the escort, decision support) come from scripts/demo_reset.sh and scripts/demo_tour.sh,
+ * run by the operator before the camera; the camera itself never stages anything. A `strict` shot (an e-challan on the
+ * theft victim's vehicle, an escort on /plan) is saved only when its state is on the board; otherwise it fails and is
+ * left out, never faked.
+ *
+ * WebGL: the GPU (ANGLE on EGL) by default; the two replay shots use software WebGL (SwiftShader), where the draped
+ * hindsight roads draw; --swiftshader puts every shot on it.
+ *
+ * SAFETY (on any deck; the live one is :5373): every non-GET /api/* request is answered 503 here and never reaches the deck,
  * except the on-premises AI services' compute calls (speech, vision, twin, hydro replay, forecast refresh), the
- * assistant's chat turn, the flow layer's live read (a POST) and the session itself — the shots can never write
- * the live city (no approval, no dispatch, no event, no plan is ever sent). Response
- * bodies are never logged (the signed-in /gods-eye/mode answer carries the ion token). The operator PIN is read
- * at run time by scripts/lib/deck_session.mjs and never printed.
+ * assistant's chat turn, the flow layer's live read (a POST) and the session itself — the shots can never write the
+ * live city (no approval, no dispatch, no event, no plan, no field report is ever sent). Response bodies are never
+ * logged (the signed-in /gods-eye/mode answer carries the ion token). The operator PIN is read at run time by
+ * scripts/lib/deck_session.mjs and never printed.
+ *
+ * Each shot prints one JSON line: the file, what the page refused or logged, and two checks for the reviewer
+ * (`busy`: a loading or error line on screen; `bengali`: Bengali characters on an English shot).
  *
  * Exit: 0 every requested shot saved; 1 any shot failed (the others are still saved).
  */
@@ -37,23 +53,27 @@ const opt = (name, dflt) => {
 	const i = argv.indexOf(name);
 	return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : dflt;
 };
+const list = (name) => opt(name, '').split(',').map((s) => s.trim()).filter(Boolean);
 const ORIGIN = opt('--origin', 'http://127.0.0.1:5373').replace(/\/+$/, '');
 const OUT = path.resolve(opt('--out', path.join(ROOT, 'docs', 'screenshots')));
-const ONLY = opt('--only', '').split(',').map((s) => s.trim()).filter(Boolean);
+const ONLY = list('--only');
+const SKIP = list('--skip');
 const OFFICER = opt('--signin', 'Demo duty officer');
-/** A WAV the fake microphone plays (the voice-report shot: a synthetic Bengali report from the speech service's TTS). */
-const AUDIO = opt('--fake-audio', null);
-const LIVE = new URL(ORIGIN).port === '5373';
+const QUALITY = Number(opt('--quality', 85));
+/** WAVs the fake microphone plays: a synthetic English report and a synthetic Bengali one (the speech service's TTS). */
+const AUDIO = { en: opt('--fake-audio-en', null), bn: opt('--fake-audio-bn', opt('--fake-audio', null)) };
+/** A current reported situation that is about a place (a road closure, flooding, weather): never crime or politics. */
+const OSINT_ID = opt('--osint', '75432078-c3fa-4328-856f-899bbfa59494');
+const SWIFTSHADER = argv.includes('--swiftshader');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const CONSOLE = { width: 1440, height: 900 };
+const HERO = { width: 1920, height: 1080 };
 const PHONE = { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 
 // ── helpers the shots use ──────────────────────────────────────────────────
 /** Click the first element whose visible text matches (a button, link, tab or chip). */
 async function clickText(page, re, { selector = 'button, a, [role="tab"], [role="button"], label, summary', timeout = 15000 } = {}) {
-	const src = re.source;
-	const flags = re.flags;
 	const t0 = Date.now();
 	while (Date.now() - t0 < timeout) {
 		const ok = await page.evaluate((sel, s, f) => {
@@ -66,7 +86,7 @@ async function clickText(page, re, { selector = 'button, a, [role="tab"], [role=
 			els[0].scrollIntoView({ block: 'center' });
 			els[0].click();
 			return true;
-		}, selector, src, flags);
+		}, selector, re.source, re.flags);
 		if (ok) return true;
 		await sleep(500);
 	}
@@ -82,36 +102,6 @@ async function waitText(page, re, timeout = 30000) {
 		await sleep(700);
 	}
 	return false;
-}
-
-/** Wait for the God's-eye photoreal tiles (the canvas reports them on window.__GODS_EYE__). */
-async function waitTiles(page, timeout = 150000) {
-	const t0 = Date.now();
-	while (Date.now() - t0 < timeout) {
-		const s = await page.evaluate(() => {
-			const g = window.__GODS_EYE__ || {};
-			const p3d = g.layerStats?.['photoreal-3d'] ?? null;
-			return { via: p3d?.via ?? null, loaded: p3d?.initialTilesLoaded ?? p3d?.detail?.initialTilesLoaded ?? null };
-		}).catch(() => null);
-		if (s && s.via === 'ion' && s.loaded === 1) return true;
-		await sleep(3000);
-	}
-	return false;
-}
-
-/** Build a /gods-eye share hash (share-link.ts v=2 format). */
-function godsEyeHash({ lat, lon, alt, heading = 20, pitch = -45, layers }) {
-	const p = new URLSearchParams();
-	p.set('v', '2');
-	p.set('lat', lat.toFixed(6));
-	p.set('lon', lon.toFixed(6));
-	p.set('alt', alt.toFixed(6));
-	p.set('heading', heading.toFixed(6));
-	p.set('pitch', pitch.toFixed(6));
-	p.set('roll', '0');
-	p.set('style', 'raw');
-	p.set('layers', layers.join(','));
-	return `#${p.toString()}`;
 }
 
 /** Click the first visible element matching a CSS selector (optionally whose aria-label / text matches). */
@@ -136,14 +126,77 @@ async function clickSel(page, sel, re = null, timeout = 30000) {
 	throw new Error(`no element ${sel}${re ? ` matching ${re}` : ''}`);
 }
 
-/** Click an element even when the layout hides it (a collapsed rail's text control). */
-async function clickHidden(page, sel, timeout = 30000) {
+/** A real mouse click at the centre of the first visible element matching a selector and (optionally) a text/label regex. */
+async function mouseSel(page, sel, re = null, timeout = 60000) {
 	const t0 = Date.now();
 	while (Date.now() - t0 < timeout) {
-		if (await page.evaluate((q) => { const e = document.querySelector(q); if (!e) return false; e.click(); return true; }, sel)) return true;
-		await sleep(700);
+		const box = await page.evaluate((q, s, f) => {
+			const rx = s ? new RegExp(s, f) : null;
+			const el = [...document.querySelectorAll(q)].find((e) => !rx || rx.test(`${e.getAttribute('aria-label') || ''} ${e.innerText || ''}`));
+			if (!el) return null;
+			el.scrollIntoView({ block: 'center' });
+			const r = el.getBoundingClientRect();
+			return r.width > 0 && r.height > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+		}, sel, re ? re.source : null, re ? re.flags : '');
+		if (box) {
+			await sleep(600);
+			await page.mouse.click(box.x, box.y);
+			return true;
+		}
+		await sleep(1500);
 	}
-	throw new Error(`no element ${sel}`);
+	throw new Error(`no element ${sel}${re ? ` matching ${re}` : ''}`);
+}
+
+/** Pick one decision in the Decide queue (its row's aria-label names the kind, the title and the mark). */
+const pickQueue = (page, re, timeout = 90000) => mouseSel(page, 'a[data-testid="queue-card"]', re, timeout);
+
+/** Every scroller back to the top (a sheet's own scroll included). */
+async function scrollTop(page) {
+	await page.evaluate(() => {
+		window.scrollTo(0, 0);
+		for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
+	});
+}
+
+/** Wait for the God's-eye photoreal tiles (the canvas reports them on window.__GODS_EYE__). */
+async function waitTiles(page, timeout = 150000) {
+	const t0 = Date.now();
+	while (Date.now() - t0 < timeout) {
+		const s = await page.evaluate(() => {
+			const g = window.__GODS_EYE__ || {};
+			const p3d = g.layerStats?.['photoreal-3d'] ?? null;
+			return { via: p3d?.via ?? null, loaded: p3d?.initialTilesLoaded ?? p3d?.detail?.initialTilesLoaded ?? null };
+		}).catch(() => null);
+		if (s && s.via === 'ion' && s.loaded === 1) return true;
+		await sleep(3000);
+	}
+	return false;
+}
+
+/** Wait until the map canvas says it is ready (then the shot's own settle lets the live layers fill). */
+async function waitMap(page, timeout = 120000) {
+	const t0 = Date.now();
+	while (Date.now() - t0 < timeout) {
+		if (await page.evaluate(() => window.__GODS_EYE__?.phase === 'ready').catch(() => false)) return true;
+		await sleep(2000);
+	}
+	return false;
+}
+
+/** Build a /map or /gods-eye share hash (share-link.ts v=2 format); `sel` hands over a selection. */
+function godsEyeHash({ lat, lon, alt, heading = 20, pitch = -45, layers }) {
+	const p = new URLSearchParams();
+	p.set('v', '2');
+	p.set('lat', lat.toFixed(6));
+	p.set('lon', lon.toFixed(6));
+	p.set('alt', alt.toFixed(6));
+	p.set('heading', heading.toFixed(6));
+	p.set('pitch', pitch.toFixed(6));
+	p.set('roll', '0');
+	p.set('style', 'raw');
+	p.set('layers', layers.join(','));
+	return `#${p.toString()}`;
 }
 
 /** Pick a road through the top bar's search (the omnibar selects it and the map flies to it). */
@@ -151,158 +204,239 @@ async function omniPick(page, query) {
 	await clickSel(page, '[data-shell="command-search"]');
 	await sleep(900);
 	await page.keyboard.type(query, { delay: 40 });
-	await sleep(3000);
+	await sleep(3500);
 	await page.keyboard.press('Enter');
 	await sleep(9000);
 }
 
 /** Click a road on the canvas: the canvas hook (window.__GODS_EYE__.locate) gives the on-screen point of each visible,
- *  uncovered entity of a layer (wl: waterlogging, seg: traffic flow, fc: forecast); the first preferred id wins. */
+ *  uncovered entity of a layer (wl: waterlogging, seg: traffic flow, fc: forecast, aq: air); the first preferred id wins. */
 async function pickRoad(page, prefix, prefer = []) {
-	const pts = await page.evaluate((p) => window.__GODS_EYE__?.locate?.(p) ?? [], prefix).catch(() => []);
+	const pts = (await page.evaluate((p) => window.__GODS_EYE__?.locate?.(p) ?? [], prefix).catch(() => [])).filter((q) => !/veil/.test(q.id));
 	if (!pts.length) throw new Error(`no visible ${prefix} entity to pick`);
 	const byId = new Map(pts.map((q) => [q.id, q]));
-	const hit = prefer.map((id) => byId.get(`${prefix}${id}`)).find(Boolean) ?? pts[Math.floor(pts.length / 2)];
-	await page.mouse.click(hit.x, hit.y);
-	await sleep(5000);
-	return hit.id;
+	const first = prefer.map((id) => byId.get(`${prefix}${id}`)).find(Boolean) ?? pts[Math.floor(pts.length / 2)];
+	// the first that opens a selection card wins (a label or another mark may sit on top of a point)
+	for (const hit of [first, ...pts.filter((q) => q !== first)].slice(0, 6)) {
+		await page.mouse.click(hit.x, hit.y);
+		await sleep(5000);
+		if (await page.$('[data-testid="v3-selection"]')) return hit.id;
+	}
+	throw new Error(`no ${prefix} pick opened a selection card`);
 }
 
-/** Zoom the map out over the canvas centre (mouse wheel). */
-async function wheelOut(page, ticks = 3, dy = 400) {
-	await page.mouse.move(640, 480);
-	for (let i = 0; i < ticks; i++) { await page.mouse.wheel({ deltaY: dy }); await sleep(900); }
+/** The waterlogging roads land batch by batch: wait until the visible count holds steady. */
+async function steadyWl(page, timeout = 150000) {
+	const t0 = Date.now();
+	let last = -1, steady = 0;
+	while (Date.now() - t0 < timeout && steady < 4) {
+		const n = await page.evaluate(() => (window.__GODS_EYE__?.locate?.('wl:') ?? []).length).catch(() => 0);
+		steady = n >= 10 && n === last ? steady + 1 : 0;
+		last = n;
+		await sleep(3000);
+	}
+	return last;
 }
 
-/** The Map page on its flat 2D city basemap (the 3D tool off): draped lines read clearly in software WebGL. */
-async function map2d(page) {
-	const is3d = await page.$eval('[data-map-tool="3d"]', (b) => b.getAttribute('aria-pressed') === 'true' || b.classList.contains('is-pressed')).catch(() => false);
-	if (is3d) await clickSel(page, '[data-map-tool="3d"]').catch(() => {});
-	await sleep(6000);
-}
-
-/** Turn a Map layer on (the Layers sheet's switch), then close the sheet. */
-async function mapLayer(page, id, on = true) {
-	await clickSel(page, '[data-testid="v3-map-layers"]');
+/** Turn a Map layer on (the Layers sheet's switch); `keepOpen` leaves the sheet open for the shot. */
+async function mapLayer(page, id, on = true, keepOpen = false) {
+	const open = await page.$eval('[data-testid="v3-layers-sheet"]', () => true).catch(() => false);
+	if (!open) await clickSel(page, '[data-testid="v3-map-layers"]');
 	await sleep(800);
 	const pressed = await page.$eval(`button[data-layer="${id}"]`, (b) => b.getAttribute('aria-checked') === 'true').catch(() => null);
 	if (pressed !== on) await clickSel(page, `button[data-layer="${id}"]`);
 	await sleep(600);
-	await page.keyboard.press('Escape');
+	if (!keepOpen) await page.keyboard.press('Escape');
+}
+
+/** The voice field report: open the sheet, pick the spoken language, hold the mic while the fake microphone plays. */
+async function voiceReport(page, spoken) {
+	await clickSel(page, '[data-testid="field-report-open"]');
+	await sleep(1500);
+	if (spoken) await clickSel(page, `[data-testid="field-sheet"] .langs button[lang="${spoken}"]`, null, 10000);
+	await sleep(800);
+	const hold = await page.waitForSelector('[data-testid="field-hold"]', { visible: true, timeout: 15000 });
+	const box = await hold.boundingBox();
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	await sleep(9500); // the clips run 6–8 s after a short lead
+	await page.mouse.up();
+	await page.waitForSelector('[data-testid="field-result"]', { visible: true, timeout: 150000 });
+	await sleep(2500);
+}
+
+/** Ask the assistant one question and wait for the streamed answer to end (no bot turn still working). */
+async function ask(page, question) {
+	const box = await page.waitForSelector('[data-testid="v3-ask"]', { visible: true, timeout: 30000 });
+	await box.click();
+	await page.keyboard.type(question, { delay: 25 });
+	await sleep(600);
+	await page.keyboard.press('Enter');
+	await sleep(5000);
+	const t0 = Date.now();
+	while (Date.now() - t0 < 240000) {
+		const busy = await page.evaluate(() => !document.querySelector('[data-testid="v3-bot-turn"]')
+			|| !!document.querySelector('[data-testid="v3-bot-turn"][data-working="true"]')).catch(() => true);
+		if (!busy) break;
+		await sleep(2000);
+	}
+	await sleep(4000);
 }
 
 // ── the set (docs/screenshots/README.md) ───────────────────────────────────
-/** The map shots' camera: North and Central Kolkata (College Street, Thanthania, Shyambazar), seen from the south. */
+/** The Map's own default layers (lib/v3/map/model.ts V3_DEFAULT_LAYERS); the photoreal city is added in 3D. */
+const LIVE_LAYERS = ['events', 'convoy', 'traces', 'enforcement', 'osint', 'flow', 'cameras', 'units', 'dispatch', 'waterlog', 'landmarks', 'livevalues', 'air'];
+const L3D = [...LIVE_LAYERS, 'photoreal-3d'];
+/** Over the Hooghly from the south: Howrah Bridge, Burrabazar, BBD Bag, College Street and Sealdah in one frame. */
+const WIDE = (layers) => godsEyeHash({ lat: 22.5350, lon: 88.3520, alt: 6500, heading: 0, pitch: -48, layers });
+/** Closer: Esplanade, BBD Bag and Lalbazar towards Howrah Bridge, where the evening's events, units and pumps meet. */
+const CLOSE = (layers) => godsEyeHash({ lat: 22.5420, lon: 88.3505, alt: 3000, heading: 6, pitch: -40, layers });
+/** North and Central Kolkata (College Street, Thanthania, Shyambazar), seen from the south. */
 const NORTH = (layers) => godsEyeHash({ lat: 22.5420, lon: 88.3560, alt: 5200, heading: 15, pitch: -42, layers });
+/** South Kolkata (Gariahat, Rash Behari Avenue, Ballygunge), seen from the south-west. */
+const SOUTH = (layers) => godsEyeHash({ lat: 22.4950, lon: 88.3450, alt: 4200, heading: 30, pitch: -40, layers });
+/** The whole city from above (the 2D city map). */
+const CITY = (layers, alt = 16000) => godsEyeHash({ lat: 22.5550, lon: 88.3600, alt, heading: 0, pitch: -89, layers });
+
 const SHOTS = [
-	{ name: 'landing', url: '/welcome', view: CONSOLE, lang: 'bn', public: true, wait: 5000 },
-	{ name: 'home', url: '/', view: CONSOLE, lang: 'en', wait: 20000 },
-	{ name: 'home-bn', url: '/', view: CONSOLE, lang: 'bn', wait: 40000,
-		// scrolled to the City row (Air · Heat · Cyclone · River · Quake) and the decision strip
-		act: async (page) => { await page.evaluate(() => { const el = [...document.querySelectorAll('h2, h3')].find((h) => /^শহর$|^City$/.test(h.textContent.trim()));
-			el?.scrollIntoView({ block: 'center' }); }); await sleep(3000); } },
-	{ name: 'map-waterlogging', url: '/map?replay=2025-09-23' + godsEyeHash({ lat: 22.5750, lon: 88.3650, alt: 14000, heading: 0, pitch: -89, layers: ['waterlog'] }), view: CONSOLE, lang: 'en', wait: 15000,
+	// ── the front door and Home ──
+	{ name: 'landing', url: '/welcome', view: CONSOLE, public: true, wait: 6000 },
+	{ name: 'home', url: '/home', view: CONSOLE, wait: 20000 },
+	{ name: 'home-bn', url: '/home', view: CONSOLE, lang: 'bn', wait: 20000 },
+
+	// ── the live map ──
+	{ name: 'map-live-3d', url: '/map' + WIDE(L3D), view: HERO, map: { base: 'sat3d', legend: true, tiles: true, settle: 80000 } },
+	{ name: 'map-live-3d-close', url: '/map' + CLOSE(L3D), view: HERO, map: { base: 'sat3d', legend: false, tiles: true, settle: 75000 } },
+	{ name: 'map-live-2d', url: '/map' + CITY(LIVE_LAYERS, 14500), view: HERO, map: { base: 'city', legend: true, settle: 70000 } },
+	{ name: 'map-layers', url: '/map' + CITY(LIVE_LAYERS, 15000), view: CONSOLE, map: { base: 'city', legend: true, settle: 60000 },
+		act: async (page) => {
+			await clickSel(page, '[data-testid="v3-map-layers"]');
+			await page.waitForSelector('[data-testid="v3-layers-sheet"]', { visible: true, timeout: 15000 });
+			await sleep(3000);
+		} },
+	// a road's card: the 2D map with only the roads, their forecast and the places, so a click lands on the road itself
+	// (with every layer on, an event's route or a feed check sits on top of the road)
+	{ name: 'map-forecast', url: '/map' + godsEyeHash({ lat: 22.5180, lon: 88.3550, alt: 7000, heading: 0, pitch: -89, layers: ['flow', 'forecast', 'landmarks', 'livevalues'] }), view: CONSOLE,
+		map: { base: 'city', legend: false, settle: 45000 },
+		act: async (page) => {
+			await pickRoad(page, 'seg:', [1033, 1034, 1032, 1058, 1053, 1062]);
+			await sleep(9000);
+		} },
+	{ name: 'map-waterlogging', gl: 'swiftshader', url: '/map?replay=2025-09-23' + godsEyeHash({ lat: 22.5750, lon: 88.3650, alt: 14000, heading: 0, pitch: -89, layers: ['waterlog', 'landmarks'] }), view: CONSOLE,
+		map: { base: 'city', legend: false, settle: 15000 },
 		act: async (page) => {
 			await waitText(page, /hindsight/i, 60000);
-			await map2d(page);
 			await clickText(page, /^05:30$/).catch(() => {});
-			// the hindsight roads are on screen before one is picked (the canvas reports what it can click)
-			// (the draped lines land batch by batch: wait until the visible count holds steady)
-			const t0 = Date.now();
-			let last = -1, steady = 0;
-			while (Date.now() - t0 < 150000 && steady < 4) {
-				const n = await page.evaluate(() => (window.__GODS_EYE__?.locate?.('wl:') ?? []).length).catch(() => 0);
-				steady = n >= 10 && n === last ? steady + 1 : 0;
-				last = n;
-				await sleep(3000);
-			}
+			await steadyWl(page);
 			await sleep(5000);
 			await pickRoad(page, 'wl:', [1058, 1055, 1057, 1053, 1025, 1027, 1033, 1019]).catch(() => {});
 			await sleep(6000);
 		} },
-	{ name: 'map-forecast', url: '/map' + NORTH(['photoreal-3d', 'flow', 'forecast', 'events', 'units']), view: CONSOLE, lang: 'en', wait: 15000,
+	{ name: 'replay-2025-09-23', gl: 'swiftshader', url: '/map?replay=2025-09-23' + godsEyeHash({ lat: 22.5520, lon: 88.3620, alt: 15000, heading: 0, pitch: -89, layers: ['waterlog', 'landmarks'] }), view: CONSOLE,
+		map: { base: 'city', legend: false, settle: 15000 },
 		act: async (page) => {
-			await mapLayer(page, 'forecast', true);
-			await sleep(9000);
-			await pickRoad(page, 'seg:', [1058, 1053, 1062, 1057, 1051]);
-			await sleep(8000);
-		} },
-	{ name: 'map-air', url: '/map' + godsEyeHash({ lat: 22.5600, lon: 88.3450, alt: 30000, heading: 0, pitch: -89, layers: ['air', 'events'] }),
-		view: CONSOLE, lang: 'en', wait: 15000,
-		act: async (page) => {
-			// the 2D city map (the flat basemap): every air site visible at once
-			await map2d(page);
-			await mapLayer(page, 'air', true).catch(() => {});
+			await waitText(page, /hindsight/i, 60000);
+			await clickText(page, /^04:00$/).catch(() => {});
+			await steadyWl(page);
 			await sleep(10000);
+		} },
+	{ name: 'map-air', url: '/map' + CITY(['air', 'events', 'landmarks', 'livevalues'], 30000), view: CONSOLE, map: { base: 'city', legend: false, settle: 40000 },
+		act: async (page) => {
+			await mapLayer(page, 'air', true).catch(() => {});
+			await sleep(6000);
 			await pickRoad(page, 'aq:', []).catch(() => {});
 			await sleep(5000);
 		} },
-	{ name: 'replay-2025-09-23', url: '/map?replay=2025-09-23' + godsEyeHash({ lat: 22.5520, lon: 88.3620, alt: 15000, heading: 0, pitch: -89, layers: ['waterlog'] }), view: CONSOLE, lang: 'en', wait: 15000,
+
+	// ── Decide: one decision at a time ──
+	{ name: 'decide-corridor', url: '/decide', view: CONSOLE, wait: 20000,
+		act: async (page) => { await pickQueue(page, /108 corridor request/i); await sleep(6000); await scrollTop(page); } },
+	{ name: 'decide-stolen', url: '/decide', view: CONSOLE, wait: 20000,
+		act: async (page) => { await pickQueue(page, /stolen vehicle|authorise pursuit/i); await sleep(6000); await scrollTop(page); } },
+	// the same sheet with NO officer named: the mark masked, the buttons waiting for a name. Only a deck with the operator
+	// gate off can show a console page without a session (a dev deck reading the live stack: --origin http://127.0.0.1:5383)
+	{ name: 'decide-masked', url: '/decide', view: CONSOLE, wait: 20000, nameless: true,
+		act: async (page) => { await pickQueue(page, /stolen vehicle|authorise pursuit/i); await sleep(6000); await scrollTop(page); } },
+	// strict: saved only when such a card is pending (the evening's reset rejects them; never staged or faked)
+	{ name: 'decide-echallan', url: '/decide', view: CONSOLE, wait: 20000, strict: true,
 		act: async (page) => {
-			await waitText(page, /hindsight/i, 60000);
-			await map2d(page);
-			// the draped hindsight roads land batch by batch: wait until the layer reports its roads drawn
-			const t0 = Date.now();
-			while (Date.now() - t0 < 90000) {
-				const n = await page.evaluate(() => { const s = window.__GODS_EYE__?.layerStats?.waterlog; return s ? (s.drawn ?? s.count ?? s.detail?.drawn ?? 0) : 0; }).catch(() => 0);
-				if (n > 0) break;
-				await sleep(2000);
-			}
-			await sleep(15000);
+			// the theft victim's vehicle: the stolen exercise mark's e-challan, which can only be rejected
+			await pickQueue(page, /e-challan.*WB ?06 ?EM ?9001/i, 60000);
+			await sleep(6000);
+			if (!(await waitText(page, /can only be rejected/i, 15000))) throw new Error('the sheet does not say "can only be rejected"');
+			await scrollTop(page);
 		} },
-	{ name: 'decide-ai', url: '/decide', view: CONSOLE, lang: 'en', wait: 25000,
+	{ name: 'decide-dss', url: '/decide', view: CONSOLE, wait: 20000,
+		act: async (page) => { await pickQueue(page, /choose a response/i); await sleep(7000); await scrollTop(page); } },
+	{ name: 'decide-ai', url: '/decide', view: CONSOLE, wait: 25000,
 		act: async (page) => {
 			// the twin's signal-timing card (a real mouse click: the queue's own handler selects it)
-			const t0 = Date.now();
-			let h = null;
-			while (!h && Date.now() - t0 < 90000) {
-				h = await page.evaluateHandle(() => [...document.querySelectorAll('[data-testid="ai-queue-card"]')]
-					.find((e) => /signal timing|re-time/i.test(e.getAttribute('aria-label') || '')) || null);
-				if (!(await h.evaluate((e) => !!e))) { h = null; await sleep(1500); }
-			}
-			if (!h) throw new Error('no signal-timing card in the queue');
-			await h.evaluate((e) => e.scrollIntoView({ block: 'center' }));
-			await sleep(500);
-			await h.click();
+			await mouseSel(page, '[data-testid="ai-queue-card"]', /signal timing|re-time/i, 90000);
 			await sleep(7000);
 		} },
-	{ name: 'decide-waterlogging', url: '/decide', view: CONSOLE, lang: 'en', wait: 12000,
+	{ name: 'decide-waterlogging', url: '/decide', view: CONSOLE, wait: 15000,
 		act: async (page) => {
-			await clickHidden(page, '[data-testid="ai-exercise"]');
+			await clickSel(page, '[data-testid="ai-exercise"]', null, 30000).catch(() => page.evaluate(() => document.querySelector('[data-testid="ai-exercise"]')?.click()));
 			await waitText(page, /exercise/i, 60000);
-			await sleep(5000);
-			await clickSel(page, '[data-testid="ai-queue-card"]', /reroute|divert|waterlog/i, 60000);
+			await sleep(8000);
+			await mouseSel(page, '[data-testid="ai-queue-card"]', /reroute|divert|waterlog/i, 60000);
 			await sleep(5000);
 		} },
-	{ name: 'object-segment', url: '/o/segment:1033', view: CONSOLE, lang: 'en', wait: 20000 },
-	{ name: 'voice-report', url: '/', view: CONSOLE, lang: 'bn', wait: 8000, audio: true,
+	{ name: 'audit', url: '/analyst', view: CONSOLE, wait: 15000,
 		act: async (page) => {
-			await clickSel(page, '[data-testid="field-report-open"]');
-			await sleep(1500);
-			const hold = await page.waitForSelector('[data-testid="field-hold"]', { visible: true, timeout: 15000 });
-			const box = await hold.boundingBox();
-			await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-			await page.mouse.down();
-			await sleep(6500);
-			await page.mouse.up();
-			await page.waitForSelector('[data-testid="field-result"]', { visible: true, timeout: 120000 });
-			await sleep(2500);
+			await clickText(page, /^Audit$/, { selector: 'button, [role="tab"]' });
+			await sleep(3500);
+			await clickText(page, /^Officers$/, { selector: 'button, [role="tab"], label, span' }).catch(() => {});
+			await sleep(3500);
 		} },
-	{ name: 'road-state', url: '/o/camera:EM-J12', view: { width: 1440, height: 1320 }, lang: 'en', wait: 10000,
+
+	// ── Plan, the escort and the field units ──
+	{ name: 'plan', url: '/plan', view: CONSOLE, wait: 12000,
+		act: async (page) => {
+			// a running escort is adopted (step 4, Live): the planner starts a new trip beside it
+			if (await page.$('[data-testid="v3-plan-new"]')) { await clickSel(page, '[data-testid="v3-plan-new"]').catch(() => {}); await sleep(3000); }
+			await clickSel(page, '[data-testid="v3-plan-class"][data-class="Z+"]', null, 10000).catch(() => {});
+			await sleep(3000);
+			// Find routes registers a labelled movement (an officer's press): the camera stops before it
+		} },
+	// strict: saved only while an escort runs (started by an officer on /plan; the camera never starts one)
+	{ name: 'plan-live', url: '/plan', view: CONSOLE, wait: 20000, strict: true,
+		act: async (page) => {
+			if (!(await page.$('[data-testid="v3-plan-follow"]'))) throw new Error('no escort is running (seed escort first)');
+			await sleep(5000);
+		} },
+	// the protected movement on the map (the escort's emulated convoy, its route and rolling holds): its Now row focuses it
+	{ name: 'map-escort', url: '/map' + godsEyeHash({ lat: 22.5300, lon: 88.3700, alt: 9000, heading: 20, pitch: -50, layers: L3D }), view: CONSOLE,
+		map: { base: 'sat3d', legend: false, tiles: true, settle: 50000 },
+		act: async (page) => {
+			await mouseSel(page, '[data-testid="v3-now-row"]', /VIP Movement/i, 30000);
+			await sleep(15000);
+		} },
+	{ name: 'dispatch', url: '/ops', view: CONSOLE, wait: 20000,
+		act: async (page) => {
+			await page.evaluate(() => {
+				const t = document.querySelector('[data-testid="dispatch-tile"], [data-testid="dispatch-request"]');
+				const sec = t?.closest('section') ?? t;
+				sec?.scrollIntoView({ block: 'start' });
+			});
+			await sleep(4000);
+		} },
+	// ── object pages ──
+	{ name: 'object-segment', url: '/o/segment:1033', view: { width: 1440, height: 1110 }, wait: 20000 },
+	{ name: 'object-vehicle', url: '/o/vehicle:44f24e0b-27cd-4bc0-845b-912edb50b506', view: CONSOLE, wait: 15000 },
+	{ name: 'object-osint', url: `/o/osint_event:${OSINT_ID}`, view: CONSOLE, wait: 15000 },
+	{ name: 'road-state', url: '/o/camera:EM-J12', view: { width: 1440, height: 1320 }, wait: 10000,
 		act: async (page) => {
 			await clickSel(page, 'button.th', /rain|water/i, 20000).catch(() => {});
 			await sleep(800);
 			await clickSel(page, '[data-testid="rs-read"]');
 			await waitText(page, /confidence|waterlogged|depth/i, 240000);
 			// the click scrolls the card into view; the shot shows the page from its header, model line included
-			await page.evaluate(() => {
-				window.scrollTo(0, 0);
-				for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
-			});
+			await scrollTop(page);
 			await sleep(3000);
 		} },
-	// the same panel reading the nearest public Mapillary photo (Chittaranjan Avenue: one taken in Aug 2026, 39 m away)
-	{ name: 'road-state-street', url: '/o/camera:EM-CAM-04', view: { width: 1440, height: 1320 }, lang: 'en', wait: 10000,
+	// the same panel reading the nearest public Mapillary photo (Chittaranjan Avenue)
+	{ name: 'road-state-street', url: '/o/camera:EM-CAM-04', view: { width: 1440, height: 1320 }, wait: 10000,
 		act: async (page) => {
 			await page.waitForSelector('[data-testid="rs-street"]:not([disabled])', { visible: true, timeout: 60000 });
 			await clickSel(page, '[data-testid="rs-street"]', null, 30000);
@@ -310,60 +444,55 @@ const SHOTS = [
 			await sleep(800);
 			await clickSel(page, '[data-testid="rs-read"]');
 			await waitText(page, /confidence/i, 240000);
-			await page.evaluate(() => {
-				window.scrollTo(0, 0);
-				for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
-			});
+			await scrollTop(page);
 			await sleep(3000);
 		} },
-	{ name: 'plan', url: '/plan', view: CONSOLE, lang: 'en', wait: 12000 },
-	{ name: 'assistant', url: '/assistant', view: CONSOLE, lang: 'en', wait: 8000,
+
+	// ── the AI surfaces and the Analyst family ──
+	{ name: 'assistant', url: '/assistant', view: CONSOLE, wait: 8000,
+		act: async (page) => { await ask(page, 'How is traffic on Howrah Bridge right now?'); await scrollTop(page); await sleep(1500); } },
+	{ name: 'assistant-refusal', url: '/assistant', view: CONSOLE, wait: 8000,
+		act: async (page) => { await ask(page, 'Who is driving the stolen vehicle, and where do they live?'); await scrollTop(page); await sleep(1500); } },
+	{ name: 'advisories', url: '/comms', view: CONSOLE, wait: 15000,
 		act: async (page) => {
-			await clickText(page, /where was the stolen/i);
-			await sleep(5000);
-			// the answer streams; wait until the send control is usable again (the stream ended)
-			const t0 = Date.now();
-			while (Date.now() - t0 < 180000) {
-				const busy = await page.evaluate(() => !!document.querySelector('[data-testid="v3-ask"]')?.disabled || /thinking|reading the city/i.test(document.body.innerText)).catch(() => true);
-				if (!busy) break;
-				await sleep(2000);
-			}
-			await sleep(4000);
+			// the cloudburst's row (SIMULATED), its three-language draft for the first audience
+			await mouseSel(page, '[data-testid="comms-event-row"]', /cloudburst/i, 30000)
+				.catch(() => clickText(page, /cloudburst/i, { selector: 'button, a, [role="option"], li' }).catch(() => {}));
+			await sleep(8000);
 		} },
-	{ name: 'advisories', url: '/comms', view: CONSOLE, lang: 'en', wait: 15000 },
-	{ name: 'analyst-workspace', url: '/analyst', view: CONSOLE, lang: 'en', wait: 15000 },
-	{ name: 'situation-wall', url: '/ops', view: CONSOLE, lang: 'en', wait: 15000 },
-	{ name: 'map-3d', url: '/gods-eye' + godsEyeHash({ lat: 22.5480, lon: 88.3560, alt: 2600, heading: 20, pitch: -32,
-		layers: ['photoreal-3d', 'events', 'units', 'signals', 'cameras', 'traces'] }), view: CONSOLE, lang: 'en', wait: 15000, tiles: true },
-	{ name: 'imagery', url: '/v3-gallery', view: CONSOLE, lang: 'en', wait: 6000,
-		act: async (page) => { await page.evaluate(() => document.getElementById('g-photos')?.scrollIntoView({ block: 'start' })); await sleep(4000); } },
-	{ name: 'citizen', url: '/citizen', view: PHONE, lang: 'bn', public: true, wait: 12000,
+	{ name: 'analyst-workspace', url: '/analyst', view: CONSOLE, wait: 15000, map: { settle: 30000 } },
+	{ name: 'situation-wall', url: '/ops', view: CONSOLE, wait: 20000 },
+	{ name: 'analyst-city-map', url: '/gods-eye' + godsEyeHash({ lat: 22.5480, lon: 88.3560, alt: 2600, heading: 20, pitch: -32,
+		layers: ['photoreal-3d', 'events', 'units', 'signals', 'cameras', 'traces', 'flow', 'landmarks'] }), view: CONSOLE, map: { tiles: true, settle: 45000 } },
+	// 1000 px tall so the sheet's Send to the board line shows under a longer transcript
+	{ name: 'voice-report-en', url: '/home', view: { width: 1440, height: 1000 }, wait: 8000, audio: 'en', act: async (page) => voiceReport(page, 'en') },
+	{ name: 'voice-report', url: '/home', view: CONSOLE, wait: 8000, audio: 'bn', act: async (page) => voiceReport(page, 'bn') },
+
+	// ── the public pages (anonymous: marks stay masked) ──
+	{ name: 'citizen', url: '/citizen', view: PHONE, public: true, wait: 12000,
 		act: async (page) => {
 			await page.select('[data-testid="water-road"]', '1058').catch(() => {});
 			await sleep(3000);
-			// the road's waterlogging status, its Listen button and Air today below it
-			await page.evaluate(() => document.querySelector('[data-testid="air-card"]')?.scrollIntoView({ block: 'end' }));
-			await sleep(600);
-			await page.evaluate(() => { const c = document.querySelector('[data-testid="air-card"]'); let el = c?.parentElement;
-				while (el && el.scrollHeight <= el.clientHeight) el = el.parentElement; (el || document.scrollingElement).scrollBy(0, 40); });
+			await page.evaluate(() => document.querySelector('[data-testid="water-card"]')?.scrollIntoView({ block: 'start' }));
 			await sleep(2500);
 		} },
-	{ name: 'driver', url: '/driver', view: PHONE, lang: 'bn', public: true, wait: 8000 },
+	{ name: 'driver', url: '/driver', view: PHONE, public: true, wait: 8000 },
 ];
 
 if (argv.includes('--list')) {
-	for (const s of SHOTS) console.log(`${s.name.padEnd(22)} ${s.url}`);
+	for (const s of SHOTS) console.log(`${s.name.padEnd(22)} ${(s.lang || 'en')} ${s.public ? 'public ' : s.nameless ? 'no name' : 'console'} ${s.view.width}×${s.view.height}  ${s.url.split('#')[0]}`);
 	process.exit(0);
 }
 
-const todo = SHOTS.filter((s) => (!ONLY.length || ONLY.includes(s.name)) && (!s.audio || AUDIO));
-for (const s of SHOTS) if (s.audio && !AUDIO && (!ONLY.length || ONLY.includes(s.name))) console.log(JSON.stringify({ shot: s.name, skipped: 'needs --fake-audio <wav>' }));
+const wanted = SHOTS.filter((s) => (!ONLY.length || ONLY.includes(s.name)) && !SKIP.includes(s.name));
+for (const s of wanted) if (s.audio && !AUDIO[s.audio]) console.log(JSON.stringify({ shot: s.name, skipped: `needs --fake-audio-${s.audio} <wav>` }));
+let todo = wanted.filter((s) => !s.audio || AUDIO[s.audio]);
 fs.mkdirSync(OUT, { recursive: true });
 
 function guard(page, errors) {
 	page.on('pageerror', (e) => errors.push('pageerror: ' + e.message.slice(0, 200)));
 	page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 200)); });
-	if (!LIVE) return;
+	// on every deck, not only :5373: a dev deck may read the live backend
 	page.setRequestInterception(true);
 	page.on('request', (req) => {
 		const u = new URL(req.url());
@@ -378,49 +507,95 @@ function guard(page, errors) {
 	});
 }
 
-const browser = await puppeteer.launch({
-	executablePath: CHROME,
-	headless: 'new',
-	args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--use-gl=angle',
-		'--ignore-gpu-blocklist', '--window-size=1440,900', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream',
-		...(AUDIO ? [`--use-file-for-fake-audio-capture=${path.resolve(AUDIO)}%noloop`] : [])],
-});
+/** One browser per fake-microphone file (the file is a launch flag); one browser at a time. */
+async function launch(audioFile, software) {
+	const gl = software
+		? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--use-gl=angle', '--ignore-gpu-blocklist']
+		: ['--use-angle=gl-egl', '--use-gl=angle', '--enable-gpu', '--ignore-gpu-blocklist'];
+	return puppeteer.launch({
+		executablePath: CHROME,
+		headless: 'new',
+		protocolTimeout: 600000,
+		args: ['--no-sandbox', ...gl, '--window-size=1920,1080', '--hide-scrollbars',
+			'--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream',
+			...(audioFile ? [`--use-file-for-fake-audio-capture=${path.resolve(audioFile)}%noloop`] : [])],
+	});
+}
+
 let session = null;
 let failures = 0;
-const report = [];
 try {
 	session = await signIn(ORIGIN, OFFICER);
-	if (AUDIO) await browser.defaultBrowserContext().overridePermissions(ORIGIN, ['microphone']).catch(() => {});
-	const pub = await browser.createBrowserContext();
-	for (const s of todo) {
-		const errors = [];
-		const ctx = s.public ? pub : browser.defaultBrowserContext();
-		const page = await ctx.newPage();
+	if (session && session.gate !== false) {
+		// a gated deck answers a console page without a session with its sign-in screen: nothing to show
+		for (const s of todo.filter((x) => x.nameless)) console.log(JSON.stringify({ shot: s.name, skipped: 'needs a deck with the operator gate off (a dev deck reading the live stack)' }));
+		todo = todo.filter((x) => !x.nameless);
+	}
+	// one browser per fake-microphone file and WebGL flavour, one at a time
+	const key = (x) => `${x.audio || ''}|${x.gl || ''}`;
+	const groups = [...new Set(todo.map(key))];
+	for (const g of groups) {
+		const [audio, gl] = g.split('|');
+		const browser = await launch(audio ? AUDIO[audio] : null, gl === 'swiftshader' || SWIFTSHADER);
 		try {
-			await page.setViewport(s.view);
-			const host = new URL(ORIGIN).hostname;
-			const cookies = [{ name: 'sahoshi_lang', value: s.lang || 'en', domain: host, path: '/' }];
-			if (!s.public && session && session.gate !== false) cookies.push(...puppeteerCookies(session));
-			await page.setCookie(...cookies);
-			guard(page, errors);
-			await page.goto(ORIGIN + s.url, { waitUntil: 'networkidle2', timeout: 120000 }).catch((e) => errors.push('goto: ' + e.message.slice(0, 160)));
-			if (s.tiles) await waitTiles(page);
-			await sleep(s.wait ?? 6000);
-			if (s.act) await s.act(page).catch((e) => errors.push('act: ' + e.message.slice(0, 200)));
-			if (s.settle) await sleep(s.settle);
-			const file = path.join(OUT, `${s.name}.${s.png ? 'png' : 'jpg'}`);
-			await page.screenshot(s.png ? { path: file } : { path: file, type: 'jpeg', quality: 88 });
-			report.push({ shot: s.name, file, errors: errors.slice(0, 6) });
-			console.log(JSON.stringify({ shot: s.name, file: path.relative(ROOT, file), errors: errors.slice(0, 6) }));
-		} catch (e) {
-			failures++;
-			console.log(JSON.stringify({ shot: s.name, failed: String(e).slice(0, 240) }));
+			if (audio) await browser.defaultBrowserContext().overridePermissions(ORIGIN, ['microphone']).catch(() => {});
+			const pub = await browser.createBrowserContext();
+			for (const s of todo.filter((x) => key(x) === g)) {
+				const errors = [];
+				const ctx = s.public || s.nameless ? pub : browser.defaultBrowserContext();
+				const page = await ctx.newPage();
+				const t0 = Date.now();
+				try {
+					await page.setViewport(s.view);
+					const host = new URL(ORIGIN).hostname;
+					const cookies = [{ name: 'sahoshi_lang', value: s.lang || 'en', domain: host, path: '/' }];
+					if (!s.public && !s.nameless && session && session.gate !== false) cookies.push(...puppeteerCookies(session));
+					await page.setCookie(...cookies);
+					// the map's per-browser preferences, as an officer would leave them (base map and legend)
+					if (s.map && (s.map.base || s.map.legend !== undefined)) {
+						await page.evaluateOnNewDocument((base, legend) => {
+							try {
+								if (base) localStorage.setItem('sahoshi.v3.map.base', base);
+								if (legend !== undefined) localStorage.setItem('sahoshi.v3.map.legend', legend ? '1' : '0');
+							} catch { /* storage unavailable */ }
+						}, s.map.base ?? null, s.map.legend);
+					}
+					guard(page, errors);
+					await page.goto(ORIGIN + s.url, { waitUntil: 'networkidle2', timeout: 120000 }).catch((e) => errors.push('goto: ' + e.message.slice(0, 160)));
+					if (s.map) {
+						if (!(await waitMap(page))) errors.push('map: not ready');
+						if (s.map.tiles && !(await waitTiles(page))) errors.push('map: photoreal tiles not in');
+						await sleep(s.map.settle ?? 60000);
+					}
+					await sleep(s.wait ?? 6000);
+					if (s.act) {
+						const ok = await s.act(page).then(() => true, (e) => { errors.push('act: ' + e.message.slice(0, 200)); return false; });
+						if (!ok && s.strict) throw new Error(`not saved: ${errors[errors.length - 1]}`);
+					}
+					if (s.settle) await sleep(s.settle);
+					const file = path.join(OUT, `${s.name}.jpg`);
+					await page.screenshot({ path: file, type: 'jpeg', quality: QUALITY });
+					// two checks for the reviewer: a loading or error line on screen, Bengali on an English shot
+					const check = await page.evaluate(() => {
+						const txt = document.body?.innerText || '';
+						const busy = (txt.match(/\b(Loading|Something went wrong|could not load|Retrying)\b[^\n]{0,60}/i) || [null])[0];
+						const bengali = (txt.match(/[ঀ-৿]/g) || []).length;
+						return { busy, bengali };
+					}).catch(() => ({}));
+					const kb = Math.round(fs.statSync(file).size / 1024);
+					console.log(JSON.stringify({ shot: s.name, file: path.relative(ROOT, file), kb, s: Math.round((Date.now() - t0) / 1000), lang: s.lang || 'en', ...check, errors: errors.slice(0, 6) }));
+				} catch (e) {
+					failures++;
+					console.log(JSON.stringify({ shot: s.name, failed: String(e).slice(0, 240) }));
+				} finally {
+					await page.close().catch(() => {});
+				}
+			}
 		} finally {
-			await page.close().catch(() => {});
+			await browser.close();
 		}
 	}
 } finally {
 	if (session && session.gate !== false) await signOut(session).catch(() => {});
-	await browser.close();
 }
 process.exit(failures ? 1 : 0);

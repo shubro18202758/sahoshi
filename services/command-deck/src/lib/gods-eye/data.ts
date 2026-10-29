@@ -216,6 +216,10 @@ export interface SegmentGeometry {
 	 * one without is schematic.
 	 */
 	geometryBasis: 'osm_display' | 'schematic';
+	/** One-way road (traffic runs in the drawn direction only); absent on an oracle that does not send it. */
+	oneway?: boolean;
+	/** Posted speed limit (km/h) when the oracle sends it. */
+	speedLimitKmh?: number | null;
 }
 
 /** Pure: the C-K geometry basis of one segment row (tolerates pre-C-K oracles). */
@@ -237,6 +241,8 @@ export async function fetchSegments(
 			road_class?: string | null;
 			osm_way_id?: unknown;
 			geometry_basis?: unknown;
+			oneway?: unknown;
+			speed_limit_kmh?: unknown;
 			geometry?: { type?: string; coordinates?: unknown } | null;
 		}>;
 	}>(
@@ -261,6 +267,8 @@ export async function fetchSegments(
 			roadClass: typeof s.road_class === 'string' ? s.road_class : null,
 			coordinates,
 			geometryBasis: geometryBasisOf(s),
+			...(typeof s.oneway === 'boolean' ? { oneway: s.oneway } : {}),
+			...(typeof s.speed_limit_kmh === 'number' ? { speedLimitKmh: s.speed_limit_kmh } : {}),
 		});
 	}
 	return out;

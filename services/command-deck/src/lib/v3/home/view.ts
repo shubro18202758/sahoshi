@@ -25,6 +25,7 @@ import { escortRule, timeBoxed, waitingSince } from '$lib/decisions/cards/meta';
 import { eventTestLabel } from '$lib/corridor/events';
 import { safePathId } from '$lib/ops/endpoints';
 import { WORKSPACE_URL } from '$lib/shell/root-flip';
+import { readableIn, scriptOf } from '$lib/i18n/script';
 import { t } from '$lib/i18n/strings';
 import { tOps } from '$lib/i18n/strings.ops';
 import '$lib/i18n/packs.decisions';
@@ -616,7 +617,11 @@ export function reportVM(e: CityEntity, lang: string, now: number, units: readon
 	const reported = e.t != null ? fmtAgo(e.t, now, lang) : null;
 	// a news story about people (a crime, a conflict) is shown by its place and kind, never by its headline (events are
 	// about places, not people); its object page carries the source for the officer who opens it
-	const summary = cls && PERSON_STORY.has(cls) && !official ? t(lang, 'v3_rep_news_withheld') : str(e.props.summary);
+	const raw = cls && PERSON_STORY.has(cls) && !official ? t(lang, 'v3_rep_news_withheld') : str(e.props.summary);
+	// a text in a script the reader does not read (a Bengali IMD line on an English console) is never machine-translated:
+	// the card says so in the reader's language and the object page keeps the original
+	const sc = raw ? scriptOf(raw) : null;
+	const summary = raw && !readableIn(raw, lang) && (sc === 'bn' || sc === 'hi') ? t(lang, `v3_text_in_${sc}`, official) : raw;
 	return {
 		key: e.urn,
 		kindLine: kind ?? t(lang, 'v3_rep_kind'),

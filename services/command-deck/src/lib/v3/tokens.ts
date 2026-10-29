@@ -55,6 +55,12 @@ export const V3_COLOURS = {
 		'--v3-dashed': 'rgba(166, 166, 166, 0.55)',
 		'--v3-redact-bg': 'rgba(255, 255, 255, 0.06)',
 		'--v3-glass': 'rgba(20, 20, 20, 0.82)',
+		// the floating-panel glass: the SAME values as the map's own glass (its GLASS constant; tests/v3-tokens.unit.mjs
+		// pins the parity), so the Decide sheet, Home's inset and the map's panels are one material
+		'--v3-glass-bg': 'rgba(24, 24, 24, 0.9)',
+		'--v3-glass-solid': 'rgb(24, 24, 24)',
+		'--v3-glass-border': 'rgba(255, 255, 255, 0.14)',
+		'--v3-glass-blur': 'blur(14px) saturate(140%)',
 		'--v3-scrim': 'rgba(0, 0, 0, 0.98)',
 		'--v3-scrim-mid': 'rgba(0, 0, 0, 0.92)',
 		'--v3-scrim-soft': 'rgba(0, 0, 0, 0.45)',
@@ -110,6 +116,10 @@ export const V3_COLOURS = {
 		'--v3-dashed': 'rgba(75, 75, 75, 0.55)',
 		'--v3-redact-bg': 'rgba(0, 0, 0, 0.06)',
 		'--v3-glass': 'rgba(255, 255, 255, 0.86)',
+		'--v3-glass-bg': 'rgba(255, 255, 255, 0.9)',
+		'--v3-glass-solid': 'rgb(255, 255, 255)',
+		'--v3-glass-border': 'rgba(0, 0, 0, 0.1)',
+		'--v3-glass-blur': 'blur(14px) saturate(140%)',
 		'--v3-scrim': 'rgba(246, 246, 246, 0.98)',
 		'--v3-scrim-mid': 'rgba(246, 246, 246, 0.92)',
 		'--v3-scrim-soft': 'rgba(246, 246, 246, 0.45)',
@@ -168,11 +178,6 @@ export const V3_SHARED = {
 	'--v3-land-lh-figure': '84px',
 	'--v3-land-lockup': '80px',
 	'--v3-land-max': '1440px',
-	// Kolkata-taxi yellow: the Sahoshi mark's colour, used on the landing hero and nowhere else in the UI. It is never a
-	// meaning colour (decide stays orange, alert red, ok green, route teal, links and AI blue).
-	'--v3-land-taxi': '#FFC800',
-	'--v3-land-taxi-ink': '#000000',
-	'--v3-land-taxi-veil': 'rgba(255, 200, 0, 0.14)',
 } as const;
 
 /** Below 1500 px (§6.10): the overrides of the shared keys. */

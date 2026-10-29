@@ -43,6 +43,9 @@ from osint_common.testing import (  # noqa: E402
 from osint_common.types import RawOsintSignal  # noqa: E402
 from traffic_oracle.osint import ingest  # noqa: E402
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 

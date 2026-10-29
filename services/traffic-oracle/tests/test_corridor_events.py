@@ -59,6 +59,7 @@ USE_CASE_IDS = (
     "kali_puja_air_quality",
     "pre_monsoon_heatwave",
     "norwester_squall_treefall",
+    "bijoya_immersion_procession",
 )
 
 USE_CASE_KINDS = {
@@ -79,6 +80,7 @@ USE_CASE_KINDS = {
     "kali_puja_air_quality": "mass_gathering",
     "pre_monsoon_heatwave": "work_zone",
     "norwester_squall_treefall": "work_zone",
+    "bijoya_immersion_procession": "procession",
 }
 
 
@@ -224,7 +226,7 @@ class TestEngineLoopSubjectMerge:
 class TestCorridorEventRequest:
     def test_defaults_are_public_event(self):
         req = CorridorEventRequest(
-            event_kind="procession", title="Rath Yatra",
+            event_kind="procession", title="Bijoya Dashami immersion procession",
             route_spines=[{"segment_ids": [1012]}],
         )
         assert req.protection_class == "none"
@@ -288,7 +290,7 @@ OSINT_NEW_KINDS = (
 def _osint_req(**over):
     body = {
         "event_kind": "road_accident",
-        "title": "Road accident · Karnavati Club (SG Highway)",
+        "title": "Road accident · Science City (EM Bypass)",
         "route_spines": [{"label": "primary", "segment_ids": [1045]}],
         "metadata": {"source": "osint", "osint_event_id": "4f7a9c1e-0b5d-4c33-9e21-7d8a6b5c4e3f"},
         "officer": "Sandbox Officer",
@@ -524,7 +526,7 @@ class TestOsintPromotionGate:
         r, conn = _post_event(
             {
                 "event_kind": "procession",
-                "title": "Rath Yatra",
+                "title": "Bijoya Dashami immersion procession",
                 "route_spines": [{"segment_ids": [1012]}],
             },
             promotion=False,
@@ -661,8 +663,8 @@ class TestEmergencyVehicle:
 
     def test_scheduled_emergency_vehicle_charged_delay(self):
         engine = SimulationEngine(network=default_network())
-        # Ashram Road (North), 1.56 km — long enough for the ambulance to
-        # meet the closure (Ashram Road (South) 1001 is 0.46 km on the real
+        # Grand Trunk Road (1002), 4.1 km — long enough for the ambulance to
+        # meet the closure (Howrah Bridge 1001 is 0.77 km on the real
         # network)
         kwargs = dict(
             route_segment_ids=[1002],

@@ -6,7 +6,7 @@ h1 { font-size: 30pt; margin: 18mm 0 4mm; } h2 { font-size: 15pt; margin: 0 0 3m
 section { page-break-inside: avoid; margin-bottom: 8mm; } section.cover { page-break-after: always; background: #000; color: #fff;
   margin: -14mm -13mm 0; padding: 22mm 18mm; height: 269mm; box-sizing: border-box; }
 .cover .lockup { height: 15mm; } .cover .tag { font-family: 'Noto Sans Bengali'; font-size: 34pt; font-weight: 700; margin: 6mm 0; }
-.cover .tag b { color: #FFC800; } .cover .sub { font-size: 13pt; color: #cbcbcb; max-width: 150mm; } .cover .meta { margin-top: 120mm; color: #a6a6a6; }
+.cover .tag b { color: #a6a6a6; } .cover .sub { font-size: 13pt; color: #cbcbcb; max-width: 150mm; } .cover .meta { margin-top: 120mm; color: #a6a6a6; }
 table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.5pt; } th, td { border-bottom: 1px solid #e3e3e3; text-align: left; padding: 1.6mm 2mm; vertical-align: top; }
 th { background: #f3f3f3; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
 figure { margin: 0; } figure img { width: 100%; max-height: 92mm; object-fit: contain; background: #f6f6f6; border: 1px solid #ddd; border-radius: 2mm; } figcaption { font-size: 8.5pt; color: #555; margin-top: 1mm; }
@@ -16,7 +16,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
 <section class="cover">
   <img class="lockup" src="../../docs/deck/assets/lockup-night.png" alt="Sahoshi">
   <h1>Prototype evidence</h1>
-  <p class="tag">থামিয়ে নয়, <b>সামলে।</b></p>
+  <p class="tag">Not by stopping. <b>By steering.</b></p>
   <p class="sub">One live picture of Kolkata's roads, rain and crowds for the traffic police, KMC, disaster response and
   ambulance (108) crews. On-premises open-source AI proposes; a named officer decides.</p>
   <p class="meta">29 October 2026 · github.com/shubro18202758/sahoshi · MIT licence</p>
@@ -30,7 +30,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
         a signal-timing traffic twin, Bengali voice (speech-to-text and read-aloud) and camera road state (Qwen3-VL).</li>
     <li><b>Real Kolkata roads</b>: 49 junctions and 65 road segments (125 km), the Nabanna → airport route 29 km from OpenStreetMap; a 163-place gazetteer in English, Bengali and Hindi (wards, police stations, hospitals, pandals, ghats, low-lying spots).</li>
     <li><b>Open feeds wired in</b>: IMD / NDMA SACHET alerts for West Bengal, Bengali and English Kolkata news, KMC notices and Kolkata Traffic Police advisories, Open-Meteo rainfall and air, NASA FIRMS fire hotspots, GDACS cyclones, CWC river gauges, USGS quakes, the Hooghly tide (modelled), Copernicus 30 m terrain, KMC FFEWS adapter (emulated).</li>
-    <li><b>Quality</b>: 68 automated gates green: 6,212 Python tests, 121 Rust tests, 45 console unit suites, contract replays and type checks.</li>
+    <li><b>Quality</b>: 69 automated gates green: 6,310 Python tests, 121 Rust tests, 46 console unit suites, contract replays and type checks.</li>
   </ul>
   <p class="note">Labels used throughout: <b>LIVE</b> (a real open feed), <b>OBSERVED</b> (a measured record), <b>MODELLED</b> (computed
   under stated assumptions), <b>SIMULATED</b> (an exercise scenario), <b>EMULATED</b> (a stand-in for a feed that needs an agency's access).</p>
@@ -50,7 +50,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
     <figure><img class="" src="../../docs/screenshots/voice-report.jpg" alt="A field report spoken in Bengali becomes a structured, unverified report"><figcaption>A field report spoken in Bengali becomes a structured, unverified report</figcaption></figure>
     <figure><img class="" src="../../docs/screenshots/road-state.jpg" alt="Camera road state — roads and vehicles only; person questions are refused"><figcaption>Camera road state — roads and vehicles only; person questions are refused</figcaption></figure>
     <figure><img class="" src="../../docs/screenshots/replay-2025-09-23.jpg" alt="Replay of the 22–23 Sep 2025 storm (IMD-observed rain, modelled ponding)"><figcaption>Replay of the 22–23 Sep 2025 storm (IMD-observed rain, modelled ponding)</figcaption></figure>
-    <figure><img class="" src="../../docs/screenshots/citizen.jpg" alt="Citizen page in বাংলা — waterlogging on your road, Listen"><figcaption>Citizen page in বাংলা — waterlogging on your road, Listen</figcaption></figure>
+    <figure><img class="" src="../../docs/screenshots/citizen.jpg" alt="Citizen page — waterlogging on your road, with Listen"><figcaption>Citizen page — waterlogging on your road, with Listen</figcaption></figure>
     <figure><img class="" src="../../docs/screenshots/home-bn.jpg" alt="The console in Bengali"><figcaption>The console in Bengali</figcaption></figure>
   </div>
 </section>
@@ -71,7 +71,7 @@ figure.wide img { max-height: 110mm; object-fit: contain; } .note { font-size: 8
 </section>
 <section>
   <h2>7 · Tests and quality</h2>
-  <table><thead><tr><th>Suite</th><th>Result</th></tr></thead><tbody><tr><td>traffic-oracle</td><td>2,106 passed</td></tr><tr><td>convoy-brain</td><td>800 passed</td></tr><tr><td>OSINT (common, ingress, geo, analysis)</td><td>2,032 passed</td></tr><tr><td>event-emulator</td><td>367 passed</td></tr><tr><td>embedding-service</td><td>191 passed</td></tr><tr><td>corridor-store</td><td>153 passed</td></tr><tr><td>speech · vision · twin · forecast · hydro · city feeds</td><td>219 · 102 · 50 · 46 · 26 · 113 passed</td></tr><tr><td>signal-ingress (Rust)</td><td>121 passed</td></tr><tr><td>command-deck</td><td>45 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,908 strings)</td></tr><tr><td>Total</td><td>68 of 68 gates green · 6,212 Python + 121 Rust tests</td></tr></tbody></table>
+  <table><thead><tr><th>Suite</th><th>Result</th></tr></thead><tbody><tr><td>traffic-oracle</td><td>2,106 passed</td></tr><tr><td>convoy-brain</td><td>800 passed</td></tr><tr><td>OSINT (common, ingress, geo, analysis)</td><td>2,032 passed</td></tr><tr><td>event-emulator</td><td>367 passed</td></tr><tr><td>embedding-service</td><td>191 passed</td></tr><tr><td>corridor-store</td><td>153 passed</td></tr><tr><td>speech · vision · twin · forecast · hydro · city feeds</td><td>219 · 102 · 50 · 46 · 26 · 113 passed</td></tr><tr><td>signal-ingress (Rust)</td><td>121 passed</td></tr><tr><td>command-deck</td><td>45 unit suites, contract replays, svelte-check 0 errors, design-token and copy lints (4,908 strings)</td></tr><tr><td>Total</td><td>69 of 69 gates green · 6,310 Python + 121 Rust tests</td></tr></tbody></table>
 </section>
 <section>
   <h2>8 · Implementation and cost</h2>

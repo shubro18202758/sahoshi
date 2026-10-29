@@ -19,8 +19,8 @@ const en = {
 	nav_chat: 'Agent console',
 	nav_design: 'Design sheet',
 	nav_section_public: 'public views',
-	nav_citizen: 'Citizen — your road',
-	nav_driver: 'Driver — the window',
+	nav_citizen: 'Your road',
+	nav_driver: 'Ambulance (108)',
 
 	shell_brand: 'Sahoshi',
 	shell_search: 'Search the deck',
@@ -441,8 +441,8 @@ const hi = {
 	nav_chat: 'एजेंट कंसोल',
 	nav_design: 'डिज़ाइन शीट',
 	nav_section_public: 'सार्वजनिक दृश्य',
-	nav_citizen: 'नागरिक — आपका रास्ता',
-	nav_driver: 'ड्राइवर — विंडो',
+	nav_citizen: 'आपका रास्ता',
+	nav_driver: 'एम्बुलेंस (108)',
 
 	shell_brand: 'SAHOSHI',
 	shell_search: 'डेक खोजें',
@@ -853,8 +853,8 @@ const bn = {
 	nav_chat: 'এজেন্ট কনসোল',
 	nav_design: 'ডিজাইন শিট',
 	nav_section_public: 'জনসাধারণের পাতা',
-	nav_citizen: 'নাগরিক — আপনার রাস্তা',
-	nav_driver: 'চালক — সময়-জানালা',
+	nav_citizen: 'আপনার রাস্তা',
+	nav_driver: 'অ্যাম্বুলেন্স (১০৮)',
 
 	shell_brand: 'সাহসী',
 	shell_search: 'কনসোলে খুঁজুন',

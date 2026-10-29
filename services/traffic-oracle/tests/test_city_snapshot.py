@@ -43,6 +43,9 @@ from traffic_oracle.city import common
 from traffic_oracle.city import entities as ent
 from traffic_oracle.osint import store
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 GAZETTEER = Path(__file__).resolve().parents[3] / "scripts" / "data" / "osint_gazetteer.json"

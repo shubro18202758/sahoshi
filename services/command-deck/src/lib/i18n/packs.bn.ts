@@ -21,8 +21,8 @@ export const bn = {
 	nav_chat: 'এজেন্ট কনসোল',
 	nav_design: 'ডিজাইন শিট',
 	nav_section_public: 'জনসাধারণের পাতা',
-	nav_citizen: 'নাগরিক — আপনার রাস্তা',
-	nav_driver: 'চালক — সময়-জানালা',
+	nav_citizen: 'আপনার রাস্তা',
+	nav_driver: 'অ্যাম্বুলেন্স (১০৮)',
 
 	shell_brand: 'সাহসী',
 	shell_search: 'কনসোলে খুঁজুন',

@@ -31,8 +31,8 @@
 # (>= 0.75), i.e. the floor alone does not discriminate coordinate drift
 # within one movement — the movement-scoped key is the operative guard.
 # Both POI pairs lie ON the real-road network (WP-20): the gate pair is the
-# re-anchored Lal Darwaja → SVPI Airport, the (b) pair Drive-In Road →
-# Prahlad Nagar (scripts/data/route_acceptance_pairs.json poi_snaps). The
+# Nabanna → Kolkata Airport, the (b) pair Esplanade →
+# Gariahat crossing (scripts/data/route_acceptance_pairs.json poi_snaps). The
 # former (b) pair near Surat no longer snaps to any segment, so its plan
 # answered status=no_route with NO decider checkpoint and "passed" (b)
 # vacuously; (b) now also FAILS unless the checkpoint ran and reported a
@@ -84,13 +84,13 @@ PLANS="${TIER0_LIVE_PLANS:-3}"
 PLAN_TIMEOUT="${TIER0_LIVE_PLAN_TIMEOUT:-240}"
 SKIP_DRIFT="${TIER0_LIVE_SKIP_DRIFT:-0}"
 
-# The gate pair: the re-anchored Lal Darwaja → SVPI Airport (WP-20); MUST
+# The gate pair: Nabanna → Kolkata Airport (the flagship's VIP pair); MUST
 # equal probe_tier0_live.py GATE_BODY (its --verify-corpus searches with this
 # body's state doc, scoped to the movement, to recall the feeder's decision doc).
-BODY='{"origin":[72.5813,23.0264],"destination":[72.6221,23.072],"vvip_class":"Z","planned_departure":"2030-01-01T00:00:00Z"}'
-# (b): a genuinely different corridor ON the network (Drive-In Road →
-# Park Circus, central Kolkata; = probe_tier0_live.py DIFFERENT_POI_BODY).
-BODY_DIFFERENT='{"origin":[72.5293,23.0464],"destination":[72.512,23.0065],"vvip_class":"Z","planned_departure":"2030-01-01T00:00:00Z"}'
+BODY='{"origin":[88.3208745,22.5639606],"destination":[88.4411766,22.6510369],"vvip_class":"Z","planned_departure":"2030-01-01T00:00:00Z"}'
+# (b): a genuinely different corridor ON the network (Esplanade →
+# Gariahat crossing, central Kolkata; = probe_tier0_live.py DIFFERENT_POI_BODY).
+BODY_DIFFERENT='{"origin":[88.3512,22.5646],"destination":[88.366,22.519],"vvip_class":"Z","planned_departure":"2030-01-01T00:00:00Z"}'
 # Movement creation carries a title (the TEST label); the plan body never does.
 titled() { printf '%s,"title":"TIER-0 GATE TEST"}' "${1%\}}"; }
 

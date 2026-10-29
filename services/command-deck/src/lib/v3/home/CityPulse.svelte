@@ -66,7 +66,9 @@
 			</span>
 			<div class="st">
 				<h2 class="h">{sentence}</h2>
-				<span class="meta">{meta}</span>
+				<!-- the heartbeat: a dot that breathes while the feeds answer (still and grey when one is down); each refresh
+				     (a new "updated" time) restarts its ripple, so the console visibly lives -->
+				<span class="meta">{#key meta}<span class={['beat', down && 'still']} aria-hidden="true" data-testid="v3-heartbeat"></span>{/key}{meta}</span>
 			</div>
 		</div>
 		<a class="link" href="/map">{t(lang, 'v3_open_map')}<Glyph name="chevR" size={16} /></a>
@@ -197,6 +199,65 @@
 		font-size: var(--v3-text-meta);
 		line-height: var(--v3-lh-meta);
 		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.beat {
+		position: relative;
+		display: inline-block;
+		width: 7px;
+		height: 7px;
+		margin: 0 8px 1px 1px;
+		border-radius: 50%;
+		background: var(--v3-ok);
+		vertical-align: middle;
+		animation: v3-breathe 2.4s ease-in-out infinite;
+	}
+
+	.beat::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		box-shadow: 0 0 0 0 var(--v3-ok);
+		animation: v3-ripple 1.2s var(--v3-ease) 1 both;
+	}
+
+	.beat.still {
+		background: var(--v3-t3);
+		animation: none;
+	}
+
+	.beat.still::after {
+		animation: none;
+	}
+
+	@keyframes v3-breathe {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.45;
+		}
+	}
+
+	@keyframes v3-ripple {
+		from {
+			opacity: 0.7;
+			box-shadow: 0 0 0 0 var(--v3-ok);
+		}
+		to {
+			opacity: 0;
+			box-shadow: 0 0 0 7px var(--v3-ok);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.beat,
+		.beat::after {
+			animation: none;
+		}
 	}
 
 	.link {

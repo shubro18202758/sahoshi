@@ -18,6 +18,9 @@
  *   • one shared LRU (tiles.ts) — a tile already drawn is never fetched twice;
  *   • at most SAT_SESSION_CAP (800) network requests per browser-tab session, endpoint + metadata + tiles all counted,
  *     kept in sessionStorage so a reload loop cannot reset it (≈ 55 Bing billable transactions: negligible);
+ *   • the last SAT_HERO_RESERVE (200) of them are kept for the eager heroes (Home's featured decision, a stage): a card
+ *     asks with priority 'card' and draws the night tiles once the session is that close to the cap, so a long shift
+ *     of browsing cards never leaves the featured decision without its satellite picture (the cap itself is unchanged);
  *   • the first 401 / 403 (a dead token) or 429 (a spent quota) switches the whole session to the night tiles,
  *     silently, and is remembered for the session; transient network failures retry, then (3 in a row) do the same
  *     for this page view; requests still queued behind the failure are NOT sent.
@@ -29,6 +32,10 @@ export const SAT_CARD_TILES = 6;
 export const SAT_HERO_TILES = 40;
 export const SAT_MAX_IN_FLIGHT = 4;
 export const SAT_SESSION_CAP = 800;
+/** Of the session cap, the requests only an eager hero / stage may spend (a card yields them; the cap stays 800). */
+export const SAT_HERO_RESERVE = 200;
+/** Who asks for a tile: an eager hero or stage (the whole budget) or a card (all but the hero reserve). */
+export type SatPriority = 'hero' | 'card';
 /** Endpoint + metadata attempts per page view (a flaky network cannot loop on them). */
 export const SAT_SETUP_CAP = 4;
 /** Consecutive transient failures before satellite stands down for this page view. */
@@ -325,8 +332,10 @@ export class SatelliteSource {
 	}
 
 	/** One natural-colour tile (XYZ, as the night tiles), or null: no imagery there, or satellite is off. */
-	async tile(z: number, x: number, y: number): Promise<CanvasImageSource | null> {
+	async tile(z: number, x: number, y: number, priority: SatPriority = 'hero'): Promise<CanvasImageSource | null> {
 		if (!this.available) return null;
+		// a card leaves the last of the budget to the heroes: it draws the night tiles, and the session stays on satellite
+		if (priority === 'card' && this.#deps.store.used() >= SAT_SESSION_CAP - SAT_HERO_RESERVE) return null;
 		const info = await this.#ready();
 		if (!info || !this.available || z > info.zoomMax) return null;
 		if (!this.#take()) return null;

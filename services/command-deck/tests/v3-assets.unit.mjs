@@ -13,9 +13,10 @@
  *                     reproduces static/illustrations byte for byte; the same for the identity (scripts/brand/
  *                     build_brand.py → static/brand).
  *   3. BRAND          static/brand: the identity's files (mark, solid mark, wordmark, lockups, stacked lockups, app icon,
- *                     favicon); the night mark and the app icon carry Kolkata-taxi yellow (#FFC800, hue 47°) and that is
- *                     the ONLY warm colour allowed — never the decision orange or the alert red; paper versions are black;
- *                     no gradient, no filter (glow), no shield; no <text> (the wordmark is outlined); each SVG labelled.
+ *                     favicon) is neutral: white on night, black on paper, currentColor in mono, with ONE colour, the
+ *                     accent blue (#276EF1, the destination dot) — no warm colour at all (never the decision orange, the
+ *                     alert red or a yellow); no gradient, no filter (glow), no shield; no <text> (the wordmark is
+ *                     outlined); each SVG labelled; the PNG exports (mark 512, lockups) exist for documents and decks.
  *   4. GLYPHS         src/lib/v3/icons.ts: 68 glyphs, valid path data on the 24 grid, none a person.
  *   5. FONTS          V3 adds no font file (it reuses the deck's self-hosted Inter / Noto Devanagari /
  *                     Noto Bengali, OFL, loaded once by the root layout); the (v3) layout imports only the
@@ -37,8 +38,8 @@ const BRAND = path.join(DECK, 'static/brand');
 const REPO = path.resolve(DECK, '../..');
 const GENERATOR = path.join(REPO, 'scripts/brand/build_illustrations.py');
 const BRAND_GENERATOR = path.join(REPO, 'scripts/brand/build_brand.py');
-/** Kolkata-taxi yellow: the mark's colour (and the landing hero's), never a UI meaning colour. */
-const TAXI = '#FFC800';
+/** The identity's one colour: the accent blue (links and the AI in the deck; the destination dot in the mark). */
+const ACCENT = '#276EF1';
 
 let failures = 0;
 function ok(name, cond, detail = '') {
@@ -158,8 +159,10 @@ reproduces('static/brand', BRAND_GENERATOR, BRAND, listSvgs(BRAND).filter((f) =>
 	];
 	const have = readdirSync(BRAND).filter((f) => f.endsWith('.svg')).map((f) => f.replace(/\.svg$/, '')).sort();
 	ok('static/brand: the identity files', JSON.stringify(have) === JSON.stringify([...want].sort()), have.join(', '));
-	const taxi = hsl(TAXI);
-	ok('Kolkata-taxi yellow is a yellow, well clear of the decision orange (30°) and the alert red', taxi.h >= 44 && taxi.h <= 60, `${taxi.h.toFixed(1)}°`);
+	const accent = hsl(ACCENT);
+	ok('the accent is the deck\'s blue (hue ≈ 219°), far from every warm meaning colour', accent.h >= 210 && accent.h <= 230, `${accent.h.toFixed(1)}°`);
+	for (const png of ['sahoshi-mark-512.png', 'sahoshi-lockup.png', 'sahoshi-lockup-day.png', 'icon-512.png'])
+		ok(`static/brand: PNG export ${png}`, existsSync(path.join(BRAND, png)));
 	const bad = [];
 	for (const f of have) {
 		const s = readFileSync(path.join(BRAND, `${f}.svg`), 'utf8');
@@ -168,13 +171,20 @@ reproduces('static/brand', BRAND_GENERATOR, BRAND, listSvgs(BRAND).filter((f) =>
 		if (/<(linearGradient|radialGradient|filter)\b/i.test(s)) bad.push(`${f}: gradient/glow`);
 		if (/<image\b|<script\b|<text\b/i.test(s)) bad.push(`${f}: image/script/text`);
 		if (/#FF9F43|#FF5C61/i.test(s)) bad.push(`${f}: a meaning colour`);
-		for (const m of s.matchAll(/#[0-9a-fA-F]{6}\b/g)) if (warm(m[0]) && m[0].toUpperCase() !== TAXI) bad.push(`${f}: warm ${m[0]}`);
-		// the night mark, the app icon, the favicon and the night lockups wear the yellow; paper versions are black
-		if (/^(sahoshi-mark|sahoshi-mark-solid|sahoshi-app-icon|favicon|sahoshi-lockup|sahoshi-lockup-stacked)$/.test(f) && !s.toUpperCase().includes(TAXI)) bad.push(`${f}: not taxi yellow`);
-		if (/-day$/.test(f) && s.toUpperCase().includes(TAXI)) bad.push(`${f}: yellow on paper`);
+		for (const m of s.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+			if (warm(m[0])) bad.push(`${f}: warm ${m[0]}`);
+			// neutral (white, black, grey) or the one accent blue — nothing else
+			const c = hsl(m[0]);
+			if (m[0].toUpperCase() !== ACCENT && c.s > 0.08) bad.push(`${f}: a colour ${m[0]}`);
+		}
+		// every mark and lockup carries the accent at most once (the destination dot); the wordmark carries none
+		const accents = (s.toUpperCase().match(new RegExp(ACCENT, 'g')) ?? []).length;
+		if (/^(sahoshi-mark|sahoshi-mark-day|sahoshi-mark-solid|sahoshi-app-icon|favicon|sahoshi-lockup|sahoshi-lockup-day|sahoshi-lockup-stacked|sahoshi-lockup-stacked-day)$/.test(f) && accents !== 1) bad.push(`${f}: ${accents} accents (want exactly one)`);
+		if (/wordmark/.test(f) && accents !== 0) bad.push(`${f}: the wordmark carries the accent`);
+		if (/-day$/.test(f) && /#FFFFFF/i.test(s)) bad.push(`${f}: white on paper`);
 		if (/-mono$/.test(f) && /#[0-9a-fA-F]{6}\b/.test(s)) bad.push(`${f}: mono carries a colour`);
 	}
-	ok('brand: labelled, taxi yellow only in the mark (never orange or red), paper black, mono currentColor, no gradient/glow/image/text', bad.length === 0, bad.join(' | '));
+	ok('brand: labelled, neutral with one accent-blue dot (never orange, red or yellow), paper black, mono currentColor, no gradient/glow/image/text', bad.length === 0, bad.join(' | '));
 	const manifest = path.join(DECK, 'static/manifest.webmanifest');
 	const man = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8')) : null;
 	ok('the web manifest names Sahoshi and its icons exist', !!man && /Sahoshi/.test(man.name) && man.icons.every((i) => existsSync(path.join(DECK, 'static', i.src))), man ? man.icons.map((i) => i.src).join(', ') : 'missing');

@@ -153,15 +153,18 @@ const text = (v) => (typeof v === 'function' ? String(v('‹x›', '‹y›')) :
 		.filter((f) => f.endsWith('.ts'))
 		.flatMap((f) => [...readFileSync(path.join(SRC, 'lib/gods-eye/layers', f), 'utf8').matchAll(/^\tid: '([a-z0-9-]+)',$/gm)].map((m) => m[1]));
 	const layerIds = new Set(ids.filter((x) => x !== 'photoreal-3d'));
-	ok('defaults: §5.6 — events, convoy, traces, enforcement, osint on, plus the live city (flow, cameras, units) and the waterlogging nowcast', JSON.stringify([...model.V3_DEFAULT_LAYERS].sort()) === JSON.stringify(['cameras', 'convoy', 'enforcement', 'events', 'flow', 'osint', 'traces', 'units', 'waterlog']));
-	ok('defaults: signals, dispatch, anomalies, places and the traffic forecast off (flow, cameras, units and waterlogging open on)', JSON.stringify([...model.V3_OFF_LAYERS].sort()) === JSON.stringify(['air', 'anomalies', 'cyclone', 'dispatch', 'forecast', 'places', 'signals']) && ['flow', 'cameras', 'units', 'waterlog'].every((l) => model.V3_DEFAULT_LAYERS.includes(l)));
+	ok(
+		'defaults: §5.6 — events, convoy, traces, enforcement, osint on, plus the live city (flow, cameras, units, dispatches, City Pack places, live readings, air quality) and the waterlogging nowcast',
+		JSON.stringify([...model.V3_DEFAULT_LAYERS].sort()) === JSON.stringify(['air', 'cameras', 'convoy', 'dispatch', 'enforcement', 'events', 'flow', 'landmarks', 'livevalues', 'osint', 'traces', 'units', 'waterlog']),
+	);
+	ok('defaults: signals, anomalies, the gazetteer places, the traffic forecast and the cyclone off (the live city opens on)', JSON.stringify([...model.V3_OFF_LAYERS].sort()) === JSON.stringify(['anomalies', 'cyclone', 'forecast', 'places', 'signals']) && model.V3_SHEET_ON.every((l) => model.V3_DEFAULT_LAYERS.includes(l)));
 	const union = new Set([...model.V3_DEFAULT_LAYERS, ...model.V3_OFF_LAYERS]);
 	ok('defaults: on + off = every canvas layer but the photoreal city (layers/*.ts)', union.size === layerIds.size && [...layerIds].every((x) => union.has(x)), [...layerIds].sort().join(','));
-	ok('sheet: lists the layers that start off plus the live-city layers and the waterlogging nowcast that open on', JSON.stringify([...model.SHEET_LAYER_IDS].sort()) === JSON.stringify([...model.V3_OFF_LAYERS, 'flow', 'cameras', 'units', 'waterlog'].sort()));
+	ok('sheet: lists the layers that start off plus the live-city layers that open on', JSON.stringify([...model.SHEET_LAYER_IDS].sort()) === JSON.stringify([...model.V3_OFF_LAYERS, ...model.V3_SHEET_ON].sort()));
 	const fcSec = model.SHEET.find((x) => x.key === 'ai_sheet');
 	ok('sheet: a Forecasts section holds the waterlogging risk and the traffic forecast', !!fcSec && JSON.stringify(fcSec.rows.map((r) => r.id)) === JSON.stringify(['waterlog', 'forecast']));
 	const cfSec = model.SHEET.find((x) => x.key === 'cf_sheet');
-	ok('sheet: a City feeds section holds the air-quality and cyclone layers (both start off)', !!cfSec && JSON.stringify(cfSec.rows.map((r) => r.id)) === JSON.stringify(['air', 'cyclone']) && ['air', 'cyclone'].every((x) => model.V3_OFF_LAYERS.includes(x) && layerIds.has(x)));
+	ok('sheet: a City feeds section holds the air-quality (opens on) and cyclone (off) layers', !!cfSec && JSON.stringify(cfSec.rows.map((r) => r.id)) === JSON.stringify(['air', 'cyclone']) && model.V3_DEFAULT_LAYERS.includes('air') && model.V3_OFF_LAYERS.includes('cyclone') && ['air', 'cyclone'].every((x) => layerIds.has(x)));
 	const L = (k, ...a) => `${k}${a.length ? `(${a.join(',')})` : ''}`;
 	ok(
 		'sheet: the city-feed rows say what they hold — off: what they would show; on: sites and the worst band; no cyclone says so; a feed error',
@@ -326,7 +329,7 @@ const text = (v) => (typeof v === 'function' ? String(v('‹x›', '‹y›')) :
 		{ id: 'forecast', label: 'Forecast', group: 'traffic', count: 0, hint: '', error: null, visible: false, empty: true, simulated: false, emulated: false, paused: false },
 	];
 	const sheet = html(M.LayersSheet, { rows, is3d: false, can3d: false, why3d: 'Needs the key', lang: 'en', onlayer: noop, on3d: noop, onclose: noop });
-	ok('sheet: base map as radios, layers as switches with their state', (sheet.match(/role="radio"/g) ?? []).length === 2 && (sheet.match(/role="switch"/g) ?? []).length === 11 && /data-layer="cameras"[^>]*|aria-checked="true"[^>]*data-layer="cameras"/.test(sheet));
+	ok('sheet: base map as radios, layers as switches with their state', (sheet.match(/role="radio"/g) ?? []).length === 2 && (sheet.match(/role="switch"/g) ?? []).length === 13 && /data-layer="cameras"[^>]*|aria-checked="true"[^>]*data-layer="cameras"/.test(sheet));
 	ok('sheet: the waterlogging row says what it holds and that it is modelled; the forecast row (off) what it would show', /7 roads at risk in the next 2 hours/.test(sheet) && /Modelled/.test(sheet) && /Roads forecast to cross 0\.8 V\/C within 2 hours/.test(sheet));
 	const sheetHs = html(M.LayersSheet, { rows, is3d: false, can3d: false, why3d: 'Needs the key', lang: 'en', onlayer: noop, on3d: noop, onclose: noop, hindsightOn: true });
 	ok('sheet: on the replay night the waterlogging row says Hindsight, never live', /7 roads under water in the replay/.test(sheetHs) && /Hindsight/.test(sheetHs));
@@ -345,7 +348,14 @@ const text = (v) => (typeof v === 'function' ? String(v('‹x›', '‹y›')) :
 	ok('now: Replay is disabled with its reason while a movement is live', /data-testid="v3-now-replay"[^>]*aria-disabled="true"|aria-disabled="true"[^>]*data-testid="v3-now-replay"/.test(panel) && /A movement is live/.test(panel));
 	const chips = html(M.MapChips, { on: { live: true, decide: false, reported: true, planned: true }, counts: { live: 3, decide: 4, reported: 4, planned: 3 }, layersOn: 2, sheetOpen: false, lang: 'hi', ontoggle: noop, onlayers: noop });
 	ok('chips: toggles with aria-pressed and their counts, in HI', (chips.match(/aria-pressed="(true|false)"/g) ?? []).length === 4 && /data-group="decide"[^>]*data-count="4"|aria-pressed="false"[^>]*data-group="decide"/.test(chips) && /आपके निर्णय की प्रतीक्षा/.test(chips) && /2 चालू/.test(chips));
-	ok('legend: three lines', (html(M.Legend3, { lang: 'en' }).match(/<span[ >]/g) ?? []).length === 3);
+	ok('legend: three state lines and the data clock (waiting until a live feed answers)', (html(M.Legend3, { lang: 'en' }).match(/<span[ >]/g) ?? []).length === 4 && /data-legend="updated"[^>]*>.*Waiting for the first reading/s.test(html(M.Legend3, { lang: 'en' })));
+	{
+		const live = html(M.Legend3, { lang: 'en', flow: true, units: true, live: true, updatedAt: '20:41:07' });
+		ok(
+			'legend: the live city adds its lines (road colour, moving dots at 20×, emulated units, pulses) and "Map data updated hh:mm:ss IST"',
+			['flow', 'dots', 'units', 'pulse'].every((k) => new RegExp(`data-legend="${k}"`).test(live)) && /Map data updated 20:41:07 IST/.test(live) && /simulated feed, 20× speed/.test(live) && /\(emulated\)/.test(live),
+		);
+	}
 	const lg = html(M.Legend3, { lang: 'en', hideLabel: 'Hide the legend', onhide: noop });
 	ok('legend: terse (a few words per entry), on glass, with its own hide button', /v3-glass/.test(lg) && /aria-label="Hide the legend"/.test(lg) && ['v3m_lg_decide', 'v3m_lg_alert', 'v3m_lg_route'].every((k) => text(M.pack.MAP3_PACKS.en[k]).split(' ').length <= 4));
 	const sp = html(M.StatsPanel, {

@@ -346,7 +346,7 @@ async function runPage(routeId: string | null, title = '<title>Citizen · Sahosh
 	check('page: public route renders daylight', html.includes('data-theme="daylight"'));
 	check('page: citizen route renders lang=en', html.includes('lang="en"'));
 	const driver = await runPage('/(public)/driver');
-	check('page: /driver renders lang=bn', driver.html.includes('lang="bn"'));
+	check('page: /driver renders lang=en (English is the default everywhere; a chosen language comes from the cookie)', driver.html.includes('lang="en"') && !driver.html.includes('lang="bn"'));
 	const deck = await runPage('/(deck)/gods-eye');
 	const deckCsp = deck.res.headers.get('content-security-policy') ?? '';
 	check('page: operator route renders command theme', deck.html.includes('data-theme="command"'));

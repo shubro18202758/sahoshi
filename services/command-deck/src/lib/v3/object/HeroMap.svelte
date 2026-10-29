@@ -93,10 +93,12 @@
 		z-index: 0;
 	}
 
-	/* the credit sits above the scrim, clear of the title bar */
+	/* the credit sits above the scrim, under the crumbs: clear of the title bar and of the marker's own label (the place
+	   is framed right of centre, so a credit under "Open in the map" ran into it) */
 	.banner :global(.stage .credit) {
-		top: 62px;
-		right: var(--v3-gut);
+		top: 64px;
+		left: var(--v3-gut);
+		right: auto;
 		bottom: auto;
 		z-index: 4;
 	}
@@ -191,8 +193,7 @@
 		bottom: 12px;
 	}
 
-	.has-poster .open-map,
-	.has-poster :global(.stage .credit) {
+	.has-poster .open-map {
 		right: calc(var(--v3-gut) + clamp(220px, 27%, 440px) + 14px);
 	}
 

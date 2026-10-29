@@ -352,6 +352,17 @@ PROFILES: dict[str, UseCaseProfile] = {
         ambulance_base_sec=150.0,
         ambulance_cleared_sec=25.0,
     ),
+    # Bijoya Dashami immersion processions — the procession class: EXTREME
+    # crowd building as the processions converge on the ghats, a rolling
+    # full closure ahead of each one and the ambulance (108) windows along
+    # the same riverside stretch (forced_events).
+    "bijoya_immersion_procession": UseCaseProfile(
+        event_kind="procession",
+        crowd_class="EXTREME",
+        crowd_waypoints=((0, 0.65), (1800, 0.85), (3000, 0.95), (3600, 0.80)),
+        ambulance_base_sec=150.0,
+        ambulance_cleared_sec=20.0,
+    ),
 }
 
 

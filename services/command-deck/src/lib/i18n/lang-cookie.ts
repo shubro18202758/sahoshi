@@ -13,8 +13,8 @@
  * language; the server reads the same cookie for the document's <html
  * lang> (hooks.server.ts documentDefaults), so the first paint is already
  * in the chosen language. A missing or unknown value means "no choice
- * made" — every surface keeps its own route default (/driver Bengali,
- * everything else English); an invalid value is never trusted.
+ * made" — every surface then speaks English, the product's default; an
+ * invalid value is never trusted.
  */
 
 export const LANG_COOKIE = 'sahoshi_lang';

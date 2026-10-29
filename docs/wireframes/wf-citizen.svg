@@ -19,7 +19,7 @@
   <rect x="200" y="96" width="80" height="16" rx="8" fill="#4A4A4A"/>
   <line x1="16" y1="934" x2="464" y2="934" stroke="#C2410C" stroke-width="1" stroke-dasharray="6 4"/>
   <text x="466" y="938" font-size="10.5" font-weight="600" fill="#C2410C">fold at 844 px</text>
-  <rect x="56" y="124" width="32" height="32" rx="8" fill="#F7C600" stroke="#8A6D00" stroke-width="1.1"/>
+  <rect x="56" y="124" width="32" height="32" rx="8" fill="#1A1A1A" stroke="#4A4A4A" stroke-width="1.1"/>
   <text x="72" y="146" font-size="16" font-weight="700" text-anchor="middle" fill="#262626">স</text>
   <text x="96" y="147" font-size="17" font-weight="700" fill="#262626">সাহসী</text>
   <rect x="292" y="126" width="132" height="30" rx="15" fill="#FFFFFF" stroke="#9A9A9A" stroke-width="1.2"/>

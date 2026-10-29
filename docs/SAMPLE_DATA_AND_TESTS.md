@@ -112,6 +112,10 @@ them. Kolkata scenarios include:
 
 Two are in [`samples/corridor/`](samples/corridor/).
 
+<p align="center"><img width="100%" alt="The live map of Kolkata in photoreal 3D over the Hooghly and Howrah Bridge" src="screenshots/map-live-3d.jpg"></p>
+
+*The live map, photoreal 3D. The scenario library running on the live stack (29 Oct 2026): the Now panel lists the VIP movement base case, Eden Gardens egress, the stolen-vehicle ANPR sweep, Durga Puja night, the cloudburst at high tide, the Red Road parade, the EM Bypass crash window and the Kolkata Marathon, each replayed by the event emulator and labelled Emulated.*
+
 ## 1.5 Waterlogging data
 
 - **Hotspots** (`hotspots.json`): Thanthania, Amherst Street, College Street, Park Circus, Kalighat, Exide, Hazra,
@@ -124,6 +128,10 @@ Two are in [`samples/corridor/`](samples/corridor/).
 - **The 22–23 Sep 2025 storm**: the IMD Alipore 3-hourly totals and the peak hour are in the replay code with their
   sources; see [`ai/hydro.md`](ai/hydro.md).
 
+<p align="center"><img width="100%" alt="The replay of the 22–23 Sep 2025 storm" src="screenshots/replay-2025-09-23.jpg"></p>
+
+*Replay of 23 Sep 2025. The 2025 storm night step by step: IMD's observed rain, modelled ponding, the roads flagged at 04:00 IST.*
+
 ## 1.6 Speech and vision evaluation sets
 
 - **Speech** (`services/speech/eval/phrases.json`): 30 short Kolkata field-report phrases in Bengali, each with its
@@ -132,6 +140,11 @@ Two are in [`samples/corridor/`](samples/corridor/).
 - **Vision** (`services/vision/tests/fixtures/`): 12 public photos, nine from Kolkata and Howrah, with
   `labels.json` and `NOTICE.md` (credits and licences). Results, refusal probes and the output-filter
   demonstration are in `services/vision/eval/results.json`.
+
+| Field report in Bengali | Road state from a still |
+|---|---|
+| ![A field report spoken in Bengali](screenshots/voice-report.jpg) | ![Camera road state read from a sample still](screenshots/road-state.jpg) |
+| *Spoken Bengali, transcribed on the server and matched to its place.* | *A still read on the server as a road state with a depth band, unverified until an officer confirms.* |
 
 ## 1.7 The impact model
 
@@ -192,7 +205,7 @@ Stop each process when you are done.
 | Rust suite | The ingress pipeline and its plausibility checks | `services/signal-ingress` |
 | Deck type check | `svelte-check` with errors as failures | `services/command-deck` |
 | Deck lints | Design tokens (contrast, spacing, colour use), English copy, Bengali script | `tests/design-tokens.mjs`, `tests/copy-lint.mjs`, `tests/bn-script.unit.mjs` |
-| Deck unit suites | 42 `tests/*.unit.mjs` files: masking, the gate, Decide, Home, Map, Plan, public pages, the city module | `services/command-deck/tests/` |
+| Deck unit suites | 46 `tests/*.unit.mjs` files: masking, the gate, Decide, Home, Map, Plan, public pages, the city module | `services/command-deck/tests/` |
 | Contract replay | The deck's typed client against recorded backend answers | `tests/contract/run.mjs` |
 | Proxy guard | The deck's loopback proxy rules | `tests/test_deck_proxy_guard.py` |
 | Compose | The compose files render | `docker compose ... config -q` |
@@ -206,10 +219,10 @@ Measured on 29 Oct 2026 with every suite run once, offline, in parallel (about 4
 
 | Suite | Passed | Skipped | Notes |
 |---|---:|---:|---|
-| traffic-oracle | 2,106 | 104 | Skips need a database sandbox |
+| traffic-oracle | 2,133 | 107 | Skips need a database sandbox |
 | convoy-brain | 800 | 1 | |
-| corridor-store | 153 | 30 | Skips need a database sandbox |
-| event-emulator | 367 | 13 | |
+| corridor-store | 167 | 30 | Skips need a database sandbox |
+| event-emulator | 392 | 13 | |
 | embedding-service | 191 | 4 | |
 | forecast | 46 | 0 | 2 real-model tests deselected (`-m model`) |
 | hydro | 26 | 0 | Open-Meteo mocked |
@@ -217,20 +230,20 @@ Measured on 29 Oct 2026 with every suite run once, offline, in parallel (about 4
 | vision | 102 | 3 | 3 real-model tests skipped |
 | twin | 50 | 0 | |
 | cityfeeds | 113 | 0 | every outside source mocked or replayed from a recording |
-| osint-common | 449 | 0 | |
+| osint-common | 481 | 0 | |
 | osint-ingress | 519 | 1 | |
 | osint-geo | 586 | 0 | |
 | osint-analysis | 478 | 0 | |
 | deck proxy guard (pytest) | 7 | 0 | |
-| **Python total** | **6,212** | **160** | |
+| **Python total** | **6,310** | **163** | |
 | signal-ingress (cargo) | 121 | 0 | four test binaries: 50 + 45 + 7 + 19 |
-| deck unit suites | 45 of 45 files | — | |
-| deck lints | design tokens, copy (4,908 English strings), Bengali script | — | all pass |
+| deck unit suites | 46 of 46 files | — | |
+| deck lints | design tokens, copy (4,935 English strings), Bengali script | — | all pass |
 | `svelte-check` | 0 errors | — | |
 | OSINT offline smoke | PASS | — | 32 signals, 26 geo-tagged, 4 situations surfaced |
 | contract replay | PASS | — | 0 failures |
 
-Every one of the 68 gates passed in that run.
+Every one of the 69 gates passed in that run.
 
 ## 2.3 Python suites
 

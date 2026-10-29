@@ -4,12 +4,13 @@
 	 *
 	 * Night theme (the console's ground and type), one idea per section. The first 1920 × 1080 viewport is a poster:
 	 * Howrah Bridge lit at night (a reference photo, labelled and credited on the picture), the Sahoshi lockup, the
-	 * Bengali tagline (থামিয়ে নয়, সামলে।), "Keep Kolkata moving.", one sub-line and the two doors. Then the city in
-	 * photographs, the problem and three modelled figures, See / Decide / Act, the four seats, the principles, what it is
-	 * built on with the agencies' marks, a closing band and the footer.
+	 * tagline in the reader's language ("Not by stopping. By steering."), one sub-line, the two doors and the console
+	 * itself in a window (a screenshot, captioned "Console screenshot · exercise data"). Then the city in photographs,
+	 * the problem and three modelled figures, See / Decide / Act, the four seats, the principles, what it is built on
+	 * with the agencies' marks, a closing band and the footer.
 	 *
-	 * Kolkata-taxi yellow appears here only in the mark and on the tagline's turn (সামলে।); it is never a UI meaning
-	 * colour. PUBLIC and STATIC: no sign-in, no API call, no store and no operator code — only the V3 tokens, the imagery
+	 * Neutral black, white and grey; colour only for meaning and the one accent blue. English unless the reader picked
+	 * another language. PUBLIC and STATIC: no sign-in, no API call, no store and no operator code — only the V3 tokens, the imagery
 	 * layer (photos, key art, marks), the glyphs and this page's string pack. Links into the console load a new document
 	 * (data-sveltekit-reload), because the console runs under its own content-security policy. Every picture carries its
 	 * honest label: a reference photo is drawn by Cover (always "Reference photo · not live" + credit, on the picture),
@@ -23,13 +24,14 @@
 	import Cover from '../media/Cover.svelte';
 	import { KEY_ART } from '../media/art';
 	import LangSwitch from './LangSwitch.svelte';
-	import { AUDIENCES, BUILT, HREF, MARK_ROW, OPERATOR_HREFS, PRINCIPLES, STEPS, TAGLINE_BN, TODO_IMPACT, cityPhotos, endPhoto, heroPhoto, marks } from './content';
+	import { AUDIENCES, BUILT, HERO_SHOT, HREF, MARK_ROW, OPERATOR_HREFS, PRINCIPLES, SHOTS, STEPS, TODO_IMPACT, cityPhotos, endPhoto, heroPhoto, marks } from './content';
 
 	let { lang, onpick }: { lang: string; onpick: (code: string) => void } = $props();
 
 	const hero = heroPhoto();
 	const end = endPhoto();
 	const city = cityPhotos();
+	const win = SHOTS[HERO_SHOT];
 	const row = marks(MARK_ROW);
 	const reload = (href: string) => (OPERATOR_HREFS.includes(href) ? '' : undefined);
 </script>
@@ -59,15 +61,15 @@
 
 		<div class="hero-body wrap-wide">
 			<div class="hero-copy">
+				<p class="eyebrow">{t(lang, 'v3l_hero_eyebrow')}</p>
 				<h1 class="lockup">
-					<img src="/brand/sahoshi-lockup.svg" alt={t(lang, 'v3l_logo')} width="316" height="64" />
+					<img src="/brand/sahoshi-lockup.svg" alt={t(lang, 'v3l_logo')} width="192" height="64" />
 				</h1>
-				<p class="tagline" lang="bn" title={t(lang, 'v3l_tagline_gloss')} data-testid="land-tagline">
-					<span class="t-lead">{TAGLINE_BN.lead}</span>
-					<span class="t-turn">{TAGLINE_BN.turn}</span>
+				<p class="tagline" data-testid="land-tagline">
+					<span class="t-lead">{t(lang, 'v3l_tagline_lead')}</span>
+					<span class="t-turn">{t(lang, 'v3l_tagline_turn')}</span>
 				</p>
-				<p class="promise" data-testid="land-promise">{t(lang, 'v3l_hero_h')}</p>
-				<p class="sub">{t(lang, 'v3l_hero_sub')}</p>
+				<p class="sub" data-testid="land-promise">{t(lang, 'v3l_hero_sub')}</p>
 				<div class="ctas">
 					<a class="btn btn-primary" href={HREF.console} data-sveltekit-reload data-testid="land-cta-console">
 						{t(lang, 'v3l_open_console')}<Glyph name="arrowR" size={20} />
@@ -77,6 +79,11 @@
 				<p class="rule"><Glyph name="shield" size={18} />{t(lang, 'v3l_hero_rule')}</p>
 			</div>
 		</div>
+
+		<figure class="window" data-testid="land-hero-shot">
+			<img src={win.src} srcset={win.srcset} sizes="(max-width: 1100px) 92vw, 640px" alt={t(lang, win.alt)} width={win.w} height={win.h} loading="eager" decoding="async" />
+			<figcaption class="shot-tag" data-testid="land-shot-caption">{t(lang, 'v3l_shot_tag')}</figcaption>
+		</figure>
 	</header>
 
 	<main id="land-main" tabindex="-1">
@@ -211,7 +218,7 @@
 			<div class="end-body wrap">
 				<img class="end-mark" src="/brand/sahoshi-mark.svg" alt="" width="64" height="64" />
 				<h2 class="heading" id="land-end">{t(lang, 'v3l_end_heading')}</h2>
-				<p class="end-tagline" lang="bn">{TAGLINE_BN.lead} <span class="t-turn">{TAGLINE_BN.turn}</span></p>
+				<p class="end-tagline">{t(lang, 'v3l_tagline_lead')} <span class="t-turn">{t(lang, 'v3l_tagline_turn')}</span></p>
 				<p class="lead">{t(lang, 'v3l_end_body')}</p>
 				<div class="ctas">
 					<a class="btn btn-primary" href={HREF.console} data-sveltekit-reload>{t(lang, 'v3l_open_console')}<Glyph name="arrowR" size={20} /></a>
@@ -225,7 +232,7 @@
 	<!-- ── 9 · footer ───────────────────────────────────────────────────────── -->
 	<footer class="foot wrap" data-testid="land-footer">
 		<div class="foot-top">
-			<img class="foot-lockup" src="/brand/sahoshi-lockup.svg" alt={t(lang, 'v3l_logo')} width="190" height="38" />
+			<img class="foot-lockup" src="/brand/sahoshi-lockup.svg" alt={t(lang, 'v3l_logo')} width="114" height="38" />
 			<LangSwitch {lang} label={t(lang, 'v3l_lang')} {onpick} />
 		</div>
 		<div class="foot-cols">
@@ -278,8 +285,6 @@
 	}
 
 	/* Devanagari and Bengali carry marks above and below the line: the poster type needs the room */
-	.land:lang(hi) .promise,
-	.land:lang(bn) .promise,
 	.land:lang(hi) .heading,
 	.land:lang(bn) .heading,
 	.land:lang(hi) .statement,
@@ -398,10 +403,10 @@
 		background: var(--v3-bg);
 	}
 
-	/* the photo calmed towards the neutral ground (the bridge's coloured lamps would fight the tagline's yellow) */
+	/* the photo calmed towards the neutral ground: the bridge's steel stays, its coloured lamps go quiet */
 	.hero-photo :global(figure.land-cover > img) {
-		object-position: 72% 40%;
-		filter: saturate(0.42) contrast(1.06);
+		object-position: 64% 38%;
+		filter: saturate(0.35) contrast(1.05) brightness(0.92);
 	}
 
 	/* the photo melts into the night ground: from the left (under the words) and at the foot — over the picture, under
@@ -486,8 +491,8 @@
 	}
 
 	.hero-copy {
-		max-width: 780px;
-		padding-bottom: 56px;
+		max-width: 760px;
+		padding-bottom: 72px;
 	}
 
 	.hero-copy > * {
@@ -510,6 +515,14 @@
 		animation-delay: 240ms;
 	}
 
+	.eyebrow {
+		margin: 0 0 22px;
+		color: var(--v3-t2);
+		font-size: var(--v3-text-body);
+		font-weight: 600;
+		line-height: var(--v3-lh-body);
+	}
+
 	.lockup {
 		margin: 0;
 		line-height: 0;
@@ -519,37 +532,78 @@
 		display: block;
 		width: auto;
 		height: var(--v3-land-lockup);
-		/* the lockup's own side bearing: the truss S starts 6/64 in */
-		margin-left: calc(var(--v3-land-lockup) * -0.09);
+		/* the lockup's own side bearing: the road's round end starts 10/64 in */
+		margin-left: calc(var(--v3-land-lockup) * -0.1);
 	}
 
-	/* the tagline is the poster: Bengali in every language, the turn (সামলে।) in Kolkata-taxi yellow */
+	/* the tagline is the poster, in the reader's language: the lead in grey, the turn in white (no colour: type only) */
 	.tagline {
-		margin: 44px 0 0;
-		font-size: var(--v3-land-hero);
-		font-weight: 600;
-		line-height: 1.2;
+		margin: 40px 0 0;
+		font-size: clamp(52px, 5.2vw, var(--v3-land-hero));
+		font-weight: 650;
+		line-height: 1.04;
 	}
 
 	.tagline > span {
 		display: block;
 	}
 
-	.t-turn {
-		color: var(--v3-land-taxi);
+	.t-lead {
+		color: var(--v3-t3);
 	}
 
-	.promise {
-		margin: 28px 0 0;
-		font-size: var(--v3-land-section);
-		font-weight: 650;
-		line-height: var(--v3-land-lh-section);
-		text-wrap: balance;
+	.t-turn {
+		color: var(--v3-t1);
+	}
+
+	.land:lang(hi) .tagline,
+	.land:lang(bn) .tagline {
+		line-height: 1.24;
+	}
+
+	/* the console itself, in a window over the photo; its honest caption sits on the picture */
+	.window {
+		position: absolute;
+		right: max(var(--gut), calc((100% - var(--v3-land-max) - 240px) / 2));
+		bottom: 96px;
+		z-index: 1;
+		width: clamp(440px, 38vw, 720px);
+		margin: 0;
+		aspect-ratio: 16 / 10;
+		overflow: hidden;
+		border-radius: var(--v3-radius-l);
+		background: var(--v3-s1);
+		box-shadow:
+			0 0 0 1px var(--v3-line-3),
+			var(--v3-elev-2);
+		animation: land-rise 1.1s 280ms var(--v3-ease) both;
+	}
+
+	.window img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: 0 0;
+	}
+
+	.shot-tag {
+		position: absolute;
+		left: 12px;
+		bottom: 12px;
+		padding: 4px 10px;
+		border-radius: 12px;
+		background: var(--v3-glass);
+		box-shadow: inset 0 0 0 1px var(--v3-line-2);
+		color: var(--v3-t2);
+		font-size: var(--v3-text-micro);
+		font-weight: 600;
+		line-height: var(--v3-lh-micro);
 	}
 
 	.sub {
-		max-width: 640px;
-		margin: 20px 0 0;
+		max-width: 600px;
+		margin: 28px 0 0;
 		color: var(--v3-t2);
 		font-size: var(--v3-land-lead);
 		line-height: var(--v3-land-lh-lead);
@@ -651,8 +705,9 @@
 
 	.end-tagline {
 		margin: 20px 0 0;
+		color: var(--v3-t3);
 		font-size: var(--v3-land-section);
-		font-weight: 600;
+		font-weight: 650;
 		line-height: 1.25;
 	}
 
@@ -1167,7 +1222,8 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.hero-photo,
-		.hero-copy > * {
+		.hero-copy > *,
+		.window {
 			animation: none;
 		}
 
@@ -1193,7 +1249,12 @@
 		}
 
 		.hero-copy {
-			max-width: 620px;
+			max-width: 680px;
+		}
+
+		.window {
+			width: clamp(420px, 40vw, 600px);
+			bottom: 80px;
 		}
 
 		.people {
@@ -1208,18 +1269,17 @@
 	/* ── short laptop screens (1366 × 768): the poster tightens to fit one view ─ */
 	@media (max-height: 860px) and (min-width: 1101px) {
 		.lockup img {
-			height: 56px;
+			height: 48px;
 		}
 
 		.tagline {
 			margin-top: 24px;
-			font-size: 76px;
+			font-size: 68px;
 		}
 
-		.promise {
-			margin-top: 16px;
-			font-size: 38px;
-			line-height: 46px;
+		.window {
+			width: clamp(400px, 36vw, 560px);
+			bottom: 64px;
 		}
 
 		.sub {
@@ -1271,7 +1331,15 @@
 		}
 
 		.hero-copy {
-			padding-bottom: 56px;
+			padding-bottom: 40px;
+		}
+
+		.window {
+			position: relative;
+			right: auto;
+			bottom: auto;
+			width: min(100% - 2 * var(--gut), 760px);
+			margin: 8px auto 0;
 		}
 
 		.city-strip {
@@ -1323,18 +1391,12 @@
 		}
 
 		.lockup img {
-			height: 48px;
+			height: 40px;
 		}
 
 		.tagline {
-			margin-top: 28px;
-			font-size: 60px;
-		}
-
-		.promise {
-			margin-top: 16px;
-			font-size: 32px;
-			line-height: 40px;
+			margin-top: 24px;
+			font-size: 40px;
 		}
 
 		.city-strip {

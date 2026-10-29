@@ -742,7 +742,7 @@ ok('follow: the selection sync reads a vehicle URN only', follow.followedVehicle
 	ops.dispatches = DISPATCHES;
 	const feed = LV.liveStripFeed({ route: '/', now: t0 });
 	ok('live: a movement and a pursuit are live → a feed', !!feed && !!feed.movement && feed.pursuits.length === 1);
-	ok('live: the movement reads "VVIP movement · Z"', feed?.movement?.label === 'VVIP movement · Z', feed?.movement?.label);
+	ok('live: the movement reads "Protected movement · Z"', feed?.movement?.label === 'Protected movement · Z', feed?.movement?.label);
 	ok("live: the pursuit's mark is ALREADY masked", feed?.pursuits[0]?.plateMasked === 'WB06EM•••1' && !RAW_MARK_RE.test(JSON.stringify(feed?.pursuits)), feed?.pursuits[0]?.plateMasked);
 	ok('live: the soonest decision is the earliest deadline (the escort, before the 108 golden hour)', feed?.soonest?.deadlineMs === NOW + 45_000, feed?.soonest?.title);
 	ops.escorts = [];

@@ -671,7 +671,7 @@ def _dispatch_payload(action: Mapping[str, Any], *, dss_id: str, coa_id: str, no
 
 #: The emulated unit an agency's dispatch request names when the unit plane proposed none (the deck's defaults).
 FALLBACK_UNIT_ID = {
-    "jan_rakshak": "JR-EM-01",
+    "jan_rakshak": "CV-EM-01",
     "police": "PCR-EM-01",
     "traffic": "TP-EM-01",
     "ambulance": "108-EM-01",
@@ -750,7 +750,7 @@ async def _decide_locked(
             agency = str(p.get("agency") or "police")
             count = int(p.get("count", 1))
             units = [str(u) for u in p.get("unit_ids") or []]
-            unit_id = units[0] if units else FALLBACK_UNIT_ID.get(agency, "JR-EM-01")
+            unit_id = units[0] if units else FALLBACK_UNIT_ID.get(agency, "CV-EM-01")
             text = (
                 f"Decision support {dss_id} · {coa['coa_id']} ({coa['label']}): {agency} × {count} — a dispatch "
                 "REQUEST, decided on its own by a duty officer"

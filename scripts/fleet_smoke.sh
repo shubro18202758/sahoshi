@@ -136,12 +136,12 @@ fi
 # convoy-brain -> decider :8083 + gemma :8084 -> traffic-oracle -> PostGIS
 # (pgRouting/OR-Tools on corridor.road_segments, the real-road network).
 # Coordinates from scripts/data/route_acceptance_pairs.json poi_snaps:
-# Sarkhej–Ashram South (J33; snaps 3 m from 1006 Riverfront Road (West)) ->
-# Sabarmati Ashram (near 1041 / 1009). The movement is titled FLEET SMOKE
+# BBD Bag (snaps 108 m from 1009 Old Court House Street) ->
+# Park Street crossing (38 m from 1026 Park Street). The movement is titled FLEET SMOKE
 # TEST, so the corridor event its plan registers (status planning) wears the
 # deck's TEST pill and never reads as a real movement.
 DEPART=$(date -u -d '+1 hour' +%Y-%m-%dT%H:%M:%SZ)
-MOVEMENT_BODY='{"origin":[72.5714,23.0225],"destination":[72.5802,23.0607],"vvip_class":"Z","planned_departure":"'$DEPART'"}'
+MOVEMENT_BODY='{"origin":[88.3496,22.5726],"destination":[88.352,22.553],"vvip_class":"Z","planned_departure":"'$DEPART'"}'
 
 mov_resp=$(curl -s --max-time 30 -X POST "$CONVOY_BRAIN_URL/movements" \
     -H 'Content-Type: application/json' -d "${MOVEMENT_BODY%\}},\"title\":\"FLEET SMOKE TEST\"}")

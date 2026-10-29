@@ -1115,6 +1115,16 @@
    "label": "Modelled site Park Street crossing: Jawaharlal Nehru Road approach"
   },
   {
+   "camera_id": "EM-J12B",
+   "kind": "anpr",
+   "junction_id": 12,
+   "segment_id": 1017,
+   "lon": 88.3502206,
+   "lat": 22.555376,
+   "heading_deg": 185.7,
+   "label": "Modelled site Park Street crossing: Jawaharlal Nehru Road approach"
+  },
+  {
    "camera_id": "EM-J14",
    "kind": "anpr",
    "junction_id": 14,
@@ -1122,6 +1132,16 @@
    "lon": 88.3613442,
    "lat": 22.5465511,
    "heading_deg": 43.5,
+   "label": "Modelled site Mullickbazar crossing: Acharya Jagadish Chandra Bose Road approach"
+  },
+  {
+   "camera_id": "EM-J14B",
+   "kind": "anpr",
+   "junction_id": 14,
+   "segment_id": 1024,
+   "lon": 88.361443,
+   "lat": 22.5469024,
+   "heading_deg": 167.2,
    "label": "Modelled site Mullickbazar crossing: Acharya Jagadish Chandra Bose Road approach"
   },
   {
@@ -1135,6 +1155,16 @@
    "label": "Modelled site Hazra crossing: Ashutosh Mukherjee Road approach"
   },
   {
+   "camera_id": "EM-J18B",
+   "kind": "anpr",
+   "junction_id": 18,
+   "segment_id": 1020,
+   "lon": 88.3465782,
+   "lat": 22.5236786,
+   "heading_deg": 309.3,
+   "label": "Modelled site Hazra crossing: Shyama Prasad Mukherjee Road approach"
+  },
+  {
    "camera_id": "EM-J19",
    "kind": "anpr",
    "junction_id": 19,
@@ -1145,6 +1175,16 @@
    "label": "Modelled site Kalighat (SP Mukherjee Road): Shyama Prasad Mukherjee Road approach"
   },
   {
+   "camera_id": "EM-J19B",
+   "kind": "anpr",
+   "junction_id": 19,
+   "segment_id": 1022,
+   "lon": 88.3460721,
+   "lat": 22.5146523,
+   "heading_deg": 2.6,
+   "label": "Modelled site Kalighat (SP Mukherjee Road): SP Mukherjee Road - Deshapran Sashmal Road approach"
+  },
+  {
    "camera_id": "EM-J20",
    "kind": "anpr",
    "junction_id": 20,
@@ -1152,6 +1192,16 @@
    "lon": 88.3458556,
    "lat": 22.5169515,
    "heading_deg": 308.5,
+   "label": "Modelled site Rashbehari crossing: Shyama Prasad Mukherjee Road approach"
+  },
+  {
+   "camera_id": "EM-J20B",
+   "kind": "anpr",
+   "junction_id": 20,
+   "segment_id": 1021,
+   "lon": 88.3458997,
+   "lat": 22.5169214,
+   "heading_deg": 308.1,
    "label": "Modelled site Rashbehari crossing: Shyama Prasad Mukherjee Road approach"
   },
   {
@@ -1203,6 +1253,26 @@
    "lat": 22.5531064,
    "heading_deg": 17.1,
    "label": "Modelled site Vidyasagar Setu: Kolkata head, westbound"
+  },
+  {
+   "camera_id": "EM-BR-MAJERHAT-N",
+   "kind": "anpr",
+   "junction_id": null,
+   "segment_id": 1049,
+   "lon": 88.3240082,
+   "lat": 22.5195806,
+   "heading_deg": 191.3,
+   "label": "Modelled site Majerhat bridge: north head, southbound"
+  },
+  {
+   "camera_id": "EM-BR-MAJERHAT-S",
+   "kind": "anpr",
+   "junction_id": null,
+   "segment_id": 1049,
+   "lon": 88.3219836,
+   "lat": 22.5121053,
+   "heading_deg": 19.4,
+   "label": "Modelled site Majerhat bridge: south head, northbound"
   },
   {
    "camera_id": "EM-CAM-01",

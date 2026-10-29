@@ -636,6 +636,8 @@ try {
 				);
 				const outBadge = badges.find((b) => !b.inside);
 				// …and the emulated note beside the badge reads at full width under it, never as a sliver.
+				// the note is one tap down (a disclosure): open it, then measure
+				await page.$eval('[data-feed-note="emulated"]', (d) => d.setAttribute('open', '')).catch(() => {});
 				const noteW = await page.$eval('[data-feed-note="emulated"] .note-text', (e) => Math.round(e.getBoundingClientRect().width)).catch(() => 0);
 				ok(
 					`/citizen ${w} px ${code}: every source badge stays inside its card; the emulated note reads at full width`,
@@ -733,7 +735,7 @@ try {
 		ok('/driver live mode with a live public event', true);
 		const driverTheme = await page.evaluate(() => document.documentElement.dataset.theme ?? '');
 		ok('/driver daylight theme', driverTheme === 'daylight', `data-theme=${driverTheme}`);
-		ok('/driver Bengali first', BN.test(await text(page, '.head h1')));
+		ok('/driver English by default', /Green corridor/.test(await text(page, '.head h1')));
 
 		// F-08: the clock counts from THIS request — before one is sent it has not started (never from page load)
 		const before = await page.$eval('[data-testid="golden-hour"]', (el) => ({ started: el.getAttribute('data-started'), secs: el.querySelector('[data-golden-seconds]')?.getAttribute('data-golden-seconds') ?? null }));

@@ -42,6 +42,9 @@ from traffic_oracle.decision_support import coa, dissent, engine, mcda, voi, war
 from traffic_oracle.decision_support.feasibility import UnitPlane
 from traffic_oracle.decision_support.wargame import SegmentModel
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 NOW = datetime(2026, 10, 26, 7, 30, tzinfo=UTC)
 FIR_TITLE = "PURSUIT — stolen WB06EM9001 (FIR 4401/2026, Hare Street PS)"
 

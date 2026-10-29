@@ -7,8 +7,9 @@
  *   - reference photos of Kolkata (static/photos, Wikimedia Commons): always "Reference photo · not live" + credit,
  *     drawn by Cover on the picture itself;
  *   - key art and the Hooghly scenes (static/artwork): original illustrations, captioned "Illustration";
- *   - agency and source marks (static/logos): as-is, with the owners' credit line.
- * Console screenshots are not shown until they can be taken on the Kolkata network (static/landing/NOTICE.md).
+ *   - agency and source marks (static/logos): as-is, with the owners' credit line;
+ *   - one console screenshot in the hero window, taken on the Kolkata network with exercise (emulated) data and every
+ *     plate masked (static/landing/NOTICE.md), captioned "Console screenshot · exercise data" on the picture.
  */
 import { photoBySlug, type PlacePhoto } from '../media/photos';
 import { markFor, type Mark } from '../media/logos';
@@ -26,8 +27,26 @@ export const HREF = {
 /** The operator routes: a link to one of them must load a new document (data-sveltekit-reload). */
 export const OPERATOR_HREFS: readonly string[] = [HREF.console, HREF.analyst];
 
-/** The brand's tagline: Bengali in every language ("not by stopping — by steering"). */
-export const TAGLINE_BN = { lead: 'থামিয়ে নয়,', turn: 'সামলে।' } as const;
+/** A console screenshot (static/landing/console-<file>-{800,1600}.webp), the honest caption is the page's. */
+export interface Shot {
+	key: 'decide';
+	src: string;
+	srcset: string;
+	w: number;
+	h: number;
+	alt: string;
+}
+
+function shot(key: Shot['key'], file: string, w: number, h: number, alt: string): Shot {
+	return { key, src: `/landing/${file}-1600.webp`, srcset: `/landing/${file}-800.webp 800w, /landing/${file}-1600.webp 1600w`, w, h, alt };
+}
+
+export const SHOTS: Readonly<Record<Shot['key'], Shot>> = {
+	decide: shot('decide', 'console-decide', 1600, 1000, 'v3l_shot_alt_decide'),
+};
+
+/** The console shown in the hero window: Decide, one emulated request waiting for a named officer. */
+export const HERO_SHOT: Shot['key'] = 'decide';
 
 /** The hero's photograph (Howrah Bridge lit at night) and the closing band's (the Hooghly at dusk). */
 export const HERO_PHOTO_SLUG = 'howrah-bridge-night';

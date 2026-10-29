@@ -26,6 +26,9 @@ from osint_common import ethics
 from traffic_oracle.city import common
 from traffic_oracle.city import feed as feed_mod
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 

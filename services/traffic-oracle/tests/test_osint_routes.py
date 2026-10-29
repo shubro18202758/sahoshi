@@ -35,6 +35,9 @@ from osint_common.types import Geocode, OsintEventRow, SourceRef
 from traffic_oracle.city.common import SOURCE_LINK_WITHHELD
 from traffic_oracle.osint import router as osint_router
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 

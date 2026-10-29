@@ -42,12 +42,17 @@ export const GROUP_LAYERS: Readonly<Record<GroupId, readonly string[]>> = {
 	planned: ['events'],
 };
 
-/** The layers on when the map opens (no share link): §5.6's five, plus the live city — traffic on every road, the
- *  ANPR cameras and the field units — so the map opens alive; each of those three stays a switch in the sheet. */
-export const V3_DEFAULT_LAYERS: readonly string[] = ['events', 'convoy', 'traces', 'enforcement', 'osint', 'flow', 'cameras', 'units', 'waterlog'];
+/** The layers on when the map opens (no share link): §5.6's five, plus the live city — traffic on every road (its
+ *  colour, moving dots and names), the ANPR cameras, the field units and their dispatches (108 corridors), the City
+ *  Pack's named places, the live readings at their places (pumps, tide, heat, rivers, fires, fresh situations) and
+ *  air quality at the monitoring sites — so the map opens alive and labelled; each stays a switch in the sheet. */
+export const V3_DEFAULT_LAYERS: readonly string[] = ['events', 'convoy', 'traces', 'enforcement', 'osint', 'flow', 'cameras', 'units', 'dispatch', 'waterlog', 'landmarks', 'livevalues', 'air'];
 
 /** The layers the map starts OFF (each one a switch in the Layers sheet). */
-export const V3_OFF_LAYERS: readonly string[] = ['signals', 'dispatch', 'anomalies', 'places', 'forecast', 'air', 'cyclone'];
+export const V3_OFF_LAYERS: readonly string[] = ['signals', 'anomalies', 'places', 'forecast', 'cyclone'];
+
+/** The sheet rows that open ON (the live city): every other sheet row starts off. */
+export const V3_SHEET_ON: readonly string[] = ['units', 'dispatch', 'cameras', 'flow', 'landmarks', 'livevalues', 'waterlog', 'air'];
 
 /** Each group layer's wanted state for the chips' on/off set: on while ANY group drawing it is on. */
 export function groupLayerState(on: Readonly<Record<GroupId, boolean>>): Record<string, boolean> {
@@ -81,6 +86,8 @@ export const SHEET: readonly SheetSection[] = [
 			{ id: 'cameras', key: 'v3m_l_cameras' },
 			{ id: 'signals', key: 'v3m_l_signals' },
 			{ id: 'flow', key: 'v3m_l_flow' },
+			{ id: 'landmarks', key: 'v3m_l_landmarks' },
+			{ id: 'livevalues', key: 'v3m_l_livevalues' },
 			{ id: 'places', key: 'v3m_l_places' },
 			{ id: 'anomalies', key: 'v3m_l_anomalies' },
 		],

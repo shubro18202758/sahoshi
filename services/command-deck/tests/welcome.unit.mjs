@@ -5,24 +5,26 @@
  *   WELCOME_TREE=<copy of services/command-deck>  node tests/welcome.unit.mjs     (a mutation harness points it at a scratch copy)
  *
  *   1. ROUTE     /welcome exists as src/routes/(landing)/welcome (its own group: no operator shell, no public day shell); the
- *                server reads the language from the sahoshi_lang cookie (বাংলা when none is set: Kolkata's public pages are
- *                Bengali first); hooks.server.ts renders the group NIGHT and never gives it the operator (Cesium) policy.
+ *                server reads the language from the sahoshi_lang cookie (English when none is set: English is the
+ *                product's default everywhere); hooks.server.ts renders the group NIGHT and never gives it the operator
+ *                (Cesium) policy.
  *   2. BOUNDARY  public and static: every import under lib/v3/landing and routes/(landing) is on a short allowlist (the i18n
  *                core, the V3 tokens, the imagery layer, the glyph, the landing's own modules) — never $lib/ops, gods-eye,
  *                workspace, stores, data-service, the V3 shell or any operator screen; no fetch and no /api/ call at all.
  *   3. PACKS     packs.landing EN / HI / BN carry the same keys (v3l_*), HI is Devanagari and BN Bengali, every key the page
  *                builds exists (the dynamic ones from the content tables too), the imagery keys it borrows exist in
  *                packs.media, the EN copy keeps the deck's copy rules.
- *   4. CONTENT   the poster: the lockup, the Bengali tagline (থামিয়ে নয়, সামলে।), "Keep Kolkata moving.", the sub-line, Open
- *                the console → / (a new document) and Check your road → /citizen; the ambulance (108) crew → /driver; the
+ *   4. CONTENT   the poster: the lockup, the tagline in the reader's language ("Not by stopping. By steering." /
+ *                থামিয়ে নয়, সামলে।), the sub-line, Open the console → / (a new document), Check your road → /citizen and
+ *                the console screenshot window; the ambulance (108) crew → /driver; the
  *                source → the public repository; every picture is on disk and is Kolkata's; no picture repeats; the key art
  *                shows no crowd; every agency mark resolves and is keyed by a city.json agency id or a data source.
  *   5. HONESTY   every reference photo carries "Reference photo · not live" and its credit, every key art "Illustration";
- *                no console screenshot of another city; the figures carry the dashed Modelled tag and its note, and are
+ *                a console screenshot only of Kolkata, captioned "Console screenshot · exercise data"; the figures carry the dashed Modelled tag and its note, and are
  *                IMPACT_REPORT's or an explicit TODO-IMPACT placeholder that shows no number; no "lives saved"; no person as
  *                an image subject; no contest or prize-event wording anywhere; the marks keep the owners' credit line.
- *   6. LAYOUT    the landing tokens exist (tokens.css ↔ tokens.ts), Kolkata-taxi yellow among them and used only for the
- *                tagline's turn; motion stops under prefers-reduced-motion; touch-sized controls; no hex colour; the page
+ *   6. LAYOUT    the landing tokens exist (tokens.css ↔ tokens.ts); the page is neutral (no yellow, no taxi token: type
+ *                carries the tagline's turn, not colour); motion stops under prefers-reduced-motion; touch-sized controls; no hex colour; the page
  *                scrolls as a document only while it is mounted (:has).
  *
  * Exits 0 with `ok <name>` lines, 1 on any failure.
@@ -102,7 +104,7 @@ const EN = packs.LANDING_PACKS.en;
 	ok('1. /welcome exists in its own route group: (landing)/welcome/+page.svelte, +page.server.ts and the group layout', has(PAGE) && has(`${ROUTES}/welcome/+page.server.ts`) && has(`${ROUTES}/+layout.svelte`));
 	ok('1. /welcome is not under (public), (deck) or (v3) — no public day shell, no operator shell', !has('src/routes/(public)/welcome') && !has('src/routes/(deck)/welcome') && !has('src/routes/(v3)/welcome') && !has('src/routes/welcome'));
 	const server = read(`${ROUTES}/welcome/+page.server.ts`);
-	ok('1. the server render reads the reader\'s language from the sahoshi_lang cookie (বাংলা otherwise)', /langFromCookieHeader\(request\.headers\.get\('cookie'\)\) \?\? 'bn'/.test(server));
+	ok('1. the server render reads the reader\'s language from the sahoshi_lang cookie (English otherwise)', /langFromCookieHeader\(request\.headers\.get\('cookie'\)\) \?\? 'en'/.test(server));
 	const layout = read(`${ROUTES}/+layout.svelte`);
 	ok('1. the group layout loads the V3 tokens and the night theme, and nothing else', /\$lib\/v3\/tokens\.css/.test(layout) && /dataset\.theme = 'command'/.test(layout) && (stripComments(layout).match(/^\s*import\s/gm) ?? []).length === 1 && !/Shell|\$lib\/ops|session/.test(stripComments(layout)));
 	const hooks = read('src/hooks.server.ts');
@@ -182,9 +184,10 @@ const EN = packs.LANDING_PACKS.en;
 	ok('4. every link into the console (an operator document) loads a new document (data-sveltekit-reload)', toConsole.length >= 4 && toConsole.every((t) => /data-sveltekit-reload/.test(t)), `${toConsole.length} links`);
 	ok('4. the audience links reload exactly when they lead into the console (/ and /analyst)', /data-sveltekit-reload=\{reload\(a\.href\)\}/.test(src) && JSON.stringify(C.OPERATOR_HREFS) === JSON.stringify(['/', '/analyst']));
 	const hero = src.slice(src.indexOf('<header class="hero"'), src.indexOf('</header>'));
-	ok('4. the poster: the lockup, the Bengali tagline, the promise, Open the console (→ /) and Check your road (→ /citizen) over the photo', /sahoshi-lockup\.svg/.test(hero) && /class="tagline" lang="bn"/.test(hero) && /TAGLINE_BN\.lead/.test(hero) && /TAGLINE_BN\.turn/.test(hero) && /'v3l_hero_h'/.test(hero) && /'v3l_hero_sub'/.test(hero) && /href=\{HREF\.console\} data-sveltekit-reload data-testid="land-cta-console"/.test(hero) && /href=\{HREF\.citizen\} data-testid="land-cta-road"/.test(hero) && /<Cover [^>]*photo=\{hero\}/.test(hero));
-	ok('4. the tagline and the lines are Kolkata\'s', C.TAGLINE_BN.lead === 'থামিয়ে নয়,' && C.TAGLINE_BN.turn === 'সামলে।' && EN.v3l_hero_h === 'Keep Kolkata moving.' && EN.v3l_hero_sub === "One live picture of Kolkata's roads, rain and crowds — the AI proposes, a named officer decides.");
-	ok('4. the hero photo loads eagerly (the thumbnail), everything else lazily', /<Cover [^>]*photo=\{hero\}[^>]* eager /.test(hero) && !/loading="eager"/.test(src) && !/\beager\b/.test(src.slice(src.indexOf('</header>'))) && (src.match(/loading="lazy"/g) ?? []).length >= 2);
+	ok('4. the poster: the lockup, the tagline in the reader\'s language, the sub-line, Open the console (→ /), Check your road (→ /citizen) and the console window over the photo', /sahoshi-lockup\.svg/.test(hero) && /class="tagline"/.test(hero) && !/class="tagline" lang=/.test(hero) && /'v3l_tagline_lead'/.test(hero) && /'v3l_tagline_turn'/.test(hero) && /'v3l_hero_sub'/.test(hero) && /href=\{HREF\.console\} data-sveltekit-reload data-testid="land-cta-console"/.test(hero) && /href=\{HREF\.citizen\} data-testid="land-cta-road"/.test(hero) && /<Cover [^>]*photo=\{hero\}/.test(hero) && /data-testid="land-hero-shot"/.test(hero));
+	ok('4. the tagline and the lines: English first, the Bengali and Hindi tagline in their packs', EN.v3l_tagline_lead === 'Not by stopping.' && EN.v3l_tagline_turn === 'By steering.' && bn.v3l_tagline_lead === 'থামিয়ে নয়,' && bn.v3l_tagline_turn === 'সামলে।' && /^[\u0900-\u097F ,।]+$/.test(hi.v3l_tagline_lead + hi.v3l_tagline_turn) && EN.v3l_hero_sub === "One live picture of Kolkata's roads, rain and crowds — the AI proposes, a named officer decides.");
+	ok('4. no Bengali in the landing\'s own markup or content tables (Bengali lives in its pack, shown only when chosen)', !/[\u0980-\u09FF]/.test(stripComments(src) + stripComments(read(`${LIB}/content.ts`))));
+	ok('4. the hero photo and the console window load eagerly, everything else lazily', /<Cover [^>]*photo=\{hero\}[^>]* eager /.test(hero) && (src.match(/loading="eager"/g) ?? []).length === 1 && /<img src=\{win\.src\}[^>]*loading="eager"/.test(hero) && !/\beager\b/.test(src.slice(src.indexOf('</header>'))) && (src.match(/loading="lazy"/g) ?? []).length >= 2);
 	const photos = [C.heroPhoto(), C.endPhoto(), ...C.cityPhotos()];
 	const files = photos.flatMap((p) => [`static/photos/${p.slug}-640.webp`, `static/photos/${p.slug}-1600.webp`]);
 	for (const s of C.STEPS) files.push(`static${s.art}`);
@@ -209,8 +212,11 @@ const EN = packs.LANDING_PACKS.en;
 	const cover = read('src/lib/v3/media/Cover.svelte');
 	ok('5. every reference photo (hero, city strip, closing band) is drawn by Cover, which prints "Reference photo · not live" and the credit on the picture', (src.match(/<Cover [^>]*photo=\{(hero|end|p)\}/g) ?? []).length === 3 && !/photoSrc|\/photos\/[a-z0-9-]+-(640|1600)/.test(src) && /'v3i_ref_photo'/.test(cover) && /\{photo\.credit\}/.test(cover) && media.MEDIA_PACKS.en.v3i_ref_photo === 'Reference photo · not live');
 	ok('5. every key art under a step is captioned "Illustration"', /<figcaption class="cap" data-testid="land-step-caption">\{t\(lang, 'v3l_illustration'\)\}/.test(src) && EN.v3l_illustration === 'Illustration');
-	const oldShots = has('static/landing') ? readdirSync(path.join(DECK, 'static/landing')).filter((f) => f !== 'NOTICE.md') : [];
-	ok('5. no console screenshot of another city: they come back only when taken on the Kolkata network', !/\/landing\/console-/.test(src + read(`${LIB}/content.ts`)) || oldShots.length > 0, oldShots.join());
+	const shotFiles = has('static/landing') ? readdirSync(path.join(DECK, 'static/landing')).filter((f) => f !== 'NOTICE.md') : [];
+	const noticeNow = has('static/landing/NOTICE.md') ? read('static/landing/NOTICE.md') : '';
+	const shotsOk = Object.values(C.SHOTS).every((sh) => shotFiles.includes(sh.src.replace('/landing/', '')) && sh.srcset.split(', ').every((e) => shotFiles.includes(e.split(' ')[0].replace('/landing/', ''))) && noticeNow.includes(sh.src.replace('/landing/', '').replace('-1600.webp', '-{800,1600}.webp')));
+	ok('5. every console screenshot is on disk, Kolkata\'s, listed in the notice, and no other screenshot ships', shotsOk && shotFiles.every((f) => Object.values(C.SHOTS).some((sh) => sh.srcset.includes(f))) && /Kolkata/.test(noticeNow), shotFiles.join());
+	ok('5. the screenshot carries its honest caption on the picture ("Console screenshot · exercise data")', /<figcaption class="shot-tag" data-testid="land-shot-caption">\{t\(lang, 'v3l_shot_tag'\)\}/.test(src) && EN.v3l_shot_tag === 'Console screenshot · exercise data');
 	ok('5. the figures carry the dashed Modelled tag and the note (model outputs, not field measurements, not patient outcomes)', /class="tag-dashed">\{t\(lang, 'v3l_modelled'\)\}/.test(src) && /not field measurements/.test(EN.v3l_modelled_note) && /not a claim about patient outcomes/.test(EN.v3l_modelled_note));
 	const report = read('../../IMPACT_REPORT.md');
 	const pending = C.TODO_IMPACT.pending === true;
@@ -234,13 +240,12 @@ const EN = packs.LANDING_PACKS.en;
 	const S = tokens.V3_SHARED;
 	const css = read('src/lib/v3/tokens.css');
 	const land = ['--v3-land-hero', '--v3-land-section', '--v3-land-lead', '--v3-land-figure', '--v3-land-lockup', '--v3-land-max'];
-	ok('6. the Kolkata-taxi tokens live in tokens.ts and tokens.css', ['--v3-land-taxi', '--v3-land-taxi-ink'].every((k) => k in S && css.includes(`${k}: ${S[k]};`)) && S['--v3-land-taxi'] === '#FFC800');
+	ok('6. no Kolkata-taxi token: the landing is neutral (the turn is carried by type, not colour)', !Object.keys(S).some((k) => /taxi/.test(k)) && !/--v3-land-taxi/.test(css));
 	ok('6. the landing tokens live in tokens.ts and tokens.css (both steps)', land.every((k) => k in S && k in tokens.V3_COMPACT && css.includes(`${k}: ${S[k]};`) && css.includes(`${k}: ${tokens.V3_COMPACT[k]};`)));
 	ok('6. the poster type is the landing scale (tagline ≥ 96 px, lockup ≥ 64 px at 1920)', parseFloat(S['--v3-land-hero']) >= 96 && parseFloat(S['--v3-land-lockup']) >= 64);
 	const src = read(LANDING);
-	ok('6. motion stops under prefers-reduced-motion (the photo, the words)', /prefers-reduced-motion: reduce\)[\s\S]*?\.hero-photo,\s*\.hero-copy > \* \{\s*animation: none;/.test(src));
-	const taxiUses = [...src.matchAll(/var\(--v3-land-taxi[\w-]*\)/g)].length;
-	ok('6. Kolkata-taxi yellow colours only the tagline\'s turn (one rule), never a control or a state', taxiUses === 1 && /\.t-turn \{\s*color: var\(--v3-land-taxi\);/.test(src), `${taxiUses} uses`);
+	ok('6. motion stops under prefers-reduced-motion (the photo, the words, the window)', /prefers-reduced-motion: reduce\)[\s\S]*?\.hero-photo,\s*\.hero-copy > \*,\s*\.window \{\s*animation: none;/.test(src));
+	ok('6. the tagline\'s turn is white and its lead grey (type, not a colour)', /\.t-turn \{\s*color: var\(--v3-t1\);/.test(src) && /\.t-lead \{\s*color: var\(--v3-t3\);/.test(src) && !/--v3-land-taxi/.test(src));
 	const sw = read(`${LIB}/LangSwitch.svelte`);
 	ok('6. touch-sized controls: language buttons ≥ 40 px tall and 44 px wide, the CTAs the console pill (56 px)', /min-width: 44px;\s*min-height: 40px;/.test(sw) && /height: var\(--v3-ctl-xl\);/.test(src));
 	ok('6. the language switch speaks each language in its own script, pressed state in words (aria-pressed)', /lang=\{s\.code\}/.test(sw) && /aria-pressed=\{lang === s\.code\}/.test(sw) && /writeLangCookie\(code\)/.test(read(PAGE)) && /document\.documentElement\.lang = lang/.test(read(PAGE)));

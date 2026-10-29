@@ -69,7 +69,7 @@ const en = {
 	dss_agency_ambulance: 'Ambulance (108)',
 	dss_agency_police: 'Police',
 	dss_agency_traffic: 'Traffic police',
-	dss_agency_jan_rakshak: 'Emergency response (112)',
+	dss_agency_jan_rakshak: 'Civic Volunteers',
 	dss_agency_fire: 'Fire and emergency',
 
 	// ── the COA review (the card body) ─────────────────────────────────────

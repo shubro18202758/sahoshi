@@ -57,7 +57,8 @@
  *   8. the registry: the required layer ids and unique pick prefixes (never
  *      an exact count, X7/X14), every layer in a LayerTree group, the
  *      reserved osint / places ids and prefixes;
- *   9. the NEUTRAL flow ramp under chrome v2: flowStyle(flowStop(c)) widths
+ *   9. the flow ramp under chrome v2 (live map, 29 Oct: the band ladder green / amber / red by V/C or congestion, the
+ *      neutral ramp's widths, never under 3 px): flowStyle(flowStop(c)) widths
  *      and luminance, the casing from stop 3, a NO DATA trace dimmer than
  *      free, 60 % and 0.5 px thinner under a selection;
  *  10. every layer under chrome v2 reads --v-map-* / --v-flow-* and never
@@ -986,32 +987,34 @@ async function flowV2(body, view) {
 	const jam = M.TOK.flowStyle(5);
 	const live = M.V.emptyView('v2');
 	const { lines, cards } = await flowV2({ observations: [liveRow(1005, 50, 0.1), liveRow(1006, 8, 0.95), liveRow(1015, 20, 0.5)] }, live);
+	// live map (29 Oct): a road's congestion reads in the band ladder — green free, amber slow, red jammed — and in width
+	const band = (k) => TOKENS[k].toLowerCase();
 	const j = lines['seg:1006'];
 	check(
-		'v2 flow: a jammed road comes forward — stop 5 width + its casing, --v-flow-5 opaque',
-		j?.material?.outlined === true && j.width === jam.width + 2.5 && j.material.outlineWidth === 2.5 && cssOfColor(j.material.color) === M.SYM.inkAlpha(jam.color, 1),
+		'v2 flow: a jammed road comes forward — stop 5 width (≥ 3 px) + the dark casing, --v-band-red opaque',
+		j?.material?.outlined === true && j.width === Math.max(3, jam.width) + 2.5 && j.material.outlineWidth === 2.5 && cssOfColor(j.material.color) === M.SYM.inkAlpha(band('--v-band-red'), 1),
 		JSON.stringify({ w: j?.width, c: cssOfColor(j?.material?.color), o: j?.material?.outlineWidth }),
 	);
 	const m = lines['seg:1015'];
-	check('v2 flow: the casing starts at stop 3 (moderate)', m?.material?.outlined === true && m.width === mid.width + 2.5 && mid.casing !== null && free.casing === null);
+	check('v2 flow: a slow road (stop 3) is --v-band-amber on the casing', m?.material?.outlined === true && m.width === Math.max(3, mid.width) + 2.5 && cssOfColor(m.material.color) === M.SYM.inkAlpha(band('--v-band-amber'), 1));
 	const f = lines['seg:1005'];
 	check(
-		'v2 flow: a free road stays legible — stop 1, thin, --v-flow-1 at 95 %, its dashes on the dark ground casing (a schematic chord stays dashed)',
-		f?.material?.dashed === true && f.width === free.width && cssOfColor(f.material.color) === M.SYM.inkAlpha(free.color, 0.95) && !!f.material.gapColor,
+		'v2 flow: a free road stays legible — stop 1, at least 3 px, --v-band-green at 95 %, its dashes on the dark ground casing (a schematic chord stays dashed)',
+		f?.material?.dashed === true && f.width === Math.max(3, free.width) && cssOfColor(f.material.color) === M.SYM.inkAlpha(band('--v-band-green'), 0.95) && !!f.material.gapColor,
 		JSON.stringify({ w: f?.width, c: cssOfColor(f?.material?.color) }),
 	);
 	const used = Object.values(lines).flatMap((l) => [cssOfColor(l.material?.color ?? l.material)].filter(Boolean));
-	const rampValues = [1, 2, 3, 4, 5].map((s) => TOKENS[`--v-flow-${s}`].toLowerCase());
-	const neutral = used.every((css) => {
+	const ladder = ['--v-band-green', '--v-band-amber', '--v-band-red'].map((k) => M.SYM.inkAlpha(band(k), 1).replace(/, [\d.]+\)$/, ''));
+	const neutralTrace = (css) => {
 		const mm = /rgba\((\d+), (\d+), (\d+)/.exec(css);
 		return !!mm && Math.max(+mm[1], +mm[2], +mm[3]) - Math.min(+mm[1], +mm[2], +mm[3]) <= 30;
-	});
-	check('v2 flow: every road is a luminance step of the neutral ramp, never a hue', neutral && rampValues.every((v) => /^#/.test(v)), used.join(' | '));
-	const hues = ['--v-band-green', '--v-band-amber', '--v-band-red', '--v-act', '--v-data', '--v-tool'].map((k) => TOKENS[k].toLowerCase());
-	check('v2 flow: no band, act, data or tool colour on the roads', !used.some((css) => hues.some((h) => css.includes(h))));
+	};
+	check('v2 flow: every coloured road is a step of the band ladder (green, amber, red); a road without a reading stays a neutral trace', used.every((css) => ladder.some((h) => css.startsWith(h)) || neutralTrace(css)), used.join(' | '));
+	const hues = ['--v-act', '--v-data', '--v-tool'].map((k) => M.SYM.inkAlpha(TOKENS[k].toLowerCase(), 1).replace(/, [\d.]+\)$/, ''));
+	check('v2 flow: never the decision orange, the data or the tool blue on the roads', !used.some((css) => hues.some((h) => css.startsWith(h))));
 	const sel = await flowV2({ observations: [liveRow(1006, 8, 0.95)] }, { ...live, selection: 'vehicle:X', items: ['vehicle:X'], version: 2 });
 	const js = sel.lines['seg:1006'];
-	check('v2 flow: under a selection 60 % and 0.5 px thinner', js?.width === jam.width - 0.5 + 2.5 && cssOfColor(js.material.color) === M.SYM.inkAlpha(jam.color, 1 * 0.6), JSON.stringify({ w: js?.width, c: cssOfColor(js?.material?.color) }));
+	check('v2 flow: under a selection 60 % and 0.5 px thinner', js?.width === Math.max(3, jam.width) - 0.5 + 2.5 && cssOfColor(js.material.color) === M.SYM.inkAlpha(band('--v-band-red'), 1 * 0.6), JSON.stringify({ w: js?.width, c: cssOfColor(js?.material?.color) }));
 	const nd = sel.lines['seg:1015'];
 	check('v2 flow: a NO DATA road is a 1 px trace dimmer than free', nd?.width === 1 && cssOfColor(nd.material) === M.SYM.inkAlpha(free.color, 0.35 * 0.6), JSON.stringify({ w: nd?.width, c: cssOfColor(nd?.material) }));
 	const emu = await flowV2({ observations: [liveRow(1005, 41, 0.35)], emulated_observations: [emuRow(1005, 8, 0.92)] }, live);
@@ -1762,23 +1765,10 @@ const MINUTE = 60_000;
 // picture (no hydro or forecast rows in it), so only their coverage stats are fingerprinted; every other entry unchanged.
 // 2026-10-28 (city-feeds): the air-quality and cyclone layers join the record — each draws nothing from the fixed
 // picture (no city-feeds answer in it), so only their coverage stats are fingerprinted; every other entry unchanged.
+// 2026-10-29 (live map): the City Pack places and the live readings join the record — each draws nothing from the
+// fixed picture (no primitive collections in the test double), so only their coverage stats are fingerprinted; the
+// flow layer's stats gain its moving-dot and V/C counts; every legacy entity fingerprint unchanged.
 const LEGACY_RECORD = {
-	"air": {
-		"ents": {},
-		"stats": "2d557e31b97f"
-	},
-	"cyclone": {
-		"ents": {},
-		"stats": "91950448b5ad"
-	},
-	"waterlog": {
-		"ents": {},
-		"stats": "86507be7e01c"
-	},
-	"forecast": {
-		"ents": {},
-		"stats": "6d993a9e8762"
-	},
 	"events": {
 		"ents": {
 			"evt:mark-ev-pm": "d09e00286c5f",
@@ -1798,7 +1788,15 @@ const LEGACY_RECORD = {
 			"seg:1006": "90c06769e31f",
 			"seg:1015": "2742ac3bfa15"
 		},
-		"stats": "adb67cbeb0b3"
+		"stats": "f4cdc722f001"
+	},
+	"waterlog": {
+		"ents": {},
+		"stats": "86507be7e01c"
+	},
+	"forecast": {
+		"ents": {},
+		"stats": "6d993a9e8762"
 	},
 	"traces": {
 		"ents": {
@@ -1875,11 +1873,27 @@ const LEGACY_RECORD = {
 		},
 		"stats": "1e483ba83510"
 	},
+	"air": {
+		"ents": {},
+		"stats": "2d557e31b97f"
+	},
+	"cyclone": {
+		"ents": {},
+		"stats": "91950448b5ad"
+	},
 	"places": {
 		"ents": {
 			"place:sector_v_salt_lake_106": "9a9706db7f73"
 		},
 		"stats": "344cd5eb5c4d"
+	},
+	"landmarks": {
+		"ents": {},
+		"stats": "29c64145b87a"
+	},
+	"livevalues": {
+		"ents": {},
+		"stats": "0b21936679dd"
 	},
 	"pursuit": {
 		"ents": {
@@ -2161,7 +2175,7 @@ const LEGACY_RECORD = {
 	const AIR = { label: 'MODELLED', stations: [site('victoria_memorial', 62, 'satisfactory', 88.34), site('ghusuri', 230, 'poor', 88.35), site('belur_math', 420, 'severe', 88.36)], city: { aqi: 420, band: 'severe', band_en: 'Severe', worst_site_name: 'site belur_math' } };
 	const a = await drawAi(M.AQ.airLayer, AIR);
 	const dot = (id) => a.ents[`aq:${id}`]?.billboard;
-	check('air: one dot, one veil and an "AQI n" label per site; a worse band draws a larger dot', !!dot('victoria_memorial') && !!a.ents['aq:veil-ghusuri']?.ellipse && a.ents['aq:belur_math'].label.text === 'AQI 420' && dot('belur_math').width > dot('ghusuri').width && dot('ghusuri').width > dot('victoria_memorial').width, JSON.stringify([dot('victoria_memorial')?.width, dot('ghusuri')?.width, dot('belur_math')?.width]));
+	check('air: one dot, one veil and a "place · AQI n" label per site (the label joins the map\'s one label budget); a worse band draws a larger dot', !!dot('victoria_memorial') && !!a.ents['aq:veil-ghusuri']?.ellipse && M.AQ.airLabel(AIR.stations[2], 'en') === 'site belur_math · AQI 420 (modelled)' && dot('belur_math').width > dot('ghusuri').width && dot('ghusuri').width > dot('victoria_memorial').width, JSON.stringify([dot('victoria_memorial')?.width, dot('ghusuri')?.width, dot('belur_math')?.width]));
 	check('air: the band ladder tokens only (green · red · the black fill with its hairline), never --v-act, --v-data or --v-tool', a.reads.includes('--v-band-green') && a.reads.includes('--v-band-red') && a.reads.includes('--v-band-black-fill') && !a.reads.some((n) => /^--v-(act|data|tool)(-|$)/.test(n)), a.reads.join(' '));
 	check('air: the pick text is honest (indicative, modelled, not the station reading) and picks → a place URN', /indicative National AQI 230, poor/.test(a.ents['aq:ghusuri'].description) && /not the station's own reading/.test(a.ents['aq:ghusuri'].description) && a.stats.count === 3 && a.stats.detail.worst_band === 5 && a.left === 0);
 	check('air: urnOf maps a site pick to place:aq_<site>', M.AQ.airLayer.create().urnOf('aq:ghusuri') === 'place:aq_ghusuri');

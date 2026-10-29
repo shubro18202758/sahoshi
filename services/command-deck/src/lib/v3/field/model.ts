@@ -922,7 +922,7 @@ export function speakable(text: string, max = SPEAK_MAX): string {
 	return (end > max * 0.4 ? cut.slice(0, end + 1) : cut).trim();
 }
 
-/** The language a public page speaks in: its own (bn | en | hi), Bengali for anything else. */
+/** The language a public page speaks in: its own (bn | en | hi), English for anything else (the product's default). */
 export function speakLang(lang: string | null | undefined): SpokenLang {
-	return lang === 'en' || lang === 'hi' ? lang : 'bn';
+	return lang === 'bn' || lang === 'hi' ? lang : 'en';
 }

@@ -17,7 +17,7 @@
   <rect x="20" y="78" width="1440" height="900" rx="0" fill="#FFFFFF" stroke="#4A4A4A" stroke-width="1.5"/>
   <!-- AppRail: 76 px below 1500 px wide (88 px at &gt;= 1500); icon + label, never icon-only -->
   <rect x="20" y="78" width="76" height="900" rx="0" fill="#E8E8E8" stroke="#A2A2A2" stroke-width="1.2"/>
-  <rect x="36" y="90" width="44" height="44" rx="10" fill="#F7C600" stroke="#8A6D00" stroke-width="1.2"/>
+  <rect x="36" y="90" width="44" height="44" rx="10" fill="#1A1A1A" stroke="#4A4A4A" stroke-width="1.2"/>
   <text x="58" y="119" font-size="20" font-weight="700" text-anchor="middle" fill="#262626">স</text>
   <rect x="28" y="148" width="60" height="56" rx="10" fill="#E8E8E8" stroke="#A2A2A2" stroke-width="1"/>
   <circle cx="58" cy="168" r="8" fill="#DCDCDC" stroke="#989898" stroke-width="1"/>

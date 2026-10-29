@@ -105,6 +105,19 @@
 			transform var(--v3-dur-2) var(--v3-ease),
 			border-color var(--v3-dur-2),
 			box-shadow var(--v3-dur-2);
+		/* a card that joins a rail (a new decision, a new report) arrives softly: 200 ms */
+		animation: v3c-enter var(--v3-dur-2) var(--v3-ease) both;
+	}
+
+	@keyframes v3c-enter {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
 	}
 
 	.card:hover {
@@ -156,9 +169,11 @@
 		width: 32%;
 		aspect-ratio: 16 / 10;
 		overflow: hidden;
-		border: 1px solid var(--v3-line-2);
+		border: 1px solid var(--v3-glass-border);
 		border-radius: var(--v3-radius-m);
-		background: var(--v3-glass);
+		background: var(--v3-glass-bg);
+		-webkit-backdrop-filter: var(--v3-glass-blur);
+		backdrop-filter: var(--v3-glass-blur);
 		box-shadow: var(--v3-elev-1);
 	}
 
@@ -255,6 +270,7 @@
 		.card:hover {
 			transform: none;
 			transition: none;
+			animation: none;
 		}
 	}
 </style>

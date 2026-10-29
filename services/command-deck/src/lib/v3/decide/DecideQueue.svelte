@@ -447,8 +447,26 @@
 		outline-offset: 2px;
 	}
 
-	/* §6.10: below 1500 px the queue is its art only (92 px) */
+	/* the 1366 class: the labelled queue stays (a cryptic strip of art reads as nothing), a little tighter */
 	@media (max-width: 1500px) {
+		.q {
+			grid-template-columns: 52px minmax(0, 1fr);
+			gap: 10px;
+			padding: 8px;
+		}
+
+		.mini {
+			width: 52px;
+			height: 52px;
+		}
+
+		.tt {
+			font-size: var(--v3-text-body);
+		}
+	}
+
+	/* below 1280 px the queue is its art only (92 px) */
+	@media (max-width: 1279px) {
 		.queue {
 			align-items: center;
 			padding: 14px 8px;
@@ -468,6 +486,11 @@
 			position: relative;
 			grid-template-columns: 64px;
 			padding: 4px;
+		}
+
+		.mini {
+			width: 64px;
+			height: 64px;
 		}
 
 		.empty img {

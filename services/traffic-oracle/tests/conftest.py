@@ -229,3 +229,15 @@ def _fresh_schema_probes():
     common.reset_relation_cache()
     yield
     common.reset_relation_cache()
+
+
+@pytest.fixture(autouse=True)
+def _scope_gate_for_legacy_fixtures(request, monkeypatch):
+    """A test module whose synthetic OSINT fixtures predate the scope rule (a reported clash beside a collision,
+    a reported robbery) sets ``SCOPE_GATE_OFF = True`` to exercise fusion, decision-support and promotion
+    mechanics on them; every other module, and the service, run with the gate on."""
+    if getattr(request.module, "SCOPE_GATE_OFF", False):
+        from traffic_oracle.osint import ingest
+
+        monkeypatch.setattr(ingest, "SCOPE_GATE", False)
+

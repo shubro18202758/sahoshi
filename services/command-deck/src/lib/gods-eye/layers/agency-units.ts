@@ -33,6 +33,8 @@ import { markerBillboard, tagMarker, type MarkerMeta } from '../hud/map/symbols'
 import { agencyColor, agencyLabel, agencyTextColor, unitPhase } from './agency';
 import { clampedDot, clampedLabel, drapeAudit, ground } from './draping';
 import { labelPlate } from './labels';
+import { UNIT_GLIDE_MS, UNIT_JUMP_M, unitTag } from '../hud/map/live-marks';
+export { UNIT_GLIDE_MS, UNIT_JUMP_M, unitTag };
 
 export const AGENCY_UNITS_PICK_PREFIX = 'unit:';
 
@@ -58,16 +60,37 @@ function createAgencyUnitsLayer(): GodsEyeLayerInstance {
 	let timer: ReturnType<typeof setInterval> | null = null;
 	const entityIds: string[] = [];
 	let lastSignature = '';
+	/**
+	 * Chrome v2 motion (live map, 29 Oct): a unit glides from where it is drawn to its newly REPORTED position over
+	 * one poll (UNIT_GLIDE_MS) instead of jumping — the marker shows the last report, reached a moment late, never a
+	 * position the feed did not send. A jump of more than UNIT_JUMP_M (a new run, a reassignment) does not glide.
+	 */
+	const glide = new Map<string, { from: [number, number]; to: [number, number]; t0: number }>();
+	const glideAt = (g: { from: [number, number]; to: [number, number]; t0: number }, now: number): [number, number] => {
+		const k = Math.max(0, Math.min(1, (now - g.t0) / UNIT_GLIDE_MS));
+		return [g.from[0] + (g.to[0] - g.from[0]) * k, g.from[1] + (g.to[1] - g.from[1]) * k];
+	};
+	function glideTo(id: string, lon: number, lat: number) {
+		const now = performance.now();
+		const cur = glide.get(id);
+		if (!cur) return void glide.set(id, { from: [lon, lat], to: [lon, lat], t0: now });
+		if (cur.to[0] === lon && cur.to[1] === lat) return;
+		const at = glideAt(cur, now);
+		const far = Math.hypot((lon - at[0]) * 102_800, (lat - at[1]) * 110_600) > UNIT_JUMP_M;
+		glide.set(id, { from: far ? [lon, lat] : at, to: [lon, lat], t0: now });
+	}
 
 	function draw() {
 		if (!ctx || !active) return;
 		const { cesium, viewer } = ctx;
 		const units = godsEye.units;
+		const v2 = chromeOf(ctx) === 'v2';
+		for (const u of units) glideTo(u.unitId, u.lon, u.lat);
+		// v2: a moved unit glides (no rebuild); the legacy chrome redraws on every move as before
 		const sig = JSON.stringify([
-			units.map((u) => [u.unitId, u.agency, u.lon, u.lat, u.emulated, unitStatusLine(u)]),
+			units.map((u) => [u.unitId, u.agency, ...(v2 ? [] : [u.lon, u.lat]), u.emulated, v2 ? u.status : unitStatusLine(u)]),
 			godsEye.unitsFeed.status,
 		]);
-		const v2 = chromeOf(ctx) === 'v2';
 		if (sig === lastSignature) return;
 		lastSignature = sig;
 
@@ -85,12 +108,20 @@ function createAgencyUnitsLayer(): GodsEyeLayerInstance {
 					glyph: kindIcon('unit'),
 					shape: 'disc',
 					cluster: true,
-					label: [{ id: u.label ?? u.unitId }],
-					labelWhen: 'hover',
+					// the unit's id and what it is doing, always (the live city's units are part of the picture)
+					label: [{ id: unitTag(u) }],
+					labelWhen: 'always',
 				};
+				const unitId = u.unitId;
 				const entity = viewer.entities.add({
 					id: `${AGENCY_UNITS_PICK_PREFIX}${u.unitId}`,
-					position: ground(cesium, u.lon, u.lat),
+					position: cesium.CallbackProperty
+						? new cesium.CallbackProperty(() => {
+								const g = glide.get(unitId);
+								const [lon, lat] = g ? glideAt(g, performance.now()) : [u.lon, u.lat];
+								return ground(cesium, lon, lat);
+							}, false)
+						: ground(cesium, u.lon, u.lat),
 					billboard: markerBillboard(cesium, meta),
 					description: `Unit ${u.label ?? u.unitId} (${agencyLabel(u.agency)}): ${status}${
 						u.arrived === true ? ', arrived' : u.etaSec != null ? `, ETA ${Math.max(0, Math.round(u.etaSec))} s` : ''

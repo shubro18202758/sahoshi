@@ -13,10 +13,15 @@ phase, the Puja calendar) say so where they are defined.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
 __all__ = [
     "IST",
+    "UNIT_ROLES",
+    "UnitRole",
+    "unit_label",
+    "unit_role",
     "CITY_ID",
     "CITY_NAME",
     "FALLBACK_ANCHOR",
@@ -96,6 +101,47 @@ PATROL_AGENCY = "traffic"
 PATROL_AGENCY_LABEL = "Kolkata Traffic Police"
 #: Unit ids carry the EM marker like every emulated plate.
 PATROL_UNIT_PREFIX = "KTP-EM"
+
+
+@dataclass(frozen=True)
+class UnitRole:
+    """What a living-city field unit is, from its id prefix (C-A agency code,
+    label prefix, C-A status while it rides its beat, beat speed).  Speeds
+    are MODELLED urban averages, not measurements."""
+
+    agency: str
+    label: str
+    status: str
+    speed_kmh: float
+    beat_word: str
+
+
+#: The living city's emulated field units by unit-id prefix (longest prefix
+#: first).  Agencies are the oracle's closed C-A registry; statuses its
+#: closed vocabulary ('available' is an ambulance (108) on a standby
+#: circuit, not on a call).  Every id carries the EM marker.
+UNIT_ROLES: tuple[tuple[str, UnitRole], ...] = (
+    ("KP-EM-PCR", UnitRole("police", "Kolkata Police PCR", "patrol", 22.0, "beat")),
+    ("108-EM-LC", UnitRole("ambulance", "Ambulance (108)", "available", 24.0, "standby circuit")),
+    (PATROL_UNIT_PREFIX, UnitRole(PATROL_AGENCY, PATROL_AGENCY_LABEL, "patrol", 18.0, "beat")),
+)
+
+
+def unit_role(unit_id: str) -> UnitRole:
+    """The role of a living-city unit id (ValueError on an unknown prefix)."""
+    for prefix, role in UNIT_ROLES:
+        if unit_id.startswith(prefix):
+            return role
+    raise ValueError(f"no living-city role for unit id {unit_id!r}")
+
+
+def unit_label(unit_id: str, beat: str) -> str:
+    """The unit's C-A label: '<agency> <id> · <beat> beat' (traffic and
+    police) or '<agency> <id> · standby circuit, <roads>' (ambulance)."""
+    role = unit_role(unit_id)
+    if role.beat_word == "beat":
+        return f"{role.label} {unit_id} · {beat} beat"
+    return f"{role.label} {unit_id} · {role.beat_word}, {beat}"
 
 # ── places (landmarks.json, verbatim) ───────────────────────────────────────
 

@@ -46,7 +46,7 @@ export const hi: Pack = {
 	dss_agency_ambulance: 'एम्बुलेंस (108)',
 	dss_agency_police: 'पुलिस',
 	dss_agency_traffic: 'यातायात पुलिस',
-	dss_agency_jan_rakshak: 'आपातकालीन सहायता (112)',
+	dss_agency_jan_rakshak: 'सिविक वॉलंटियर',
 	dss_agency_fire: 'अग्नि और आपात',
 	dss_coa_list: 'कार्य-विकल्प',
 	dss_coa_rank: (rank) => `क्रम ${s(rank)}`,

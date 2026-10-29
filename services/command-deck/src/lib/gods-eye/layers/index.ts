@@ -30,6 +30,8 @@ import { waterloggingLayer } from './waterlogging';
 import { forecastLayer } from './forecast';
 import { airLayer } from './air';
 import { cycloneLayer } from './cyclone';
+import { landmarksLayer } from './landmarks';
+import { liveValuesLayer } from './live-values';
 
 export const GODS_EYE_LAYERS: ReadonlyArray<GodsEyeLayer> = validateLayers([
 	corridorEventsLayer,
@@ -48,6 +50,8 @@ export const GODS_EYE_LAYERS: ReadonlyArray<GodsEyeLayer> = validateLayers([
 	airLayer,
 	cycloneLayer,
 	placesLayer,
+	landmarksLayer,
+	liveValuesLayer,
 	photoreal3dLayer,
 ]);
 

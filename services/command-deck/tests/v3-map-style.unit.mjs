@@ -268,6 +268,23 @@ const origLog = console.log;
 	ok('quota: the cap is 800 requests a tab session', sat.SAT_SESSION_CAP === 800);
 }
 {
+	// the hero reserve: a card yields the last SAT_HERO_RESERVE requests to the eager heroes; the cap itself is unchanged
+	const r = rig();
+	r.src.configure(TOKEN);
+	await r.src.tile(15, 1, 1); // setup (2) + 1 tile
+	r.setCounter(sat.SAT_SESSION_CAP - sat.SAT_HERO_RESERVE - 2);
+	const cards = [];
+	for (let i = 0; i < 5; i++) cards.push(await r.src.tile(15, 200 + i, 5, 'card'));
+	const cardSent = r.log.filter((l) => l.kind === 'tile').length - 1;
+	ok('quota: a card stops at the hero reserve (night tiles for it), silently and without standing the session down', cardSent === 2 && cards.filter(Boolean).length === 2 && r.counter() === sat.SAT_SESSION_CAP - sat.SAT_HERO_RESERVE && r.degrades.length === 0 && r.src.available === true, `sent ${cardSent}, counter ${r.counter()}`);
+	const hero = await r.src.tile(15, 300, 5, 'hero');
+	ok('quota: a hero still draws satellite inside the reserve', !!hero && r.counter() === sat.SAT_SESSION_CAP - sat.SAT_HERO_RESERVE + 1);
+	r.setCounter(sat.SAT_SESSION_CAP - 1);
+	const last = [await r.src.tile(15, 301, 5, 'hero'), await r.src.tile(15, 302, 5, 'hero')];
+	ok('quota: the reserve ends at the same hard cap (800): the hero\'s 801st request is never sent', !!last[0] && last[1] === null && r.counter() === sat.SAT_SESSION_CAP && r.degrades.join() === 'cap' && sat.SAT_HERO_RESERVE === 200);
+	ok('quota: MapThumb asks as a hero only when eager (Home\'s featured decision, a stage), as a card otherwise', /satelliteTile\(t\.z, t\.x, t\.y, eager \? 'hero' : 'card'\)/.test(readFileSync(path.join(DECK, 'src/lib/v3/map/MapThumb.svelte'), 'utf8')));
+}
+{
 	// a reload loop cannot reset the cap: a fresh source on an exhausted store sends nothing
 	const r = rig();
 	r.setCounter(sat.SAT_SESSION_CAP);
@@ -402,7 +419,7 @@ for (const status of [401, 403]) {
 	ok('caps: an eager hero / stage / map backdrop frames to ≤ 40 satellite tiles at 1920 and 1366', hero.length === 0 && sat.SAT_HERO_TILES === 40, hero.join(' | '));
 	const thumb = read('lib/v3/map/MapThumb.svelte');
 	ok('caps: MapThumb frames satellite to min(maxTiles, 6 on a card | 40 eager)', /const tileCap = \$derived\(eff === 'satellite' \? Math\.min\(maxTiles, eager \? SAT_HERO_TILES : SAT_CARD_TILES\) : maxTiles\)/.test(thumb) && /maxTiles: tileCap/.test(thumb));
-	ok('caps: night and satellite tiles share ONE queue (≤ 4 in flight in all) and one LRU', /limiter: \{ acquire: slot, release \}/.test(read('lib/v3/map/tiles.ts')) && /const MAX_IN_FLIGHT = 4/.test(read('lib/v3/map/tiles.ts')) && sat.SAT_MAX_IN_FLIGHT === 4 && /sat:\$\{z\}/.test(read('lib/v3/map/tiles.ts')));
+	ok('caps: night and satellite tiles share ONE queue (≤ 4 in flight in all) and one LRU', /limiter: \{ acquire: satSlot, release: satRelease \}/.test(read('lib/v3/map/tiles.ts')) && /const SAT_SHARE = 3;/.test(read('lib/v3/map/tiles.ts')) && /const MAX_IN_FLIGHT = 4/.test(read('lib/v3/map/tiles.ts')) && sat.SAT_MAX_IN_FLIGHT === 4 && /sat:\$\{z\}/.test(read('lib/v3/map/tiles.ts')));
 }
 
 // ─── contrast: overlays on the brightest and the darkest imagery ─────────────
@@ -527,7 +544,7 @@ for (const status of [401, 403]) {
 	}
 	const thumb = read('lib/v3/map/MapThumb.svelte');
 	ok('thumb: with no style prop it follows the shared preference (mapStyle.effective) and waits for the deck’s answer (null)', /const eff = \$derived<ThumbStyle \| null>\(style \?\? mapStyle\.effective\)/.test(thumb) && /st === null\) return;/.test(thumb) && /mapStyle\.ensure\(\)/.test(thumb));
-	ok('thumb: satellite tiles come from satelliteTile (ungraded); night tiles from gradedTile', /as === 'satellite' \? satelliteTile\(t\.z, t\.x, t\.y\) : gradedTile\(t\.z, t\.x, t\.y, grade\)/.test(thumb));
+	ok('thumb: satellite tiles come from satelliteTile (ungraded); night tiles from gradedTile', /as === 'satellite' \? satelliteTile\(t\.z, t\.x, t\.y, eager \? 'hero' : 'card'\) : gradedTile\(t\.z, t\.x, t\.y, grade, under\)/.test(thumb));
 	ok('thumb: no satellite tile came → the night tiles for that draw (never a blank)', /ok === 0 && st === 'satellite' && drawn === key[\s\S]{0,80}paint\('night'\)/.test(thumb));
 	ok('thumb: the key includes the style, so a fall back redraws', /const key = `\$\{st\}\|/.test(thumb));
 	ok('thumb: the imagery credit is a text line (never injected HTML), shown only for drawn satellite tiles', /\{#if shown === 'satellite' && creditText && creditRoom && creditInside\}[\s\S]{0,200}\{creditText\}<\/span>/.test(thumb) && !/\{@html/.test(thumb));

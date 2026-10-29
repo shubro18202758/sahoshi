@@ -357,7 +357,7 @@ const en = {
 	dec_life_cancelled: 'Cancel this event',
 
 	// ── LiveStrip feed ─────────────────────────────────────────────────────
-	dec_live_movement: (cls: unknown) => `VVIP movement · ${s(cls)}`,
+	dec_live_movement: (cls: unknown) => `Protected movement · ${s(cls)}`,
 	dec_live_vehicle: 'vehicle',
 	dec_live_band: (band: unknown) => `Band ${s(band)} during the movement`,
 	dec_band_red: 'Red',

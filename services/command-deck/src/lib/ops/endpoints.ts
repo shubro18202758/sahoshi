@@ -338,7 +338,7 @@ export const EMULATOR_HERO_USE_CASES: readonly string[] = ['durga_puja_north', '
 
 /** Suggested unit id per agency for a new request (emulated fleet labels). */
 export const DEFAULT_UNIT_ID: Record<string, string> = {
-	jan_rakshak: 'JR-EM-01',
+	jan_rakshak: 'CV-EM-01',
 	police: 'PCR-EM-01',
 	traffic: 'TP-EM-01',
 	ambulance: '108-EM-01',

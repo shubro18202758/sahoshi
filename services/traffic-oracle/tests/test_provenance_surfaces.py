@@ -60,6 +60,9 @@ from traffic_oracle.ingest.cache_writer import (
 from traffic_oracle.signals import router as signals_router_mod
 from traffic_oracle.units import router as units_router
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 NOW = datetime.now(timezone.utc)
 
 

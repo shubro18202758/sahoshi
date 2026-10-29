@@ -1066,6 +1066,10 @@
 	 * (audit E: the minimal Button's 14 px against 12 px panel text). */
 	.suggest :global([data-ui='button']) {
 		font-size: var(--v-text-xs);
+		/* a suggestion reads as a pill to tap, not as loose text (the V3 assistant's chips) */
+		border: 1px solid var(--v-line-2);
+		border-radius: var(--v-radius-pill);
+		padding-inline: var(--v-space-3);
 	}
 
 	.toggles {

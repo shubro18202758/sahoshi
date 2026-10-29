@@ -33,6 +33,9 @@
 	import { SAT_CARD_TILES, SAT_HERO_TILES } from './satellite';
 	import type { ThumbStyle } from './style-rules';
 
+	/** How long a thumb waits for its first satellite tiles before laying the night tiles underneath. */
+	const SAT_SLOW_MS = 2500;
+
 	interface Props {
 		overlay?: ThumbOverlay | null;
 		/** Frame this bbox; else the overlay's points; a single point is framed at `zoom`. */
@@ -165,14 +168,17 @@
 		g.clearRect(0, 0, w, h);
 		if (status !== 'ready') status = 'loading';
 		const bbox = framedBBox(fr, w, h);
-		const paint = async (as: ThumbStyle): Promise<number> => {
+		/** `under`: draw beneath what is already there (the night tiles laid under a slow satellite picture). */
+		const paint = async (as: ThumbStyle, under = false): Promise<number> => {
 			let ok = 0;
 			await Promise.all(
 				fr.tiles.map((t) =>
-					(as === 'satellite' ? satelliteTile(t.z, t.x, t.y) : gradedTile(t.z, t.x, t.y, grade)).then((tile) => {
+					(as === 'satellite' ? satelliteTile(t.z, t.x, t.y, eager ? 'hero' : 'card') : gradedTile(t.z, t.x, t.y, grade, under)).then((tile) => {
 						if (drawn !== key || !tile) return;
 						ok++;
+						g.globalCompositeOperation = under ? 'destination-over' : 'source-over';
 						g.drawImage(tile, t.dx, t.dy, 256, 256);
+						g.globalCompositeOperation = 'source-over';
 					}),
 				),
 			);
@@ -180,15 +186,33 @@
 		};
 		void (async () => {
 			let used = st;
+			// a slow satellite source (no answer within SAT_SLOW_MS: an unreachable ion, a cold setup) never leaves the place
+			// black: the night tiles go down UNDER the canvas at once and the satellite tiles land on top as they come
+			let under = 0;
+			let underRun: Promise<number> | null = null;
+			const slow =
+				st === 'satellite'
+					? setTimeout(() => {
+							if (drawn !== key) return;
+							underRun = paint('night', true).then((n) => {
+								under = n;
+								if (drawn === key && n > 0 && status !== 'ready') status = 'ready';
+								return n;
+							});
+						}, SAT_SLOW_MS)
+					: null;
 			let ok = await paint(st);
+			if (slow) clearTimeout(slow);
 			// no satellite tile came (a refusal, the cap, or no network for it): the night tiles for this draw
 			if (ok === 0 && st === 'satellite' && drawn === key) {
 				used = 'night';
-				ok = await paint('night');
+				ok = underRun ? await underRun : await paint('night');
 			}
 			if (drawn !== key) return;
 			shown = ok > 0 ? used : null;
 			imagery = ok > 0 && used === 'satellite' ? satellite.credit(fr.z, bbox) : { full: '', short: '' };
+			// satellite drew only part of the frame over the night tiles: the picture is both, and so is its credit
+			if (used === 'satellite' && under > 0 && ok < fr.tiles.length && imagery.full) imagery = { full: `${imagery.full} · © OpenStreetMap contributors`, short: `${imagery.short} · © OpenStreetMap contributors` };
 			status = ok > 0 ? 'ready' : 'offline';
 			if (imagery.full) mapStyle.imagery = imagery.full;
 		})();

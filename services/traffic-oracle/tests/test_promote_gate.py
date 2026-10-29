@@ -39,6 +39,9 @@ from fixtures.osint.signals import PLACES, FakePipeline, canonical_set, new_tag,
 from traffic_oracle import events as events_mod
 from traffic_oracle.osint import promote
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 OFFICER = "Sandbox Officer"

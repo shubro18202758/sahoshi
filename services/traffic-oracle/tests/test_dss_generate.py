@@ -36,6 +36,9 @@ from traffic_oracle.osint import store as osint_store
 from traffic_oracle.decision_support.feasibility import UnitPlane
 from traffic_oracle.decision_support.wargame import SegmentModel
 
+#: the synthetic OSINT fixtures here predate the scope rule (tests/conftest.py)
+SCOPE_GATE_OFF = True
+
 pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 UNKNOWN = "0b7e3c2a-2222-4d1e-9a8b-5c6d7e8f9a0b"

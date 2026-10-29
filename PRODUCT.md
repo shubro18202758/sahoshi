@@ -82,9 +82,9 @@ freezes.
 | **Cyclones** | Amphan (2020), Remal (2024) and Dana (2024) brought tree-falls that blocked arterials; recovery routes change by the hour. | Public record |
 | **Ambulances** | Ambulance (108) crews get caught in all of the above. Sahoshi writes it as "ambulance (108)" and claims no partnership with the operator. | Directory listing (not official) |
 
-**The common failure.** The data exists, spread across agencies. What is missing is one shared, trustworthy,
-Bengali-first picture that turns it into timely, accountable decisions, and a record of what was proposed, decided
-and why.
+**The common failure.** The data exists, spread across agencies. What is missing is one shared, trustworthy
+picture, in English, Bengali and Hindi, that turns it into timely, accountable decisions, and a record of what was
+proposed, decided and why.
 
 ## 3. Who it serves
 
@@ -92,7 +92,7 @@ and why.
 |---|---|---|
 | **Kolkata Traffic Police duty officer** (and Bidhannagar and Howrah City Police for their areas) | One queue of decisions, each with its reason, its modelled effect and its labels; plan a movement; file a voice report | The console: Home, Map, Decide, Plan |
 | **KMC and WBSDMA control room** | Rain, tide, pumps and waterlogging risk by road with lead times; the 2025 storm replay; advisory drafts in Bengali and English | The console: Home, Map, Advisories |
-| **Ambulance (108) crews** | A one-tap corridor request and its status; waterlogging "ambulance windows" | `/driver` (Bengali first) |
+| **Ambulance (108) crews** | A one-tap corridor request and its status; waterlogging "ambulance windows" | `/driver` (English first; বাংলা and हिंदी one tap away) |
 | **Citizens** | "Check your road" in বাংলা, English or हिंदी, with a Listen button; no sign-in, no location collected | `/citizen`, `/welcome` |
 
 **What Sahoshi is not.** It does not issue fines, drive signals or dispatch units on its own. It does not identify,
@@ -179,8 +179,9 @@ and no location are needed.
 
 ## 6. The interface, screen by screen
 
-*Screenshots are in [`docs/screenshots/`](docs/screenshots/); the list of planned files is in its
-[`README`](docs/screenshots/README.md). Wireframes of the key screens are in [`docs/wireframes/`](docs/wireframes/).*
+*Screenshots of the live system, taken on 29 Oct 2026, are in [`docs/screenshots/`](docs/screenshots/) (its
+[`README`](docs/screenshots/README.md) says how each was taken); wireframes of the key screens are in
+[`docs/wireframes/`](docs/wireframes/).*
 
 The interface is one web console, the **command deck**, at port 5373 of the Sahoshi server. Operator pages use a
 dark theme; public pages a light one. Both are neutral black, white and grey, and colour is kept for meaning:
@@ -191,9 +192,11 @@ demand*: each screen has one job and one primary action, and every power tool si
 
 ### 6.1 Landing (`/welcome`)
 
-![Landing](docs/screenshots/landing.jpg)
+<p align="center"><img width="100%" alt="Sahoshi's landing page in English" src="docs/screenshots/landing.jpg"></p>
 
-The public front door, Bengali first: the tagline over a credited photograph of Kolkata, the problem with its
+*Landing. The public front door: the neutral mark, the tagline and the two ways in, over a credited reference photo (not live).*
+
+The public front door, English first with বাংলা and हिंदी one tap away: the tagline over a credited photograph of Kolkata, the problem with its
 modelled figures, the four audiences, the principles, and what Sahoshi is built on with the agencies' and sources'
 marks ("marks belong to their owners; not affiliated"). **Open the console** leads to the officer sign-in, **Check
 your road** to the citizen page. No API calls.
@@ -210,7 +213,9 @@ your road** to the citizen page. No API calls.
 
 ### 6.3 Home (`/`)
 
-![Home](docs/screenshots/home.jpg)
+<p align="center"><img width="100%" alt="Home: the featured decision, the city pulse and the next two hours" src="docs/screenshots/home.jpg"></p>
+
+*Home. What needs an officer now, the city's band and four counts, and the next two hours (modelled).*
 
 Three questions: what needs me, what is happening, what is coming.
 
@@ -225,9 +230,15 @@ Three questions: what needs me, what is happening, what is coming.
 
 ### 6.4 Map (`/map`)
 
-| Waterlogging risk | Traffic forecast |
+| The live map, photoreal 3D | The live map, closer |
 |---|---|
-| ![Waterlogging layer](docs/screenshots/map-waterlogging.jpg) | ![Forecast layer](docs/screenshots/map-forecast.jpg) |
+| ![The live map of Kolkata in photoreal 3D over the Hooghly and Howrah Bridge](docs/screenshots/map-live-3d.jpg) | ![A closer view of the live map over Central Kolkata](docs/screenshots/map-live-3d-close.jpg) |
+| ** | *Closer in: each road's speed and V/C (simulated), events where they happen, units with their state (emulated).* |
+
+| The live map, 2D city map | Map: layers |
+|---|---|
+| ![The live map on the 2D city map](docs/screenshots/map-live-2d.jpg) | ![The map's Layers sheet](docs/screenshots/map-layers.jpg) |
+| *The City Pack drawn live: roads in their load colours (simulated), places, events, emulated units and the legend.* | *Each layer with its label and count: units and cameras emulated, traffic simulated, 191 City Pack places.* |
 
 - A clean city map (keyless OpenStreetMap, or photoreal 3D through Cesium ion when a key is set, labelled "not a
   live image").
@@ -239,13 +250,32 @@ Three questions: what needs me, what is happening, what is coming.
 - **Replay 23 Sep 2025:** the storm night on the map, step by step, "IMD observed rain, modelled ponding. Not
   today's city."
 
-![Replay of 23 Sep 2025](docs/screenshots/replay-2025-09-23.jpg)
+| Map: a road's forecast | Map: air and city feeds |
+|---|---|
+| ![A selected road with its two-hour forecast band](docs/screenshots/map-forecast.jpg) | ![The air-quality layer and the City panel](docs/screenshots/map-air.jpg) |
+| *A road's card: waterlogging now (modelled) and its two-hour V/C band against 0.8 (simulated traffic).* | *Air-quality sites in their AQI band (modelled) and the city feeds, each with its label.* |
+
+| Map: waterlogging, 23 Sep 2025 | Replay of 23 Sep 2025 |
+|---|---|
+| ![The waterlogging layer on the replay of 23 Sep 2025](docs/screenshots/map-waterlogging.jpg) | ![The replay of the 22–23 Sep 2025 storm](docs/screenshots/replay-2025-09-23.jpg) |
+| *The 2025 storm replayed: roads by risk class, a road's depth band and when it went deep (Hindsight, MODELLED).* | *The 2025 storm night step by step: IMD's observed rain, modelled ponding, the roads flagged at 04:00 IST.* |
 
 ### 6.5 Decide (`/decide`)
 
-| AI signal-timing proposal | Waterlogging proposals |
+| Decide: a 108 corridor request | Decide: the stolen-vehicle chain |
 |---|---|
-| ![Decide: twin proposal](docs/screenshots/decide-ai.jpg) | ![Decide: waterlogging](docs/screenshots/decide-waterlogging.jpg) |
+| ![Decide: an ambulance (108) corridor request](docs/screenshots/decide-corridor.jpg) | ![Decide: the stolen-vehicle chain at Open the pursuit](docs/screenshots/decide-stolen.jpg) |
+| *A 108 crew's corridor request: the golden hour left and what changes if approved, for a named officer.* | *Authorise, then Open the pursuit as a separate decision; the reads on the map (emulated ANPR); vehicles only.* |
+
+| Decide: the mark masked until an officer is named | Decide: choose a response |
+|---|---|
+| ![Decide: the stolen-vehicle sheet with the mark masked](docs/screenshots/decide-masked.jpg) | ![Decide: decision-support options](docs/screenshots/decide-dss.jpg) |
+| *No officer named: the mark is masked and every button waits for a name.* | *Ranked responses, the recommended one first (MODELLED); approval only creates dispatch requests.* |
+
+| Decide: signal timing | Decide: waterlogging |
+|---|---|
+| ![Decide: a signal-timing proposal tested in the twin](docs/screenshots/decide-ai.jpg) | ![Decide: waterlogging proposals in the exercise](docs/screenshots/decide-waterlogging.jpg) |
+| *A signal change tested in the twin against doing nothing, the cross street's cost shown too (MODELLED).* | *A reroute around deep water in the 2025-storm exercise (MODELLED, Hindsight).* |
 
 One decision at a time, soonest deadline first: the queue on the left, the map of the place in the middle, one
 sheet on the right. Every sheet has the same anatomy: what is being decided, why, the key facts with their labels,
@@ -265,7 +295,14 @@ sheet on the right. Every sheet has the same anatomy: what is being decided, why
 
 ### 6.6 Object pages (`/o/<urn>`)
 
-![Object page of a road](docs/screenshots/object-segment.jpg)
+| A road's page | A vehicle's page |
+|---|---|
+| ![The object page of Rash Behari Avenue](docs/screenshots/object-segment.jpg) | ![The page of the watchlisted exercise vehicle](docs/screenshots/object-vehicle.jpg) |
+| *Rash Behari Avenue: the two-hour V/C forecast with its p10–p90 band against the 0.8 line (simulated traffic).* | *The stolen exercise vehicle: its lawful basis and retention, and evidence only: no e-challan for its owner.* |
+
+<p align="center"><img width="100%" alt="A reported road diversion situation at Tiljala" src="docs/screenshots/object-osint.jpg"></p>
+
+*A reported situation. An official diversion notice as a situation at a place, with how sure we are; names are removed before storage.*
 
 Every record has a page: a road segment, a junction, a corridor event, a reported event, a vehicle, a place, a
 camera, a dispatch. A road's page shows its live state, the **forecast band** (median with the p10–p90 band and the
@@ -274,16 +311,22 @@ camera, a dispatch. A road's page shows its live state, the **forecast band** (m
 
 ### 6.7 Field report by voice (top bar → **Report**)
 
-![Field report by voice](docs/screenshots/voice-report.jpg)
+| Field report by voice | Field report in Bengali |
+|---|---|
+| ![A field report spoken in English](docs/screenshots/voice-report-en.jpg) | ![A field report spoken in Bengali](docs/screenshots/voice-report.jpg) |
+| *Speech becomes place, kind and severity with the words that decided it; unverified until an officer confirms.* | *Spoken Bengali, transcribed on the server and matched to its place.* |
 
-"Press and hold, speak, then let go." The spoken language is Bengali by default (English and Hindi too). The sheet
+"Press and hold, speak, then let go." The spoken language starts as the console's (English by default; Bengali or Hindi when the console is in them), with a three-way switch. The sheet
 shows the transcript, the place (with "Not this place?" and the candidates), the kind, the severity and "Words that
 decided it". **Send** puts it on the board "as an unverified field report, for an officer to confirm". It can also
 be typed. "Audio is not stored. Only the transcript is kept, and no voice is identified."
 
 ### 6.8 Camera road state
 
-![Road state from a camera still](docs/screenshots/road-state.jpg)
+| Road state from a still | Road state from a street photo |
+|---|---|
+| ![Camera road state read from a sample still](docs/screenshots/road-state.jpg) | ![Camera road state read from a public street photo](docs/screenshots/road-state-street.jpg) |
+| *A still read on the server as a road state with a depth band, unverified until an officer confirms.* | *The nearest public street photo, dated and credited, read the same way.* |
 
 "Road state · AI reading": a still (a sample still is labelled "Sample still · not live"; an uploaded one "Your still,
 not stored") is read as waterlogged, blocked, tree fall, stalled vehicle, crash debris, congested or clear, with a
@@ -291,14 +334,20 @@ depth band judged against wheels and kerbs. It enters the queue as **unverified*
 
 ### 6.9 Plan a movement (`/plan`)
 
-![Plan a movement](docs/screenshots/plan.jpg)
+| Plan a movement | A protected movement on the map |
+|---|---|
+| ![Plan a movement: where to and the protection class](docs/screenshots/plan.jpg) | ![The map focused on a live protected movement](docs/screenshots/map-escort.jpg) |
+| *Where to, the protection class with its lane floor and closure lead, and the departure; nothing moves until a named officer starts the escort.* | *A protected movement live on the map: its route, the emulated convoy and units, Follow and Details.* |
 
 Four steps: **Where to → Routes → Launch → Live**. Routes are ranked with times from the traffic twin, labelled
 "Simulated traffic"; launch and clear need a named officer; "Nothing moves until a named officer starts the escort."
 
 ### 6.10 Assistant (`/assistant`)
 
-![Assistant](docs/screenshots/assistant.jpg)
+| Assistant | Assistant: vehicles, never people |
+|---|---|
+| ![The assistant answering in English](docs/screenshots/assistant.jpg) | ![The assistant answering a question about a person with vehicle facts only](docs/screenshots/assistant-refusal.jpg) |
+| *A grounded, read-only answer that says its traffic is synthetic; it cannot approve, unmask or dispatch.* | *Asked about the driver, it answers about the vehicle only: no owner or personal details exist.* |
 
 "Ask about the city". The assistant reads live operations, decisions, reported events and
 the traffic feed, and **cannot approve, unmask or dispatch**. A proposal arrives as a card that opens in Decide.
@@ -306,39 +355,56 @@ Every sentence of an answer is checked against what the tools returned.
 
 ### 6.11 Advisories (`/comms`)
 
-![Advisories](docs/screenshots/advisories.jpg)
+<p align="center"><img width="100%" alt="Advisories in three languages" src="docs/screenshots/advisories.jpg"></p>
+
+*Advisories. One fact for four audiences in three languages, marked exercise text; drafted, never sent on its own.*
 
 One fact, every audience, three languages: advisory drafts for the public, for crews and for partner agencies, in
 বাংলা, English and हिंदी. An officer edits and approves; Sahoshi does not send SMS or social posts on its own.
 
 ### 6.12 Analyst (`/analyst`, `/ops`, `/gods-eye`)
 
-| Workspace | Situation wall |
+| Analyst workspace | Situation wall |
 |---|---|
-| ![Analyst workspace](docs/screenshots/analyst-workspace.jpg) | ![Situation wall](docs/screenshots/situation-wall.jpg) |
+| ![The Analyst workspace](docs/screenshots/analyst-workspace.jpg) | ![The situation wall](docs/screenshots/situation-wall.jpg) |
+| *The map, the active events and the selected movement's figures, with the timeline below.* | *Counts, decisions, the city band, signal plans (writer off) and the audit stream on one screen.* |
+
+| Dispatch and the live band | Audit trail |
+|---|---|
+| ![The situation wall with the live band and the dispatch panel](docs/screenshots/dispatch.jpg) | ![The audit trail in the Analyst workspace](docs/screenshots/audit.jpg) |
+| *The live band while a movement runs, and Dispatch: one request per unit, each with its status (emulated units).* | *Every action with its time, actor and object; filters for officers, machines and the system.* |
+
+<p align="center"><img width="100%" alt="The Analyst 3D city map" src="docs/screenshots/analyst-city-map.jpg"></p>
+
+*Analyst city map. The analysts' 3D city with its vitals; roads simulated, units emulated, imagery not live.*
 
 The full-density workspace for analysts: tables, filters, saved views (always masked), the situation wall with the
 city band and the audit ladder, and the 3D city map.
 
 ### 6.13 Public pages: Citizen and ambulance crew
 
-| Citizen (`/citizen`) | Ambulance (108) crew (`/driver`) |
+| Citizen | Ambulance (108) crew |
 |---|---|
-| ![Citizen page in Bengali](docs/screenshots/citizen.jpg) | ![Driver page](docs/screenshots/driver.jpg) |
+| ![The citizen page on a phone](docs/screenshots/citizen.jpg) | ![The ambulance crew page on a phone](docs/screenshots/driver.jpg) |
+| *Check your road: the status in plain words (modelled), Listen, the tide; no sign-in, no location.* | *One request for a corridor window, its four steps; a duty officer decides.* |
 
-- **Citizen:** Bengali by default. Search a road; see approved advisories and the waterlogging status in plain
-  words with their labels; **Listen** reads the advisory aloud in Bengali, marked "synthetic voice"; 112 and
+- **Citizen:** English by default, with বাংলা and हिंदी one tap away. Search a road; see approved advisories and the waterlogging status in plain
+  words with their labels; **Listen** reads the advisory aloud in the page's language, marked "synthetic voice"; 112 and
   অ্যাম্বুলেন্স (১০৮). No sign-in, no location, no tracking.
 - **Ambulance crew:** unit, stretch and urgency; one request button; the status while it waits for a duty officer;
   the line that the crew always follows 108 control.
 
 ### 6.14 Languages and accessibility
 
-Every string exists in বাংলা, English and हिंदी; public pages open in Bengali; the console defaults to English
+Every string exists in English, Bengali and Hindi; every page, public pages included, opens in English
 and remembers the reader's choice. Noto Sans Bengali and Noto Sans Devanagari are self-hosted. Bengali copy follows
 a glossary (for example প্রস্তাব for "proposal", জল জমা for "waterlogging", মোড় for a named crossing) and uses the
 danda (।). Colour is never the only signal: every state also has a word or an icon. Motion respects "reduce
 motion".
+
+<p align="center"><img width="100%" alt="Home in Bengali" src="docs/screenshots/home-bn.jpg"></p>
+
+*Home, also in Bengali. The same screen in Bengali; every figure keeps its label.*
 
 ## 7. The AI, with its honest limits
 

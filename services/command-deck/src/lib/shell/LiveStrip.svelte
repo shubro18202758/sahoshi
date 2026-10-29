@@ -41,6 +41,8 @@
 </script>
 
 <div class="strip" data-testid="live-strip" role="region" aria-label={t(lang, 'shell_live')}>
+	<!-- the heartbeat: a dot that breathes beside the live clock (still under reduced motion) -->
+	<span class="beat" aria-hidden="true" data-testid="live-heartbeat"></span>
 	<span class="clock" data-live-clock>{fmtTime(now, { seconds: true })}</span><span class="ist">{t(lang, 'live_ist')}</span>
 
 	{#if live.movement}
@@ -118,6 +120,32 @@
 		font-size: var(--v-text-xs);
 		line-height: calc(var(--v-text-xs) + 4px);
 		white-space: nowrap;
+	}
+
+	.beat {
+		flex: none;
+		width: 7px;
+		height: 7px;
+		margin-right: 8px;
+		border-radius: 50%;
+		background: var(--v3-ok, var(--v-band-green));
+		animation: live-breathe 2.4s ease-in-out infinite;
+	}
+
+	@keyframes live-breathe {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.beat {
+			animation: none;
+		}
 	}
 
 	.clock {

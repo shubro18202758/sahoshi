@@ -65,6 +65,8 @@
 		if (id === 'flow' && r.simulated) return t(lang, 'v3m_l_flow_sim', r.count);
 		if (id === 'cameras') return t(lang, 'v3m_l_cameras_sub', r.count);
 		if (id === 'places') return t(lang, 'v3m_l_places_sub');
+		if (id === 'landmarks') return t(lang, 'v3m_l_landmarks_sub', r.count);
+		if (id === 'livevalues') return t(lang, 'v3m_l_livevalues_sub', r.count);
 		return t(lang, 'v3m_l_count', r.count);
 	}
 </script>

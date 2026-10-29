@@ -574,7 +574,8 @@ const SPEC_COMMAND = {
 	'--v-line-2': 'rgba(255,255,255,0.2)', '--v-line-select': 'rgba(138,187,255,0.752)', '--v-ink-1': '#FFFFFF',
 	'--v-ink-2': '#CBCBCB', '--v-ink-3': '#A6A6A6', '--v-ink-4': '#6B6B6B', '--v-act': '#FF9F43', '--v-act-2': '#C87619',
 	'--v-act-focus': 'rgba(138,187,255,0.752)', '--v-act-veil': 'rgba(200,118,25,0.2)', '--v-act-text': '#FBB360',
-	'--v-band-green': '#32A467', '--v-band-amber': '#F0B726', '--v-band-red': '#E76A6E',
+	// 2026-10-29 (look): the amber band re-pointed from gold #F0B726 to the console's orange-amber (V3 meaning palette)
+	'--v-band-green': '#32A467', '--v-band-amber': '#FFB257', '--v-band-red': '#E76A6E',
 	'--v-band-black-fill': 'rgba(17,17,17,0.85)', '--v-band-black-hairline': '#E76A6E', '--v-data': '#4C90F0',
 	'--v-tool': '#5B91F5', '--v-glass-bg': '#242424', '--v-glass-border': 'rgba(255,255,255,0.2)',
 	'--v-glass-blur': '0px', '--v-glow-act': 'transparent', '--v-flow-light': '#C5CBD3', '--v-text-2xs': '12px',

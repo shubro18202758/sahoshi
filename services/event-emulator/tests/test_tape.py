@@ -47,6 +47,7 @@ EXPECTED_IDS = (
     "kali_puja_air_quality",
     "pre_monsoon_heatwave",
     "norwester_squall_treefall",
+    "bijoya_immersion_procession",
 )
 
 # values pinned from the Kolkata library (verbatim consumption check).
@@ -89,6 +90,8 @@ PINNED = {
         route=[1003, 1028, 1029, 1036, 1037, 1038]),
     "norwester_squall_treefall": dict(seed=20270506, vvip="X",
         route=[1038, 1037, 1036, 1035]),
+    "bijoya_immersion_procession": dict(seed=202610021, vvip="X",
+        route=[1060, 1061, 1004]),
 }
 
 T0 = datetime(2026, 10, 12, 6, 0, 0, tzinfo=timezone.utc)

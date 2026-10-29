@@ -392,6 +392,8 @@ class Engine:
             fetch_mode=st.fetch_mode,
             signals=st.signals,
             pii_redactions=st.pii_redactions,
+            # counts by reason only (out_of_scope_* included); never a text
+            dropped=st.dropped,
             error=error,
         )
         return signals, st

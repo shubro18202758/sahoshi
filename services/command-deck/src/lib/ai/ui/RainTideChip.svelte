@@ -9,12 +9,13 @@
 	 *
 	 * and the way into the 22–23 Sep 2025 replay on the map: hindsight, IMD's observed rain through the same ponding
 	 * model, a few moments of that night to step through, and "Back to live". A feed that does not answer says so —
-	 * never a zero.
+	 * never a zero. Each row's honest label is a quiet word at its end (ProvWord), not a chip per row.
 	 */
 	import { t } from '$lib/i18n/strings';
 	import { fmtTime } from '$lib/ui/format/format';
 	import Glyph from '$lib/v3/Glyph.svelte';
 	import ProvTag from './ProvTag.svelte';
+	import ProvWord from './ProvWord.svelte';
 	import { rainNextHour, rainNow, riskCounts, tideState } from '../model';
 	import type { HydroNowcast, HydroRain, HydroTide } from '../types';
 	import '../packs.ai';
@@ -103,7 +104,7 @@
 			<span class="v" data-testid="ai-rain">
 				{#if mmNow != null}<b>{L('ai_rt_rain', n1(mmNow))}</b>{#if mmNext != null}<span class="dim"> · {L('ai_rt_rain_next', n1(mmNext))}</span>{/if}{:else}<span class="dim">{L('ai_rt_rain_none')}</span>{/if}
 			</span>
-			<ProvTag label={mmNow != null ? (rain?.label ?? 'LIVE') : 'UNAVAILABLE'} {lang} />
+			<ProvWord label={mmNow != null ? (rain?.label ?? 'LIVE') : 'UNAVAILABLE'} {lang} />
 
 			<span class="k"><Glyph name="timeline" size={16} /></span>
 			<span class="v" data-testid="ai-tide">
@@ -113,12 +114,12 @@
 					{#if td.nextHigh}<span class="dim"> · {L('ai_rt_high', fmtTime(td.nextHigh.at), td.nextHigh.level.toFixed(2))}</span>{/if}
 				{:else}<span class="dim">{L(tideDown ? 'ai_rt_tide_down' : 'ai_fc_loading')}</span>{/if}
 			</span>
-			<ProvTag prov={td ? 'modelled' : tideDown ? 'unavailable' : null} {lang} />
+			<ProvWord prov={td ? 'modelled' : tideDown ? 'unavailable' : null} {lang} />
 
 			{#if pumps}
 				<span class="k"><Glyph name="building" size={16} /></span>
 				<span class="v" data-testid="ai-pumps">{L('ai_rt_pumps', pumps.a, pumps.t)}</span>
-				<ProvTag prov="emulated" {lang} />
+				<ProvWord prov="emulated" {lang} />
 			{/if}
 
 			<span class="k"><Glyph name="alert" size={16} /></span>
@@ -127,7 +128,7 @@
 					{#if atRisk > 0}<span class="sw c{risk && risk.impassable ? 3 : risk && risk.deep ? 2 : 1}" aria-hidden="true"></span><b>{L('ai_rt_risk', atRisk)}</b>{:else}{L('ai_rt_risk_none')}{/if}
 				{:else}<span class="dim">{L(hydroDown ? 'ai_rt_hydro_down' : 'ai_fc_loading')}</span>{/if}
 			</span>
-			<ProvTag prov={atRisk != null ? 'modelled' : hydroDown ? 'unavailable' : null} {lang} />
+			<ProvWord prov={atRisk != null ? 'modelled' : hydroDown ? 'unavailable' : null} {lang} />
 		</div>
 		<button type="button" class="go" title={L('ai_rt_hindsight_tip')} aria-busy={replayBusy} data-testid="ai-hs-open" onclick={() => onhindsight(true)}>
 			<Glyph name="history" size={16} />{replayBusy ? L('ai_rt_loading') : L('ai_rt_hindsight')}
@@ -159,6 +160,7 @@
 		grid-template-columns: 18px minmax(0, 1fr) auto;
 		align-items: center;
 		gap: 6px 10px;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.k {

@@ -19,6 +19,8 @@
 	import { objectHref, type Check, type EffectTile } from './model';
 	import type { OsintReportProps } from '$lib/osint/model';
 	import { kindOne } from '$lib/workspace/kinds/generic';
+	import { readableIn, scriptOf } from '$lib/i18n/script';
+	import '../packs.v3';
 
 	let {
 		report,
@@ -28,11 +30,19 @@
 		effects,
 		lang,
 	}: { report: OsintReportProps; summary: string | null; credibility: number | null; checks: readonly Check[]; effects: readonly EffectTile[]; lang: string } = $props();
+
+	/** The summary's own script when the reader does not read it: the original stays (it IS the report), labelled, never machine-translated. */
+	const foreign = $derived.by(() => {
+		if (!summary || readableIn(summary, lang)) return null;
+		const sc = scriptOf(summary);
+		return sc === 'bn' || sc === 'hi' ? sc : null;
+	});
 </script>
 
 <Panel title={t(lang, 'obj_reported_h')} testid="obj-reported">
 	{#if summary}
-		<p class="quote" data-testid="obj-summary">“<RedactedText text={summary} {lang} />”</p>
+		{#if foreign}<p class="orig" data-testid="obj-summary-original">{t(lang, `v3_text_original_${foreign}`)}</p>{/if}
+		<p class="quote" data-testid="obj-summary" lang={foreign ?? undefined}>“<RedactedText text={summary} {lang} />”</p>
 	{:else}
 		<p class="quiet">{t(lang, 'obj_no_summary')}</p>
 	{/if}
@@ -64,6 +74,14 @@
 </Panel>
 
 <style>
+	.orig {
+		margin: 0 0 6px;
+		color: var(--v3-t3);
+		font-size: var(--v3-text-micro);
+		font-weight: 600;
+		line-height: var(--v3-lh-micro);
+	}
+
 	.quote {
 		margin: 0;
 		color: var(--v3-t1);

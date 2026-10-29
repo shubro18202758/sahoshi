@@ -313,7 +313,7 @@ function documentDefaults(event: RequestEvent): { theme: string; lang: string; o
 	return {
 		// (landing) falls to 'command' with the console: the night ground
 		theme: id.startsWith('/(public)') ? 'daylight' : 'command',
-		lang: langFromCookieHeader(event.request.headers.get('cookie')) ?? (id === '/(public)/driver' ? 'bn' : 'en'),
+		lang: langFromCookieHeader(event.request.headers.get('cookie')) ?? 'en',
 		// only the two operator groups; (public) and (landing) keep the strict policy
 		operator: id.startsWith('/(deck)') || id.startsWith('/(v3)'),
 	};

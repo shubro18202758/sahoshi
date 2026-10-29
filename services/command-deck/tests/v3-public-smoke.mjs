@@ -16,7 +16,7 @@
  *      card's solid; the honest SIMULATED FEED · EMULATED tag and note are kept;
  *   4. contrast: the page's text inks hold ≥ 4.5:1 on what they sit on (measured in the browser, EN · HI · BN);
  *   5. /driver: the golden-hour clock is the hero (≥ 56 px) and says it has not started; the phase rail is four large steps;
- *      the urgency chips are ≥ 44 px tall with ≥ 16 px type; the one request button is ≥ 56 px; Bengali first;
+ *      the urgency chips are ≥ 44 px tall with ≥ 16 px type; the one request button is ≥ 56 px; English by default;
  *   6. the live request files ONE POST (answered in the browser), waits for the officer — no approve control — then the window
  *      opens with its countdown in the 108 corridor green and the unit EMULATED;
  *   7. the scripted fallback is labelled and files NOTHING (zero POSTs);
@@ -276,7 +276,7 @@ export async function main() {
 				select: Math.round(box('[data-testid="stretch-select"]').right) <= Math.round(box('.request-card').right),
 			};
 		});
-		ok('5. /driver is Bengali first', idle.lang === 'bn' && BN.test(idle.h1), idle.lang);
+		ok('5. /driver speaks English by default (no language chosen)', idle.lang === 'en' && /Green corridor/.test(idle.h1), idle.lang);
 		ok('5. the golden-hour clock is the hero (≥ 56 px) and has not started before a request', idle.clock >= 56 && idle.started === '0', `${idle.clock}px started=${idle.started}`);
 		ok('5. the phase rail is four large steps (≥ 44 px)', idle.steps === 4 && idle.stepDot >= 44, `${idle.steps} steps · ${idle.stepDot}px`);
 		ok('5. urgency chips ≥ 44 px tall with ≥ 16 px type; the one request button ≥ 56 px', idle.chips.length === 4 && idle.chips.every((x) => x.h >= 44 && x.fs >= 16) && idle.btn >= 56, JSON.stringify({ chips: idle.chips[0], btn: idle.btn }));
@@ -349,7 +349,7 @@ export async function main() {
 						mark: /[A-Z]{2}\s?\d{1,2}\s?[A-Z]{1,3}\s?\d{4}/.test(document.body.innerText),
 					};
 				});
-				const script = lang === 'hi' ? HI : lang === 'bn' ? BN : /^Regulated, not stopped\.$/;
+				const script = lang === 'hi' ? HI : lang === 'bn' ? BN : /^One live picture of Kolkata's roads/;
 				ok(`10. ${w} px ${lang}: /welcome is night, speaks ${lang}, wears no shell, no sideways scroll`, m.theme === 'command' && m.lang === lang && script.test(m.promise) && m.shells === 0 && m.spill <= 1, JSON.stringify({ theme: m.theme, lang: m.lang, spill: m.spill, shells: m.shells }));
 				if (w >= 1366) ok(`10. ${w} × ${h} ${lang}: the first viewport is the poster (lockup, promise, both doors, the console window)`, m.heroH === h && m.poster.every(Boolean), JSON.stringify({ heroH: m.heroH, poster: m.poster }));
 				ok(`10. ${w} px ${lang}: the doors (/ reloads, /citizen), honest captions on every picture, the Modelled tag, no registration mark`, m.doors === '/ reload,/citizen' && m.consoleReload && m.photoCaps === 2 && m.shotCaps === 4 && m.modelled && !m.mark, JSON.stringify({ doors: m.doors, photoCaps: m.photoCaps, shotCaps: m.shotCaps }));

@@ -142,7 +142,7 @@
 #        POSTGIS_CONTAINER (sahoshi-postgis); VERIFY_PREVIEW_PORT (5199) —
 #        the private preview's port (another free port lets two checkouts
 #        verify side by side); DECK_URL / DECK_PORT (5373) — the --live deck;
-#        CC_PLATE (GJ27EM9001) — the watch plate of the C6 'plates' group;
+#        CC_PLATE (WB06EM9001) — the watch plate of the C6 'plates' group;
 #        CHROME_PATH (optional — the smokes default to the puppeteer cache);
 #        SAHOSHI_CARGO_REGISTRY_VOLUME / SAHOSHI_CARGO_TARGET_VOLUME / SAHOSHI_RUST_IMAGE
 #        for the docker cargo path. scripts/sahoshi_env.sh is NOT sourced: it
@@ -423,7 +423,7 @@ tier_deck_ui() {
     deck_step "frame geometry (docks, credit plate; no escort section)" env -u GEOMETRY_ESCORT GEOMETRY_OUT="$DECK/tests/artifacts/geometry" node tests/frame-geometry.mjs "$PREVIEW" "$DECK/tests/artifacts/geometry"
     deck_step "osint-dom inspector (the compact inspector measured on the /design/osint harness)" node tests/osint-dom.unit.mjs --inspector "$PREVIEW"
     free_preview
-    local plate="${CC_PLATE:-GJ27EM9001}" titled plates_line
+    local plate="${CC_PLATE:-WB06EM9001}" titled plates_line
     titled="$(plate_titled_count "$plate")"
     if [ "${titled:-0}" -gt 0 ]; then
         free_preview

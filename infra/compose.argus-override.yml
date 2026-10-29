@@ -58,6 +58,10 @@
 # lets it drive its deliberate violators — each only a PENDING e-challan
 # recommendation for a named officer's review, never a fine on its own — and
 # EMULATOR_CITY_SEED (default 1411) picks its deterministic day program.
+# EMULATOR_LIVING_DENSITY (1–3, default 2 here) sets how busy it is: 1 = two
+# patrol beats and 2–3 causes; 2 = 18 emulated units (11 traffic beats, 3
+# Kolkata Police PCR beats, 4 ambulance (108) standby circuits) and 2–5 causes,
+# a 108 request about every 15 min; 3 = 2–7 causes. All of it EMULATED.
 #
 # PORTS. The host ports above are this file's constants. scripts/sahoshi_up.sh
 # reads them from the rendered compose (docker compose config) and probes
@@ -292,6 +296,8 @@ services:
       # named officer's review; 0 = none) and its day-program seed (header)
       EMULATOR_LIVING_VIOLATORS: ${EMULATOR_LIVING_VIOLATORS:-1}
       EMULATOR_CITY_SEED: ${EMULATOR_CITY_SEED:-1411}
+      # how busy the living city is (header): 2 = 18 units on the real roads
+      EMULATOR_LIVING_DENSITY: ${EMULATOR_LIVING_DENSITY:-2}
     depends_on:
       postgis:
         condition: service_healthy

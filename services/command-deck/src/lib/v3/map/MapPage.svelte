@@ -15,7 +15,8 @@
 	 *   SelectionCard what is selected: ≤ 2 tags, ≤ 3 figures, one verb (Review → its ONE home in Decide), Follow,
 	 *                 Details; never an Approve
 	 *   MapTools      3D, thermal-style view (main toolbar, honest tooltip), measure, follow, zoom, north
-	 *   Legend3       three lines
+	 *   Legend3       three lines, the live city's lines (road colour, moving dots, units, pulses) and the
+ *                 "Map data updated hh:mm:ss IST" clock (hud/map/live-clock: the newest real feed answer)
 	 *
 	 * Clean by default (§5.6): events, convoy, traces, enforcement, osint on; the rest off (a share link's own
 	 * layers win). The OSM night map shows at once — a graded tile placeholder until the canvas is up, and under the
@@ -44,6 +45,7 @@
 	import { workspace } from '$lib/workspace/workspace.svelte';
 	import { decisionUnits, unitEmulated, type Unit } from '$lib/decisions/units';
 	import { t } from '$lib/i18n/strings';
+	import { readableIn, scriptOf } from '$lib/i18n/script';
 	import { tOps } from '$lib/i18n/strings.ops';
 	import '$lib/i18n/packs';
 	import '$lib/i18n/packs.wall';
@@ -65,6 +67,8 @@
 	import LayersSheet from './LayersSheet.svelte';
 	import WeatherChip from './WeatherChip.svelte';
 	import Legend3 from './Legend3.svelte';
+	import { liveClock } from '$lib/gods-eye/hud/map/live-clock';
+	import { istClock } from '$lib/gods-eye/hud/map/live-marks';
 	import StatsPanel from './StatsPanel.svelte';
 	import Glyph from '../Glyph.svelte';
 	import { glassSupported, glassVars } from './glass';
@@ -161,10 +165,28 @@
 		void cityRegistry.version;
 		return [...cityRegistry.byKind('osint_event')].sort((a, b) => (b.t ?? 0) - (a.t ?? 0));
 	});
-	const weather = $derived(reports.find((r) => isOfficialWeather(r)) ?? null);
+	const wxText = (r: { label: string; props: Readonly<Record<string, unknown>> }) => (typeof r.props.summary === 'string' && r.props.summary ? r.props.summary : r.label);
+	/** English first: the official warning in the reader's language when the source sent one (IMD publishes English and Bengali). */
+	const weather = $derived.by(() => {
+		const all = reports.filter((r) => isOfficialWeather(r));
+		return all.find((r) => readableIn(wxText(r), lang)) ?? all[0] ?? null;
+	});
+	/** Never a machine translation of an official warning: a text the reader does not read says so, and the object page keeps it. */
+	const weatherLine = $derived.by(() => {
+		if (!weather) return '';
+		const text = wxText(weather);
+		if (readableIn(text, lang)) return ops.text(text);
+		return t(lang, scriptOf(text) === 'hi' ? 'v3_text_brief_hi' : 'v3_text_brief_bn');
+	});
 	const reportVMs = $derived(reports.map((e) => reportVM(e, lang, slow, units)));
 	const planned = $derived(plannedOf(ops.events, slow));
 	const plannedVMs = $derived(planned.map((ev) => plannedVM(ev, lang, slow)));
+
+	/** The legend's "Map data updated hh:mm:ss IST": the newest real answer of a live map feed, re-read every second. */
+	const liveUpdated = $derived.by(() => {
+		void now;
+		return liveClock.updatedAt != null ? istClock(liveClock.updatedAt) : null;
+	});
 
 	const items = $derived<NowItem[]>([
 		...opVMs.map((vm) => nowFromOp(vm, reviewOf.get(vm.key)?.href ?? null)),
@@ -702,7 +724,7 @@
 				</div>
 			{/if}
 			{#if weather && on.reported && !sheetOpen && !statsOpen}
-				<WeatherChip text={ops.text(typeof weather.props.summary === 'string' && weather.props.summary ? weather.props.summary : weather.label)} href={detailsHref(weather.urn)} {lang} />
+				<WeatherChip text={weatherLine} href={detailsHref(weather.urn)} {lang} />
 			{/if}
 			{#if !sheetOpen && !statsOpen}
 				<RainTideChip
@@ -787,7 +809,7 @@
 					</SelectionCard>
 				</div>
 			{/if}
-			{#if legendOpen}<div class="legend"><Legend3 {lang} hideLabel={L('v3m_legend_hide')} onhide={() => setLegend(false)} water={mapChrome.rows.some((r) => r.id === 'waterlog' && r.visible && r.count > 0)} forecast={mapChrome.rows.some((r) => r.id === 'forecast' && r.visible && r.count > 0)} air={mapChrome.rows.some((r) => r.id === 'air' && r.visible && r.count > 0)} cyclone={mapChrome.rows.some((r) => r.id === 'cyclone' && r.visible && r.count > 0)} /></div>{/if}
+			{#if legendOpen}<div class="legend"><Legend3 {lang} hideLabel={L('v3m_legend_hide')} onhide={() => setLegend(false)} water={mapChrome.rows.some((r) => r.id === 'waterlog' && r.visible && r.count > 0)} forecast={mapChrome.rows.some((r) => r.id === 'forecast' && r.visible && r.count > 0)} air={mapChrome.rows.some((r) => r.id === 'air' && r.visible && r.count > 0)} cyclone={mapChrome.rows.some((r) => r.id === 'cyclone' && r.visible && r.count > 0)} flow={mapChrome.rows.some((r) => r.id === 'flow' && r.visible && r.count > 0)} units={mapChrome.rows.some((r) => r.id === 'units' && r.visible && r.count > 0)} live={mapChrome.rows.some((r) => r.id === 'livevalues' && r.visible)} updatedAt={liveUpdated} /></div>{/if}
 		</div>
 
 		<div class="bottom-mid">
