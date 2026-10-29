@@ -92,6 +92,11 @@ const DENY: Array<[string, string, string?]> = [
 	['GET', '/api/cityfeeds/feeds/river'],
 	['GET', '/api/cityfeeds/feeds/proposals'],
 	['GET', '/api/cityfeeds/health'],
+	// the road-state panel's nearby street photo (Mapillary through the city feeds): officers only
+	['GET', '/api/cityfeeds/feeds/street-image?lat=22.564600&lon=88.351000'],
+	['GET', '/api/cityfeeds/feeds/street-image.jpg?lat=22.564600&lon=88.351000'],
+	['HEAD', '/api/cityfeeds/feeds/street-image.jpg?lat=22.564600&lon=88.351000'],
+	['GET', '/api/cityfeeds/feeds/street-image%2Ejpg?lat=22.5646&lon=88.351'],
 	['GET', '/api/cityfeeds/feeds/air?force=1'],
 	['GET', '/api/cityfeeds/feeds/summary?force=true'],
 	['POST', '/api/cityfeeds/feeds/air', '{}'],
@@ -148,6 +153,25 @@ resetSpeak();
 		if (r.status !== 200) all = false;
 	}
 	check('ai gate on, signed in: every AI route proxies', all);
+	// the street photo: the query reaches the city feeds as sent, and the JPEG comes back byte for byte with its type
+	const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70, 0, 1, 0xff, 0xd9]);
+	const stub = globalThis.fetch;
+	globalThis.fetch = (async (input: RequestInfo | URL) => {
+		fetched.push(String(input instanceof URL ? input.href : input));
+		return new Response(JPEG, { status: 200, headers: { 'content-type': 'image/jpeg', 'cache-control': 'no-store' } });
+	}) as typeof fetch;
+	try {
+		const q = '?lat=22.564600&lon=88.351000';
+		const photo = await run(`/api/cityfeeds/feeds/street-image.jpg${q}`, 'GET', { cookie });
+		const bytes = new Uint8Array(await photo.arrayBuffer());
+		check(
+			'ai gate on, signed in: the street photo proxies to the city feeds and its JPEG comes back intact',
+			photo.status === 200 && fetched.length === 1 && fetched[0] === `${CITYFEEDS}/feeds/street-image.jpg${q}` && photo.headers.get('content-type') === 'image/jpeg' && photo.headers.get('x-content-type-options') === 'nosniff' && bytes.length === JPEG.length && bytes.every((b, i) => b === JPEG[i]),
+			`status ${photo.status} ${fetched[0] ?? ''}`,
+		);
+	} finally {
+		globalThis.fetch = stub;
+	}
 	const sub = await run('/api/forecast/forecast/segments', 'GET', { sub: true });
 	check('ai gate on: a server-side sub-request passes', sub.status === 200 && fetched.length === 1);
 }

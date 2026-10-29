@@ -15,7 +15,9 @@
  *                                                      SPEAK_MAX_PER_WINDOW requests per client per minute (429)
  *
  * Nothing else under /api/speech, /api/forecast, /api/vision, /api/hydro, /api/twin or /api/cityfeeds passes anonymously — not
- * transcription or field reports (an officer's tool), not the replay, the pumps or any proposal. An allowlist on
+ * transcription or field reports (an officer's tool), not the replay, the pumps or any proposal, not the road-state
+ * panel's street photo (GET /api/cityfeeds/feeds/street-image[.jpg]: a signed-in officer's, like every route above
+ * once the session cookie is valid). An allowlist on
  * purpose: a route added to a service later is gated the day it ships. Routes that do not exist upstream are never
  * allow-listed.
  */

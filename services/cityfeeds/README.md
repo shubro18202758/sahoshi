@@ -24,7 +24,7 @@ Full documentation, sources and the checks behind every feed are in [`docs/ai/ci
 | Notices | KMC public portal (no robots.txt), place and road notices only; Kolkata Traffic Police current advisories (legacy-TLS allowance for that host, certificate verified) | LIVE | 6 h, 1 h, 8 each |
 | Fires | NASA FIRMS hotspots in the Kolkata Metropolitan Area box: the public South Asia 24-h files (no key), or the area API with `FIRMS_MAP_KEY` | LIVE; "not a confirmed fire" | 3 h, 30 min, 16 |
 | Observed air | CPCB on data.gov.in (`DATA_GOV_IN_API_KEY`), WAQI (`WAQI_TOKEN`), OpenAQ v3 (`OPENAQ_API_KEY`), matched to the ten sites | OBSERVED (off and `needs <KEY>` without its key) | 30 min, 5 min, 96 each |
-| Street stills | Mapillary (`MAPILLARY_TOKEN`), nearest public photo to a point, CC BY-SA 4.0 | Reference photo · not live | per point 24 h, 500 a day |
+| Street stills | Mapillary (`MAPILLARY_TOKEN`), nearest public photo to a point, CC BY-SA 4.0; its bytes for the deck's Road state panel | Reference photo · not live | per point 24 h, 500 a day; photos 30 min in memory (12 at most), 500 a day |
 
 **Dropped:**
 - **IMD RSMC bulletins:** these are PDF and text, not machine-readable, so they are linked rather than parsed.
@@ -45,9 +45,10 @@ Full documentation, sources and the checks behind every feed are in [`docs/ai/ci
 | `GET /feeds/notices` | KMC notices about places and roads and the Traffic Police's current advisories (title, link, date) |
 | `GET /feeds/fires` | GeoJSON of NASA FIRMS hotspots in the metro box, each with its nearest landmark; `key` state |
 | `GET /feeds/street-image?lat=&lon=` | The nearest Mapillary photo (thumbnail URL, capture time, attribution, licence), or `needs MAPILLARY_TOKEN`; never calls the vision model |
+| `GET /feeds/street-image.jpg?lat=&lon=` | That photo's JPEG/PNG bytes, fetched here so the deck stays same-origin: only the Graph API's own thumbnail URL on Mapillary's CDN hosts (`scontent…fbcdn.net`), no redirect elsewhere, at most 4 MB, JPEG/PNG checked by type and leading bytes, 8 s; `no-store`. JSON 503 (no key, offline: no call), 404 (none in the 150 m box) or 502 otherwise |
 | `GET /feeds/proposals` | Every drafted proposal, and why the others were not drafted |
 
-`?force=1` refreshes past the cache, still inside the rate limits. The deck's public gate refuses it, and allows only `GET /feeds/summary` and `GET /feeds/air` anonymously.
+`?force=1` refreshes past the cache, still inside the rate limits. The deck's public gate refuses it, and allows only `GET /feeds/summary` and `GET /feeds/air` anonymously. The street photo routes are for signed-in officers only.
 
 ## Run and test
 

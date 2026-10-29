@@ -141,6 +141,23 @@ Port: 8199 in production (loopback, `infra/systemd/sahoshi-feeds.service`); 9201
   - **On 28 Oct 2026** six notices were kept, among them the 7 Jul 2026 construction notice, the road-renaming list, the drainage activity chart and the desilting chart.
 - **kmc.wb.gov.in** (the circulars page) does not answer from this box.
 
+### Street photos (`street_image.py`)
+
+- **What it is for:** the Road state panel on a camera's page offers the nearest public Mapillary photo as a still to read (the vision model's answer stays `UNVERIFIED-CAMERA`; [`vision.md`](vision.md#the-stills-the-deck-sends)). It is labelled "Reference photo · not live" with the date it was taken (it can be years old) and "© Mapillary contributors, CC BY-SA 4.0". Mapillary blurs faces and number plates before it publishes.
+- **Two routes:**
+  - `GET /feeds/street-image?lat=&lon=` gives the facts: the nearest non-panoramic image within a 150 m box (the nearest of up to 500 the Graph API returns for it), its capture time, distance, compass angle and attribution, or `needs MAPILLARY_TOKEN` (no call without the key). Lookups are cached per point for 24 h, at most 500 a day.
+  - `GET /feeds/street-image.jpg?lat=&lon=` gives that photo's **bytes**, because the deck's pages load images from their own origin only (the CSP is unchanged). Otherwise it answers JSON: 503 without the key or offline (no call), 404 with nothing in range, 502 when Mapillary or its CDN gave nothing usable.
+- **Fetch rules for the bytes:**
+  - only the `thumb_1024_url` the Graph API returned, over https, on Mapillary's CDN hosts (`scontent…fbcdn.net`, matched in full);
+  - redirects followed by hand, at most two, and only to those hosts;
+  - at most 4 MB (the declared length is checked first, then the stream is cut off);
+  - `image/jpeg` or `image/png` only, and the body must start with that type's bytes;
+  - 8 s in all;
+  - the token travels only on the Graph API request, never to the CDN; errors are scrubbed with `keys.redact` (no key and no signed URL query string);
+  - a cached lookup whose signed thumbnail URL has expired (CDN 403/404/410) is asked for afresh once.
+- **Storage:** none on disk. The last 12 photos stay in memory for 30 minutes; at most 500 photo fetches a day. The answer carries `cache-control: no-store`.
+- **On 29 Oct 2026** (dev instance, the real key): Esplanade (22.5646, 88.3510) gave a 1024×768 JPEG of 81,862 bytes, taken 29 Jun 2018, 35 m from the point, from `scontent-bom2-4.xx.fbcdn.net`. Gariahat also has one; Howrah Bridge has none within 60 m.
+
 ## The polite fetcher (`fetch.py`)
 
 - **Limits:** each feed has a cache age, a minimum interval between refreshes and a daily cap (the table in `services/cityfeeds/README.md`).
@@ -169,7 +186,8 @@ When a trigger does not hold, the answer says why, with the threshold (`{"none":
 
 ## Deck surfaces
 
-- **Proxy:** `/api/cityfeeds` → `127.0.0.1:${CITYFEEDS_PORT:-8199}`, prefix stripped (`hooks.server.ts`, and `vite.config.ts`'s `devAiProxies`). With the operator gate on, everything is denied except the citizen page's two reads: `GET /feeds/summary` and `GET /feeds/air`, with no `force`.
+- **Proxy:** `/api/cityfeeds` → `127.0.0.1:${CITYFEEDS_PORT:-8199}`, prefix stripped (`hooks.server.ts`, and `vite.config.ts`'s `devAiProxies`). With the operator gate on, everything is denied except the citizen page's two reads: `GET /feeds/summary` and `GET /feeds/air`, with no `force`. The street photo routes are for signed-in officers only.
+- **Road state panel** (`$lib/v3/object/RoadStatePanel.svelte`, a camera's page): "Nearby street photo" beside the sample stills and Upload. The panel asks for the facts when it opens; without the key, with nothing in range or with no camera position, the choice is disabled with a one-line note.
 - **City row** (`$lib/cityfeeds/CityChips.svelte`):
   - **Where:** on the map under Rain · Tide, and on Home under "Next 2 hours".
   - **Each chip:** Air · Heat · Cyclone · River · Quake, each with its value, its band in words with a dot in the band's colour, and its honest label.

@@ -21,6 +21,9 @@
  *   - the road under a place, the waterlogging order and lead, tide and rain in words, the forecast chart, speakable text
  *   - the sample stills: every file exists, is the vision service's pixelated fixture byte for byte, and NOTICE.md
  *     credits it; the page labels it "Sample still · not live"
+ *   - the nearby street photo (city feeds → Mapillary): the answer read honestly (no key → "needs", nothing in range →
+ *     "none", never an invented photo), same-origin calls only, "Reference photo · not live" with its date beside it
+ *     and the CC BY-SA credit; the choice disabled with a note otherwise; on the board it is named, never a live frame
  *   - boundaries: the public card and Listen import no operator code and never write; the shell has ONE entry point that
  *     loads the sheet lazily; the road-state panel never sends a question (so never one about a person); the sheet keeps
  *     the privacy line and never stores audio (no storage API, no download)
@@ -200,6 +203,55 @@ const report = model.parseFieldReport(RAW_REPORT);
 	ok('camera: clear and unclear are never sent to the board', !model.sendableState('clear') && !model.sendableState('unknown') && model.sendableState('tree_fall'));
 }
 
+// ─── the nearby street photo (city feeds → Mapillary) ───────────────────────
+
+const MLY_ID = '532916977698294';
+const MLY_AT = '2018-06-29T10:10:35.087000+00:00';
+{
+	const P = model.parseStreetPhoto;
+	const base = { lat: 22.5646, lon: 88.351, source: 'Mapillary (CC BY-SA 4.0)', label: 'Reference photo · not live' };
+	const ready = P({ ...base, state: 'live', image: { id: MLY_ID, captured_at: MLY_AT, distance_m: 35.4, page_url: 'https://evil.example/x', thumb_url: 'https://scontent-bom2-4.xx.fbcdn.net/x.jpg' }, searched_m: 60 });
+	ok('street: a live answer offers the photo — id, capture time, distance; the page link is built from the id, never the wire', ready.kind === 'ready' && ready.photo.id === MLY_ID && ready.photo.capturedAt === MLY_AT && ready.photo.distanceM === 35 && ready.photo.pageUrl === `https://www.mapillary.com/app/?pKey=${MLY_ID}` && !('thumbUrl' in ready.photo), JSON.stringify(ready));
+	ok('street: without the key the choice says what it needs (the city feeds made no call)', JSON.stringify(P({ ...base, state: 'needs MAPILLARY_TOKEN', image: null })) === JSON.stringify({ kind: 'needs_key', env: 'MAPILLARY_TOKEN' }));
+	ok('street: nothing in range is "none", with the range searched', JSON.stringify(P({ ...base, state: 'live', image: null, searched_m: 60 })) === JSON.stringify({ kind: 'none', rangeM: 60 }) && P({ state: 'live', image: null }).rangeM === model.STREET_PHOTO_RANGE_M);
+	ok('street: offline, an error, garbage or a strange id is unavailable — never an invented photo', P({ ...base, state: 'offline: no call', image: null }).kind === 'unavailable' && P({ state: 'error: HTTP 500 from Mapillary', image: null }).kind === 'unavailable' && P(null).kind === 'unavailable' && P('x').kind === 'unavailable' && P({ state: 'live', image: { id: '../../x' } }).kind === 'unavailable');
+	ok('street: an unreadable capture time is no date (shown as a dash, never a guess)', P({ state: 'live', image: { id: '7', captured_at: 'yesterday' } }).photo.capturedAt === null);
+	ok('street: the query names the camera’s position, inside the box the city feeds answer for', model.streetPhotoQuery(88.351, 22.5646) === 'lat=22.564600&lon=88.351000' && model.streetPhotoQuery(null, 22.5) === null && model.streetPhotoQuery(88.3, 10) === null && model.streetPhotoQuery(Number.NaN, 22.5) === null);
+	ok('street: the capture date in IST with Latin digits, the month in the reader’s language', model.photoDate(MLY_AT, 'en') === '29 Jun 2018' && /^29 জুন,? 2018$/.test(model.photoDate(MLY_AT, 'bn')) && /^29 जून,? 2018$/.test(model.photoDate(MLY_AT, 'hi')) && model.photoDate(null, 'en') === null && model.photoDate('nope', 'en') === null, `${model.photoDate(MLY_AT, 'bn')} | ${model.photoDate(MLY_AT, 'hi')}`);
+	ok('street: the credit is Mapillary’s CC BY-SA 4.0 line', `${model.STREET_PHOTO_CREDIT}, ${model.STREET_PHOTO_LICENCE}` === '© Mapillary contributors, CC BY-SA 4.0' && model.STREET_PHOTO_LICENCE_URL.startsWith('https://creativecommons.org/licenses/by-sa/4.0'));
+	ok('street: the label reads "Reference photo · not live" and the date sits beside it (EN / BN / HI)', M.t('en', 'fld_rs_street_label') === 'Reference photo · not live' && M.t('bn', 'fld_rs_street_label') === 'রেফারেন্স ছবি · লাইভ নয়' && M.t('hi', 'fld_rs_street_label') === 'संदर्भ चित्र · लाइव नहीं' && M.t('en', 'fld_rs_street_taken', '29 Jun 2018') === 'Taken 29 Jun 2018');
+	ok('street: without the key the note says the source needs a key and that no call is made', /needs a Mapillary key/.test(M.t('en', 'fld_rs_street_needs_key')) && /no call is made/.test(M.t('en', 'fld_rs_street_needs_key')) && M.t('en', 'fld_rs_street_none', 60) === 'No public street photo within 60 m of this camera.');
+
+	// the client: same-origin paths only, the type checked, the city feeds' refusals kept as typed errors
+	const seen = [];
+	const saved = globalThis.fetch;
+	const answer = { info: null, photo: null };
+	globalThis.fetch = async (url, init = {}) => {
+		seen.push({ url: String(url), method: (init.method ?? 'GET').toUpperCase(), credentials: init.credentials });
+		return String(url).includes('.jpg?') ? answer.photo() : answer.info();
+	};
+	try {
+		const q = model.streetPhotoQuery(88.351, 22.5646);
+		answer.info = () => new Response(JSON.stringify({ ...base, state: 'needs MAPILLARY_TOKEN', image: null }), { status: 200, headers: { 'content-type': 'application/json' } });
+		const info = await M.api.fetchStreetPhotoInfo(q);
+		ok('street client: the facts come from /api/cityfeeds/feeds/street-image on this origin', info.kind === 'needs_key' && seen[0].url === `/api/cityfeeds/feeds/street-image?${q}` && seen[0].method === 'GET' && seen[0].credentials === 'same-origin');
+		const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]);
+		answer.photo = () => new Response(JPEG, { status: 200, headers: { 'content-type': 'image/jpeg' } });
+		const blob = await M.api.fetchStreetPhoto(q);
+		ok('street client: the photo’s bytes come from /api/cityfeeds/feeds/street-image.jpg, a JPEG blob in memory', blob.type === 'image/jpeg' && blob.size === JPEG.length && seen[1].url === `/api/cityfeeds/feeds/street-image.jpg?${q}` && seen[1].method === 'GET');
+		answer.photo = () => new Response('<html></html>', { status: 200, headers: { 'content-type': 'text/html' } });
+		const notImage = await M.api.fetchStreetPhoto(q).then(() => null, (e) => e);
+		answer.photo = () => new Response(JSON.stringify({ detail: 'no public Mapillary photo within 60 m' }), { status: 404, headers: { 'content-type': 'application/json' } });
+		const none = await M.api.fetchStreetPhoto(q).then(() => null, (e) => e);
+		answer.photo = () => new Response(JSON.stringify({ detail: 'needs MAPILLARY_TOKEN' }), { status: 503, headers: { 'content-type': 'application/json' } });
+		const noKey = await M.api.fetchStreetPhoto(q).then(() => null, (e) => e);
+		ok('street client: anything but a JPEG/PNG is refused; "none in range" and "needs the key" stay typed', notImage instanceof M.api.FieldApiError && notImage.status === 415 && none?.status === 404 && noKey?.status === 503 && noKey.detail === 'needs MAPILLARY_TOKEN');
+		ok('street client: every request stayed on this origin (no Mapillary or CDN address)', seen.every((s) => s.url.startsWith('/api/cityfeeds/feeds/street-image')), seen.map((s) => s.url).join(' | '));
+	} finally {
+		globalThis.fetch = saved;
+	}
+}
+
 // ─── the board ───────────────────────────────────────────────────────────────
 
 const PERSON = /author|person|handle|username|byline|reporter|poster|uploader|suspect|accused|victim|owner|driver_name|face|biometric|individual_/i;
@@ -228,6 +280,13 @@ const drafts = [];
 	const c = model.boardDraftFromReading(reading, cam, 1018, 'Insp. R. Sen', NOW, true);
 	drafts.push(c);
 	ok('board: a camera reading enters labelled UNVERIFIED-CAMERA, the sample still named, no image stored', c.metadata.source === 'camera-ai' && c.metadata.verification === 'UNVERIFIED-CAMERA' && /^Unverified camera reading/.test(c.title) && c.provenance.image_stored === false && c.description.includes('not a live frame') && !keysDeep(c).some((k) => PERSON.test(k)));
+	const ref = { id: MLY_ID, capturedAt: MLY_AT };
+	const s = model.boardDraftFromReading(reading, { ...cam, sample: null, reference: ref }, 1018, 'Insp. R. Sen', NOW, true);
+	drafts.push(s);
+	ok('board: a reading of the nearby street photo names it (Mapillary id, the date taken, not a live frame), UNVERIFIED-CAMERA, no image stored', s.metadata.verification === 'UNVERIFIED-CAMERA' && s.description.includes(`reference photo: Mapillary ${MLY_ID}, taken 29 Jun 2018, not a live frame`) && s.metadata.reference_photo === true && !('sample' in s.metadata) && s.provenance.reference_photo?.source === 'Mapillary' && s.provenance.reference_photo.captured_at === MLY_AT && s.provenance.reference_photo.licence === 'CC BY-SA 4.0' && s.provenance.sample_still === null && s.provenance.image_stored === false && !keysDeep(s).some((k) => PERSON.test(k)));
+	const up = model.boardDraftFromReading(reading, { ...cam, sample: null }, 1018, 'Insp. R. Sen', NOW, true);
+	const both = model.boardDraftFromReading(reading, { ...cam, reference: ref }, 1018, 'Insp. R. Sen', NOW, true);
+	ok('board: an upload names no still; a sample still is never called a reference photo', !/sample still|reference photo/.test(up.description) && !('reference_photo' in up.provenance) && !/reference photo/.test(both.description) && !('reference_photo' in both.metadata));
 	ok('board: a clear or unclear reading makes no entry', model.boardDraftFromReading({ ...reading, state: 'clear' }, cam, 1018, 'x y', NOW, true) === null && model.boardDraftFromReading({ ...reading, state: 'unknown' }, cam, 1018, 'x y', NOW, true) === null);
 	for (const s of model.ROAD_STATES) {
 		const dd = model.boardDraftFromReading({ ...reading, state: s }, cam, 1018, 'Insp. R. Sen', NOW, true);
@@ -370,6 +429,11 @@ print(json.dumps({"n": len(json.load(open(sys.argv[1]))), "bad": bad}))
 	ok('shell: the entry loads the sheet lazily (no recorder, map or writer in the first load)', /import\('\.\/FieldReportSheet\.svelte'\)/.test(entry) && !/import\s+\w+\s+from\s+'\.\/FieldReportSheet/.test(entry) && /packs\.field\.core/.test(entry) && !/'\.\/packs\.field'/.test(entry));
 	const panel = read('src/lib/v3/object/RoadStatePanel.svelte');
 	ok('ethics: the road-state panel never sends a question (so never one about a person)', !/question/i.test(panel) && !/question/.test(apiSrc.slice(apiSrc.indexOf('readRoadState'))));
+	const panelCode = panel.replace(/<style>[\s\S]*<\/style>/, '');
+	ok('street panel: the photo shows "Reference photo · not live" with its date chip beside it, the CC BY-SA credit and its Mapillary page', /data-label="REFERENCE"[^\n]*fld_rs_street_label/.test(panelCode) && /fld_rs_street_label[\s\S]{0,200}data-testid="rs-street-date"[^\n]*fld_rs_street_taken/.test(panelCode) && /\{STREET_PHOTO_CREDIT\}, <a href=\{STREET_PHOTO_LICENCE_URL\}[^>]*>\{STREET_PHOTO_LICENCE\}<\/a>/.test(panelCode) && /street\.photo\.pageUrl/.test(panelCode));
+	ok('street panel: the choice is offered only when the city feeds found a photo; otherwise disabled with its note (key, range, down, no position)', /data-testid="rs-street"/.test(panelCode) && /disabled=\{[^}]*streetInfo\.kind !== 'ready'\}/.test(panelCode) && ['fld_rs_street_needs_key', 'fld_rs_street_none', 'fld_rs_street_down', 'fld_rs_street_no_position'].every((k) => panelCode.includes(`'${k}'`)) && /data-testid="rs-street-note"/.test(panelCode));
+	ok('street panel: same origin only — the page names no Mapillary or CDN address and loads the photo through the api client', !/mapillary\.com\/|fbcdn|graph\.mapillary/i.test(panelCode.replace(/\/\*[\s\S]*?\*\//g, '')) && /fetchStreetPhoto\(streetQuery/.test(panelCode) && /URL\.revokeObjectURL\(street\.url\)/.test(panelCode));
+	ok('street panel: the reading of the photo stays UNVERIFIED-CAMERA and names the reference photo on the board', /pick === 'street' && street \? \{ id: street\.photo\.id, capturedAt: street\.photo\.capturedAt \}/.test(panelCode) && /data-label="UNVERIFIED-CAMERA"/.test(panelCode));
 	const sheet = read('src/lib/v3/field/FieldReportSheet.svelte');
 	const rec = read('src/lib/v3/field/recorder.svelte.ts');
 	ok('privacy: the sheet keeps the line, and no recording is stored (no storage, no download, the microphone released)', /fld_privacy/.test(sheet) && !/localStorage|sessionStorage|indexedDB|download=|createObjectURL/.test(sheet + rec) && /getTracks\(\)[^;]*tr\.stop\(\)/.test(rec));

@@ -15,7 +15,7 @@ from cityfeeds.fires import fetch_fires_area, fetch_fires_public, fires_view
 from cityfeeds.heat import fetch_heat, heat_view
 from cityfeeds.keys import KEYED, key, keyed_state, redact
 from cityfeeds.notices import fetch_notices, notices_view
-from cityfeeds.street_image import StreetImages
+from cityfeeds.street_image import SEARCH_HALF_SIDE_M, PhotoRefused, StreetImages
 from cityfeeds.proposals import air_advisory, cyclone_preposition, heat_shift
 from cityfeeds.quakes import fetch_quakes, quakes_view
 from cityfeeds.river import fetch_news, fetch_river, river_view
@@ -241,7 +241,43 @@ class CityFeeds:
             self._street_error = redact(f"{type(exc).__name__}: {exc}")[:160]
             return {**base, "state": keyed_state("mapillary", error=self._street_error), "image": None}
         self._street_error, self._street_ok = None, True
-        return {**base, "state": "live", "image": got["image"], "cached": got["cached"], "searched_m": 60}
+        return {**base, "state": "live", "image": got["image"], "cached": got["cached"],
+                "searched_m": int(SEARCH_HALF_SIDE_M)}
+
+    async def street_photo(self, lat: float, lon: float) -> tuple[int, dict[str, Any], dict[str, Any] | None]:
+        """The bytes of the nearest public Mapillary photo, for the road-state panel (the deck's pages load images from
+        their own origin only). ``(200, facts, photo)``, or ``(status, why, None)``: 503 without the token or offline
+        (no call), 404 with no photo in the search box, 502 when Mapillary or its CDN gave nothing usable (the rules of
+        ``street_image.fetch_photo``). Read into memory, kept only in the short photo cache; never stored, never sent
+        to the vision model from here."""
+        base = {"lat": lat, "lon": lon, "source": "Mapillary (CC BY-SA 4.0)", "label": "Reference photo · not live"}
+        tok = key("mapillary")
+        if tok is None:
+            return 503, {**base, "state": keyed_state("mapillary"), "detail": keyed_state("mapillary")}, None
+        if self.s.offline:
+            return 503, {**base, "state": "offline: no call", "detail": "offline: no call"}, None
+        none = 404, {**base, "state": "live", "detail": f"no public Mapillary photo within {SEARCH_HALF_SIDE_M:.0f} m",
+                "searched_m": int(SEARCH_HALF_SIDE_M)}, None
+        try:
+            got = await self._street.near(self.f.client, tok, lat, lon)
+            if got["image"] is None:
+                return none
+            try:
+                photo = await self._street.photo(self.f.client, got["image"])
+            except PhotoRefused as exc:
+                # the thumbnail URL is signed and expires: a cached lookup's URL is asked for afresh, once
+                if not (got["cached"] and exc.status in (403, 404, 410)):
+                    raise
+                got = await self._street.near(self.f.client, tok, lat, lon, fresh=True)
+                if got["image"] is None:
+                    return none
+                photo = await self._street.photo(self.f.client, got["image"])
+        except Exception as exc:  # noqa: BLE001 — reported, never raised to the deck
+            self._street_error = redact(f"{type(exc).__name__}: {exc}")[:160]
+            return 502, {**base, "state": keyed_state("mapillary", error=self._street_error),
+                         "detail": self._street_error}, None
+        self._street_error, self._street_ok = None, True
+        return 200, {**base, "state": "live", "image": got["image"], "cached": photo["cached"]}, photo
 
     async def proposals(self) -> dict[str, Any]:
         a, h, c = await asyncio.gather(self.air(), self.heat(), self.cyclones())

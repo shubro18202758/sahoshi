@@ -238,9 +238,11 @@ def test_ai_gate_bundle_behaviour(tmp_path: Path) -> None:
         "ok ai gate on, anonymous GET /api/hydro/hydro/nowcast passes (public read)",
         "ok ai gate on, anonymous GET /api/cityfeeds/feeds/air passes (citizen air today)",
         "ok ai gate on, anonymous GET /api/cityfeeds/feeds/cyclones → 403",
+        "ok ai gate on, anonymous GET /api/cityfeeds/feeds/street-image.jpg?lat=22.564600&lon=88.351000 → 403",
         "ok ai gate on: anonymous speak with a short advisory passes",
         "ok ai gate on: speak with more than 400 characters → 413, never fetched",
         "ok ai gate on: the speak cap is per client",
         "ok ai gate on, signed in: every AI route proxies",
+        "ok ai gate on, signed in: the street photo proxies to the city feeds and its JPEG comes back intact",
     ):
         assert marker in run.stdout, f"ai gate suite never reached: {marker}"

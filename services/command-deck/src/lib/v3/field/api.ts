@@ -5,6 +5,8 @@
  *   POST /api/speech/speech/report?lang=   audio (the MediaRecorder blob) or {"text"} → a field report (UNVERIFIED-FIELD)
  *   POST /api/speech/speech/speak          {text, lang} → audio/wav (synthetic voice)
  *   POST /api/vision/vision/road-state     a JPEG/PNG still → a road state (UNVERIFIED-CAMERA) or a 403 policy refusal
+ *   GET  /api/cityfeeds/feeds/street-image[.jpg]?lat=&lon=   the nearby street photo's facts, then its bytes (Mapillary,
+ *                                          fetched by the city feeds so the page stays same-origin; officers only)
  *   GET  /api/hydro/hydro/nowcast | tide | rain
  *   GET  /api/forecast/forecast/segment/{id}
  *   (the board entry, POST /api/v1/events, is ./board.ts: operator pages only)
@@ -18,6 +20,7 @@ import {
 	parseRain,
 	parseRoadState,
 	parseSegmentForecast,
+	parseStreetPhoto,
 	parseTide,
 	speakable,
 	type FieldReport,
@@ -27,6 +30,7 @@ import {
 	type SegmentForecast,
 	type StormReplay,
 	type SpokenLang,
+	type StreetPhotoInfo,
 	type TideNow,
 } from './model';
 
@@ -39,6 +43,7 @@ export const SPEECH = '/api/speech/speech';
 export const VISION = '/api/vision/vision';
 export const HYDRO = '/api/hydro/hydro';
 export const FORECAST = '/api/forecast/forecast';
+export const FEEDS = '/api/cityfeeds/feeds';
 
 /** Why a call did not answer: the model cannot load now (503), too many asks (429), refused, unreachable or bad input. */
 export class FieldApiError extends Error {
@@ -130,6 +135,21 @@ export async function readRoadState(image: Blob, signal?: AbortSignal): Promise<
 	const r = parseRoadState(await res.json());
 	if (!r) throw new FieldApiError('bad', 200, 'not a road state');
 	return r;
+}
+
+/** The nearby street photo's facts for `query` (model.streetPhotoQuery); without the key the city feeds call nobody. */
+export async function fetchStreetPhotoInfo(query: string, signal?: AbortSignal): Promise<StreetPhotoInfo> {
+	return parseStreetPhoto(await getJson(`${FEEDS}/street-image?${query}`, 20_000, signal));
+}
+
+/** That photo as a JPEG/PNG blob, read into memory only (the city feeds fetch it from Mapillary's CDN). */
+export async function fetchStreetPhoto(query: string, signal?: AbortSignal): Promise<Blob> {
+	const res = await call(`${FEEDS}/street-image.jpg?${query}`, { headers: { accept: 'image/jpeg, image/png' }, signal }, 20_000);
+	if (!res.ok) await fail(res);
+	const type = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+	if (type !== 'image/jpeg' && type !== 'image/png') throw new FieldApiError('bad', 415, 'not a JPEG or PNG');
+	const blob = await res.blob();
+	return blob.type === type ? blob : new Blob([blob], { type });
 }
 
 export async function fetchNowcast(signal?: AbortSignal): Promise<Nowcast> {

@@ -74,7 +74,9 @@
  * /api/speech, /api/forecast, /api/vision, /api/hydro, /api/twin and /api/cityfeeds is default-denied (403) on its
  * canonical path, except the citizen page's needs: GET /api/hydro/hydro/nowcast | tide | rain and GET
  * /api/cityfeeds/feeds/summary | air (read-only, no forced refresh) and POST /api/speech/speech/speak (a JSON `text` of at most 400 characters, else 413; at most 10 per
- * client per minute, else 429). The public pages keep the strict CSP below.
+ * client per minute, else 429). The public pages keep the strict CSP below. The road-state panel's nearby street photo
+ * (GET /api/cityfeeds/feeds/street-image.jpg, Mapillary's JPEG fetched server-side by the city feeds) is not on that
+ * list: signed-in officers only, and the page keeps loading images from its own origin (img-src is unchanged).
  *
  * OPERATOR GATE (opt-in, SAHOSHI_OPERATOR_PIN — see
  * $lib/shell/operator-session.server.ts): without the signed session

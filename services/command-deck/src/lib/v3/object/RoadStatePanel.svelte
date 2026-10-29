@@ -1,14 +1,19 @@
 <script lang="ts">
 	/**
 	 * A camera's road state (PLAN §2.4 D) on its object page: no live CCTV frame reaches Sahoshi, so the officer reads a
-	 * credited SAMPLE still ("Sample still · not live") or uploads one, and the on-premises vision model answers the road
-	 * state — waterlogged, blocked, tree fall, stalled vehicle, crash debris, congested, clear — with its own (uncalibrated)
-	 * confidence, a water-depth band read against wheels and kerbs, a rough vehicle count and a short rationale, labelled
-	 * UNVERIFIED-CAMERA. "Send to the board" creates one unverified camera report (field/board.ts) for an officer to
-	 * confirm. Roads and vehicles only: the page never asks about people, and the service refuses if anything does.
-	 * The still is read from memory and never stored.
+	 * credited SAMPLE still ("Sample still · not live"), the nearby street photo or an upload, and the on-premises vision
+	 * model answers the road state — waterlogged, blocked, tree fall, stalled vehicle, crash debris, congested, clear —
+	 * with its own (uncalibrated) confidence, a water-depth band read against wheels and kerbs, a rough vehicle count and a
+	 * short rationale, labelled UNVERIFIED-CAMERA. "Send to the board" creates one unverified camera report
+	 * (field/board.ts) for an officer to confirm. Roads and vehicles only: the page never asks about people, and the
+	 * service refuses if anything does. The still is read from memory and never stored.
+	 *
+	 * The nearby street photo is the nearest public Mapillary image to the camera's position, fetched by the city feeds
+	 * (same origin, officers only): "Reference photo · not live" with its capture date beside it (it may be years old)
+	 * and its CC BY-SA credit. Its facts are asked for when the panel opens; without the key the city feeds make no call
+	 * and the choice stays disabled with a note, as it does when no photo is within range.
 	 */
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import { t } from '$lib/i18n/strings';
 	import { inBox } from '$lib/city';
 	import type { ObjectRow } from '$lib/workspace/types';
@@ -16,9 +21,24 @@
 	import { loadSegments } from '../public/geometry';
 	import '../field/packs.field';
 	import '../field/packs.field.core';
-	import { FieldApiError, readRoadState } from '../field/api';
+	import { FieldApiError, fetchStreetPhoto, fetchStreetPhotoInfo, readRoadState } from '../field/api';
 	import { writeBoardEntry } from '../field/board';
-	import { boardDraftFromReading, nearestSegment, officerOf, sendableState, VEHICLE_KEYS, type RoadState } from '../field/model';
+	import {
+		boardDraftFromReading,
+		nearestSegment,
+		officerOf,
+		photoDate,
+		sendableState,
+		STREET_PHOTO_CREDIT,
+		STREET_PHOTO_LICENCE,
+		STREET_PHOTO_LICENCE_URL,
+		STREET_PHOTO_RANGE_M,
+		streetPhotoQuery,
+		VEHICLE_KEYS,
+		type RoadState,
+		type StreetPhoto,
+		type StreetPhotoInfo,
+	} from '../field/model';
 	import { SAMPLE_STILLS, sampleFor, type SampleStill } from '../field/samples';
 	import Panel from './Panel.svelte';
 
@@ -40,6 +60,13 @@
 	// the page is keyed by its URN, so the camera never changes under this panel
 	let sample = $state<SampleStill>(untrack(() => sampleFor(row.id)));
 	let upload = $state<{ url: string; blob: Blob } | null>(null);
+	let pick = $state<'sample' | 'upload' | 'street'>('sample');
+	// the nearby street photo: its facts when the panel opens, its bytes once chosen (kept in memory for this page only)
+	const streetQuery = untrack(() => streetPhotoQuery(row.lon, row.lat));
+	let streetInfo = $state<StreetPhotoInfo | { kind: 'loading' }>(untrack(() => (streetQuery ? { kind: 'loading' } : { kind: 'no_position' })));
+	let street = $state<{ url: string; blob: Blob; photo: StreetPhoto } | null>(null);
+	let streetLoading = $state(false);
+	const life = new AbortController();
 	let phase = $state<'idle' | 'reading' | 'done'>('idle');
 	let reading = $state<RoadState | null>(null);
 	let refusal = $state<string | null>(null);
@@ -49,14 +76,68 @@
 	let ctl: AbortController | null = null;
 
 	const who = $derived(officerOf(officer));
-	const src = $derived(upload?.url ?? sample.src);
+	const src = $derived(pick === 'upload' && upload ? upload.url : pick === 'street' && street ? street.url : sample.src);
 	const segId = $derived(typeof row.props.segment_id === 'number' ? (row.props.segment_id as number) : null);
+	const taken = $derived(street ? (photoDate(street.photo.capturedAt, lang) ?? '—') : '—');
+	/** Why the street choice is off (null while it is offered or still being asked for). */
+	const streetNote = $derived(
+		streetInfo.kind === 'needs_key'
+			? L('fld_rs_street_needs_key')
+			: streetInfo.kind === 'none'
+				? L('fld_rs_street_none', streetInfo.rangeM)
+				: streetInfo.kind === 'unavailable'
+					? L('fld_rs_street_down')
+					: streetInfo.kind === 'no_position'
+						? L('fld_rs_street_no_position')
+						: null,
+	);
+	const streetTitle = $derived(
+		streetNote ??
+			(streetInfo.kind === 'ready' ? `${L('fld_rs_street')} (${L('fld_rs_street_taken', photoDate(streetInfo.photo.capturedAt, lang) ?? '—')})` : L('fld_rs_street')),
+	);
+
+	onMount(() => {
+		if (!streetQuery) return;
+		fetchStreetPhotoInfo(streetQuery, life.signal)
+			.then((info) => (streetInfo = info))
+			.catch((err) => {
+				if (!life.signal.aborted) streetInfo = { kind: 'unavailable', detail: err instanceof FieldApiError ? err.detail : String(err) };
+			});
+	});
 
 	function choose(s: SampleStill) {
 		if (phase === 'reading') return;
 		if (upload) URL.revokeObjectURL(upload.url);
 		upload = null;
 		sample = s;
+		pick = 'sample';
+		clear();
+	}
+
+	async function chooseStreet() {
+		if (phase === 'reading' || streetLoading || streetInfo.kind !== 'ready' || !streetQuery) return;
+		const photo = streetInfo.photo;
+		if (!street || street.photo.id !== photo.id) {
+			streetLoading = true;
+			try {
+				const blob = await fetchStreetPhoto(streetQuery, life.signal);
+				if (street) URL.revokeObjectURL(street.url);
+				street = { url: URL.createObjectURL(blob), blob, photo };
+			} catch (err) {
+				if (life.signal.aborted) return;
+				clear();
+				// the city feeds' own words for a key gone or nothing in range; anything else is a plain retry note
+				if (err instanceof FieldApiError && err.status === 404) streetInfo = { kind: 'none', rangeM: STREET_PHOTO_RANGE_M };
+				else if (err instanceof FieldApiError && /^needs [A-Z]/.test(err.detail)) streetInfo = { kind: 'needs_key', env: err.detail.slice(6) };
+				else problem = L('fld_rs_street_failed');
+				return;
+			} finally {
+				streetLoading = false;
+			}
+		}
+		if (upload) URL.revokeObjectURL(upload.url);
+		upload = null;
+		pick = 'street';
 		clear();
 	}
 
@@ -78,17 +159,18 @@
 		}
 		if (upload) URL.revokeObjectURL(upload.url);
 		upload = { url: URL.createObjectURL(f), blob: f };
+		pick = 'upload';
 		clear();
 	}
 
 	async function read() {
-		if (phase === 'reading') return;
+		if (phase === 'reading' || streetLoading) return;
 		ctl?.abort();
 		ctl = new AbortController();
 		clear();
 		phase = 'reading';
 		try {
-			const blob = upload ? upload.blob : await (await fetch(sample.src, { signal: ctl.signal })).blob();
+			const blob = pick === 'upload' && upload ? upload.blob : pick === 'street' && street ? street.blob : await (await fetch(sample.src, { signal: ctl.signal })).blob();
 			const ans = await readRoadState(blob.type ? blob : new Blob([blob], { type: 'image/jpeg' }), ctl.signal);
 			if (ans.ok) reading = ans.reading;
 			else refusal = ans.reason || L('fld_rs_refused');
@@ -112,7 +194,14 @@
 			}
 			const draft = boardDraftFromReading(
 				reading,
-				{ id: row.id, label: row.sublabel ? `${row.sublabel} (${row.id})` : row.label, lon: row.lon, lat: row.lat, sample: upload ? null : sample.id },
+				{
+					id: row.id,
+					label: row.sublabel ? `${row.sublabel} (${row.id})` : row.label,
+					lon: row.lon,
+					lat: row.lat,
+					sample: pick === 'sample' ? sample.id : null,
+					reference: pick === 'street' && street ? { id: street.photo.id, capturedAt: street.photo.capturedAt } : null,
+				},
 				seg,
 				who,
 				Date.now(),
@@ -128,7 +217,9 @@
 
 	onDestroy(() => {
 		ctl?.abort();
+		life.abort();
 		if (upload) URL.revokeObjectURL(upload.url);
+		if (street) URL.revokeObjectURL(street.url);
 	});
 </script>
 
@@ -136,23 +227,35 @@
 	<div class="rs">
 		<div class="grid">
 		<div class="left">
-			<figure class={['still', phase === 'reading' && 'scanning']}>
-				<img {src} alt={upload ? L('fld_rs_uploaded') : sample.caption} width="1024" height="682" decoding="async" />
-				<span class="chip" data-label="SAMPLE"><Glyph name={upload ? 'eyeoff' : 'flask'} size={14} />{upload ? L('fld_rs_uploaded') : L('fld_rs_sample')}</span>
+			<figure class={['still', phase === 'reading' && 'scanning']} data-pick={pick}>
+				<img {src} alt={pick === 'upload' ? L('fld_rs_uploaded') : pick === 'street' ? L('fld_rs_street_alt') : sample.caption} width="1024" height="682" decoding="async" />
+				<div class="chips">
+					{#if pick === 'street' && street}
+						<span class="chip" data-label="REFERENCE"><Glyph name="history" size={14} />{L('fld_rs_street_label')}</span>
+						<span class="chip date" data-testid="rs-street-date"><Glyph name="calendar" size={14} />{L('fld_rs_street_taken', taken)}</span>
+					{:else}
+						<span class="chip" data-label="SAMPLE"><Glyph name={pick === 'upload' ? 'eyeoff' : 'flask'} size={14} />{pick === 'upload' ? L('fld_rs_uploaded') : L('fld_rs_sample')}</span>
+					{/if}
+				</div>
 				{#if phase === 'reading'}<span class="scan" aria-hidden="true"></span><span class="busy"><span class="spin light" aria-hidden="true"></span>{L('fld_rs_reading')}</span>{/if}
-				{#if !upload}<figcaption>{L('fld_rs_credit', sample.author, sample.licence)} · <a href={sample.source} target="_blank" rel="noopener noreferrer">Wikimedia Commons</a></figcaption>{/if}
+				{#if pick === 'sample'}<figcaption>{L('fld_rs_credit', sample.author, sample.licence)} · <a href={sample.source} target="_blank" rel="noopener noreferrer">Wikimedia Commons</a></figcaption>
+				{:else if pick === 'street' && street}<figcaption data-testid="rs-street-credit">{STREET_PHOTO_CREDIT}, <a href={STREET_PHOTO_LICENCE_URL} target="_blank" rel="noopener noreferrer license">{STREET_PHOTO_LICENCE}</a> · <a href={street.photo.pageUrl} target="_blank" rel="noopener noreferrer">Mapillary</a>{#if street.photo.distanceM !== null} · {L('fld_rs_street_away', street.photo.distanceM)}{/if}</figcaption>{/if}
 			</figure>
 			<div class="strip" role="group" aria-label={L('fld_rs_pick')}>
 				{#each SAMPLE_STILLS as s (s.id)}
-					<button type="button" class={['th', !upload && sample.id === s.id && 'is-selected']} aria-pressed={!upload && sample.id === s.id} onclick={() => choose(s)} title={s.caption} disabled={phase === 'reading'}>
+					<button type="button" class={['th', pick === 'sample' && sample.id === s.id && 'is-selected']} aria-pressed={pick === 'sample' && sample.id === s.id} onclick={() => choose(s)} title={s.caption} disabled={phase === 'reading' || streetLoading}>
 						<img src={s.src} alt={s.caption} width="96" height="64" loading="lazy" decoding="async" />
 					</button>
 				{/each}
-				<button type="button" class={['th', 'up', upload && 'is-selected']} onclick={() => fileInput?.click()} disabled={phase === 'reading'} aria-label={L('fld_rs_upload')} title={L('fld_rs_upload')} data-testid="rs-upload">
+				<button type="button" class={['th', 'up', 'street', pick === 'street' && 'is-selected']} aria-pressed={pick === 'street'} onclick={() => void chooseStreet()} disabled={phase === 'reading' || streetLoading || streetInfo.kind !== 'ready'} aria-label={L('fld_rs_street')} title={streetTitle} data-testid="rs-street" data-state={streetInfo.kind}>
+					{#if streetLoading || streetInfo.kind === 'loading'}<span class="spin light" aria-hidden="true"></span>{:else}<Glyph name="pin" size={18} />{/if}<span>{L('fld_rs_street_short')}</span>
+				</button>
+				<button type="button" class={['th', 'up', pick === 'upload' && 'is-selected']} onclick={() => fileInput?.click()} disabled={phase === 'reading' || streetLoading} aria-label={L('fld_rs_upload')} title={L('fld_rs_upload')} data-testid="rs-upload">
 					<Glyph name="plus" size={18} /><span>{L('fld_rs_upload_short')}</span>
 				</button>
 				<input bind:this={fileInput} type="file" accept="image/jpeg,image/png" hidden onchange={onFile} />
 			</div>
+			{#if streetNote}<p class="meta" data-testid="rs-street-note">{streetNote}</p>{/if}
 		</div>
 
 		<div class="answer" aria-live="polite">
@@ -210,8 +313,8 @@
 			{:else}
 				<div class="cta">
 					<span class="ico big"><Glyph name="spark" size={28} /></span>
-					<p>{L('fld_rs_no_live')}</p>
-					<button type="button" class="primary" onclick={() => void read()} disabled={phase === 'reading'} data-testid="rs-read">
+					<p>{pick === 'street' ? L('fld_rs_street_lead') : L('fld_rs_no_live')}</p>
+					<button type="button" class="primary" onclick={() => void read()} disabled={phase === 'reading' || streetLoading} data-testid="rs-read">
 						{#if phase === 'reading'}<span class="spin" aria-hidden="true"></span>{L('fld_rs_reading')}{:else}<Glyph name="spark" size={18} />{L('fld_rs_read')}{/if}
 					</button>
 					{#if problem}<p class="problem" role="alert">{problem}</p>{/if}
@@ -280,10 +383,17 @@
 		transform: translate(-50%, -50%);
 	}
 
-	.chip {
+	.chips {
 		position: absolute;
 		top: 12px;
 		left: 12px;
+		right: 12px;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.chip {
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
@@ -295,6 +405,13 @@
 		color: var(--v3-t1);
 		font-size: var(--v3-text-meta);
 		font-weight: 650;
+	}
+
+	/* a reference photo may be years old: its date reads as loudly as its label */
+	.chip.date {
+		border-style: solid;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.scan {
@@ -617,7 +734,7 @@
 
 	.strip {
 		display: grid;
-		grid-template-columns: repeat(7, minmax(0, 1fr));
+		grid-template-columns: repeat(8, minmax(0, 1fr));
 		gap: 8px;
 	}
 
@@ -670,6 +787,17 @@
 		overflow: hidden;
 		max-width: 100%;
 		padding: 0 2px;
+	}
+
+	.th.up.is-selected {
+		border: 2px solid var(--v3-t1);
+		color: var(--v3-t1);
+	}
+
+	/* off for a reason (no key, nothing in range): the note under the strip says which */
+	.th.street:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
 	}
 
 	.th:focus-visible,

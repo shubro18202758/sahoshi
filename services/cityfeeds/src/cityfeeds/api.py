@@ -16,6 +16,8 @@
     GET /feeds/fires            GeoJSON: NASA FIRMS hotspots in the Kolkata Metropolitan Area (places, not people)
     GET /feeds/street-image     ?lat=&lon= the nearest public Mapillary photo (CC BY-SA 4.0), or "needs
                                 MAPILLARY_TOKEN"; never calls the vision model
+    GET /feeds/street-image.jpg ?lat=&lon= that photo's JPEG/PNG bytes, fetched here from Mapillary's CDN (so the
+                                deck stays same-origin; limits in street_image.py); JSON 503 / 404 / 502 otherwise
     GET /feeds/proposals        every drafted proposal, and why the others were not drafted
 
 ``?force=1`` refreshes past the cache (still inside the rate limits); the deck's public gate refuses it.
@@ -29,8 +31,9 @@ from typing import Any, AsyncIterator
 
 import structlog
 import uvicorn
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from cityfeeds import __version__
 from cityfeeds.config import Settings, get_settings
@@ -52,7 +55,8 @@ LABELS = {
     "notices": "LIVE (KMC public portal; Kolkata Traffic Police advisories)",
     "fires": "LIVE (NASA FIRMS public files; the area API with FIRMS_MAP_KEY); satellite thermal anomalies, not "
              "confirmed fires",
-    "street_image": "Reference photo · not live (Mapillary, CC BY-SA 4.0) with MAPILLARY_TOKEN",
+    "street_image": "Reference photo · not live (Mapillary, CC BY-SA 4.0) with MAPILLARY_TOKEN; the .jpg route passes "
+                    "the photo's bytes on from memory, never stored",
 }
 
 
@@ -120,6 +124,17 @@ def create_app(settings: Settings | None = None, feeds: CityFeeds | None = None)
     @app.get("/feeds/street-image")
     async def street_image(lat: float = Query(ge=22.0, le=23.5), lon: float = Query(ge=87.8, le=89.0)) -> dict:
         return await cf().street_image(lat, lon)
+
+    @app.get("/feeds/street-image.jpg", response_model=None)
+    async def street_image_jpg(lat: float = Query(ge=22.0, le=23.5),
+                               lon: float = Query(ge=87.8, le=89.0)) -> Response:
+        status, info, photo = await cf().street_photo(lat, lon)
+        if photo is None:
+            return JSONResponse(info, status_code=status, headers={"cache-control": "no-store"})
+        im = info["image"]
+        return Response(photo["body"], media_type=photo["content_type"], headers={
+            "cache-control": "no-store", "x-content-type-options": "nosniff",
+            "x-mapillary-id": im["id"], "x-captured-at": im.get("captured_at") or ""})
 
     @app.get("/feeds/proposals")
     async def proposals() -> dict:

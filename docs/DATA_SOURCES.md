@@ -38,7 +38,7 @@ Labels used below: **LIVE** (a third-party feed answered), **OBSERVED** (a stati
 | Syama Prasad Mookerjee Port: Tidal Notices | The port's published tide notices | `smp.smportkolkata.in` | none | **Read live (new)** over a pinned exception for its expired certificate (§5). The site answers HTTP 404 "No Such URL." for the page and every content path; shown as exactly that | PUBLISHED: UNAVAILABLE (with the port's answer); tide MODELLED |
 | Sahoshi hydro service | Modelled Garden Reach high and low waters | `127.0.0.1:8197` (this box) | none | Live | MODELLED |
 | NASA FIRMS active fires | Satellite hotspots (VIIRS S-NPP, NOAA-20, NOAA-21, MODIS) in the Kolkata Metropolitan Area | `firms.modaps.eosdis.nasa.gov` | none; `FIRMS_MAP_KEY` optional | **Live (new), no key:** the four public South Asia 24-h files answer 200 (0.7 MB together); 0 hotspots in the metro box on 28 Oct. With the key, the area API for the box (2 days) | LIVE; each point "satellite thermal anomaly, not a confirmed fire" |
-| Mapillary | A public street-level photo near a junction, for road-state stills | `graph.mapillary.com` | `MAPILLARY_TOKEN` | Wired; without a token: "Invalid OAuth 2.0 Access Token" | Reference photo · not live (CC BY-SA 4.0; faces and plates blurred by Mapillary) |
+| Mapillary | The nearest public street-level photo to a camera: the Road state panel's "Nearby street photo", which the officer can send to the vision model (the answer stays UNVERIFIED-CAMERA). The city feeds fetch the photo's bytes (`/feeds/street-image.jpg`) so the deck stays same-origin | `graph.mapillary.com`; the photo from `scontent…fbcdn.net` (allow-listed, ≤ 4 MB, JPEG/PNG, 8 s, memory only) | `MAPILLARY_TOKEN` | **Live (key set 29 Oct):** Esplanade gave a photo 35 m away, taken 29 Jun 2018; Howrah Bridge none within 60 m. With the search box widened to 150 m (the nearest of up to 500 images), 13 of the 21 camera sites have a photo, against 5 at 60 m. Without a token no call is made and the choice is disabled with a note | Reference photo · not live, with the date taken (CC BY-SA 4.0; faces and plates blurred by Mapillary) |
 
 `GET /health` and `GET /feeds/summary` list each keyed source as `live`, `needs <ENV_VAR>` or `error: <reason>`.
 The observed air values sit beside the modelled ones (`/feeds/air` → `observed`, and each site's `observed`); the
@@ -132,7 +132,7 @@ These need an agency's access or a paid licence. Each is a stand-in, labelled wh
 | Fleet GPS / AVL, escort GPS, patrol units | operators, Kolkata Police | synthetic and emulated positions | EMULATED |
 | Crowdsourced traffic reports | commercial | synthetic | SIMULATED FEED |
 | ANPR / number-plate cameras and camera sites | Kolkata Police | `EmulatedAnprSource`; 21 modelled sites | EMULATED |
-| CCTV video | Kolkata Police | none ingested; sample stills only | "Sample still · not live" |
+| CCTV video | Kolkata Police | none ingested; sample stills, or the nearest public Mapillary photo (§1) | "Sample still · not live"; "Reference photo · not live" with its date |
 | Scenario events, crowds, historical traffic | — | event emulator, forecast and twin profiles | SIMULATED / EMULATED |
 
 One label gap was found in this check: the oracle badges junction signal entities `live` although their phase is

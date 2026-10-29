@@ -5,6 +5,8 @@
  *
  *   parseFieldReport        POST /api/speech/report → a FieldReport (always UNVERIFIED-FIELD, whatever the wire says)
  *   parseRoadState          POST /api/vision/road-state → a RoadState (always UNVERIFIED-CAMERA) or a policy refusal
+ *   parseStreetPhoto        GET /api/cityfeeds/feeds/street-image → the nearby street photo (Mapillary, "Reference photo
+ *                           · not live", its capture date) or why there is none (no key: the city feeds made no call)
  *   parseNowcast / waterOf  GET /api/hydro/nowcast → one segment's waterlogging (MODELLED; drivers with their labels)
  *   parseTide / parseRain   GET /api/hydro/tide | rain → the plain-word state a citizen reads
  *   parseSegmentForecast    GET /api/forecast/segment/{id} → V/C steps with the p10–p90 band (SIMULATED until real traffic)
@@ -208,6 +210,66 @@ export function sendableState(s: RoadStateName): boolean {
 	return s !== 'clear' && s !== 'unknown';
 }
 
+// ── the nearby street photo (city feeds → Mapillary) ───────────────────────
+
+/** The credit and licence a Mapillary photo carries wherever it shows (data, not UI copy). */
+export const STREET_PHOTO_CREDIT = '© Mapillary contributors';
+export const STREET_PHOTO_LICENCE = 'CC BY-SA 4.0';
+export const STREET_PHOTO_LICENCE_URL = 'https://creativecommons.org/licenses/by-sa/4.0/';
+/** How far round the camera the city feeds look (their 150 m box). */
+export const STREET_PHOTO_RANGE_M = 150;
+
+export interface StreetPhoto {
+	id: string;
+	/** ISO capture time: a past photograph, possibly years old. */
+	capturedAt: string | null;
+	distanceM: number | null;
+	/** The photo's own page on mapillary.com, where its contributor is credited (built from the id, never the wire). */
+	pageUrl: string;
+}
+
+/** What the panel can offer: the photo, or why not (no key → the city feeds made no call). */
+export type StreetPhotoInfo =
+	| { kind: 'ready'; photo: StreetPhoto }
+	| { kind: 'needs_key'; env: string }
+	| { kind: 'none'; rangeM: number }
+	| { kind: 'unavailable'; detail: string }
+	| { kind: 'no_position' };
+
+/** `lat=…&lon=…` for a camera inside the box the city feeds answer for (22.0–23.5 N, 87.8–89.0 E), else null. */
+export function streetPhotoQuery(lon: number | null, lat: number | null): string | null {
+	if (num(lon) === null || num(lat) === null) return null;
+	if ((lat as number) < 22 || (lat as number) > 23.5 || (lon as number) < 87.8 || (lon as number) > 89) return null;
+	return `lat=${(lat as number).toFixed(6)}&lon=${(lon as number).toFixed(6)}`;
+}
+
+/** The city feeds' GET /feeds/street-image answer → the panel's offer. */
+export function parseStreetPhoto(raw: unknown): StreetPhotoInfo {
+	if (!isObj(raw)) return { kind: 'unavailable', detail: 'no answer' };
+	const state = str(raw.state) ?? '';
+	const needs = /^needs ([A-Z][A-Z0-9_]*)$/.exec(state);
+	if (needs) return { kind: 'needs_key', env: needs[1] };
+	if (state !== 'live') return { kind: 'unavailable', detail: state || 'no answer' };
+	const im = isObj(raw.image) ? raw.image : null;
+	if (!im) return { kind: 'none', rangeM: num(raw.searched_m) ?? STREET_PHOTO_RANGE_M };
+	const id = str(im.id);
+	if (!id || !/^\d{1,24}$/.test(id)) return { kind: 'unavailable', detail: 'not a Mapillary image' };
+	const at = str(im.captured_at);
+	const d = num(im.distance_m);
+	return {
+		kind: 'ready',
+		photo: { id, capturedAt: at && Number.isFinite(Date.parse(at)) ? at : null, distanceM: d === null ? null : Math.round(d), pageUrl: `https://www.mapillary.com/app/?pKey=${id}` },
+	};
+}
+
+/** A capture date for the console: "29 Jun 2018" (IST, Latin digits, the month in the reader's language); null for none. */
+export function photoDate(iso: string | null, lang: string): string | null {
+	const ms = iso ? Date.parse(iso) : Number.NaN;
+	if (!Number.isFinite(ms)) return null;
+	const locale = lang === 'bn' ? 'bn-IN-u-nu-latn' : lang === 'hi' ? 'hi-IN-u-nu-latn' : 'en-GB';
+	return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(ms);
+}
+
 // ── the board (the platform's ingestion path for a reported situation) ──────
 
 /**
@@ -339,10 +401,14 @@ export function boardDraftFromReport(r: FieldReport, place: ReportPlace, segment
 	};
 }
 
-/** The board entry of a camera reading (same path, UNVERIFIED-CAMERA); null for a state that is not worth one. */
+/**
+ * The board entry of a camera reading (same path, UNVERIFIED-CAMERA); null for a state that is not worth one. The still
+ * it was read from is named: a sample still, or the nearby street photo (Mapillary, with its capture date) — never a
+ * live frame.
+ */
 export function boardDraftFromReading(
 	reading: RoadState,
-	camera: { id: string; label: string; lon: number | null; lat: number | null; sample: string | null },
+	camera: { id: string; label: string; lon: number | null; lat: number | null; sample: string | null; reference?: { id: string; capturedAt: string | null } | null },
 	segmentId: number,
 	officer: string,
 	nowMs: number,
@@ -351,6 +417,12 @@ export function boardDraftFromReading(
 	const kind = BOARD_KIND_FOR_STATE[reading.state];
 	if (!kind) return null;
 	const words = STATE_WORDS[reading.state];
+	const ref = camera.sample ? null : (camera.reference ?? null);
+	const still = camera.sample
+		? ` (sample still ${camera.sample}, not a live frame)`
+		: ref
+			? ` (reference photo: Mapillary ${ref.id}${photoDate(ref.capturedAt, 'en') ? `, taken ${photoDate(ref.capturedAt, 'en')}` : ''}, not a live frame)`
+			: '';
 	return {
 		event_kind: kind,
 		protection_class: 'none',
@@ -359,7 +431,7 @@ export function boardDraftFromReading(
 		description: clip(
 			[
 				`Camera still read by the on-premises vision model, unverified (UNVERIFIED-CAMERA). It is a claim awaiting an officer's confirmation, not an action.`,
-				`Camera: ${camera.id}${camera.sample ? ` (sample still ${camera.sample}, not a live frame)` : ''}.`,
+				`Camera: ${camera.id}${still}.`,
 				`Reading: ${words}${reading.confidence !== null ? ` (model confidence ${reading.confidence.toFixed(2)}, not calibrated)` : ''}.`,
 				reading.rationale ? `Rationale: ${reading.rationale}` : '',
 				'Roads and vehicles only; the still was not stored.',
@@ -380,6 +452,7 @@ export function boardDraftFromReading(
 			road_state: reading.state,
 			camera_id: camera.id,
 			...(camera.sample ? { sample: true } : {}),
+			...(ref ? { reference_photo: true } : {}),
 		},
 		provenance: {
 			feed: FIELD_SOURCES.camera,
@@ -389,6 +462,7 @@ export function boardDraftFromReading(
 			water_depth_band: reading.depth,
 			vehicles_estimate: reading.vehicles,
 			sample_still: camera.sample,
+			...(ref ? { reference_photo: { source: 'Mapillary', id: ref.id, captured_at: ref.capturedAt, licence: STREET_PHOTO_LICENCE } } : {}),
 			image_stored: false,
 		},
 		geotag: inCity && camera.lon !== null && camera.lat !== null ? { lon: camera.lon, lat: camera.lat } : null,

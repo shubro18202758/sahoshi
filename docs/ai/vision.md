@@ -59,6 +59,25 @@ How a consumer should use it:
   the `reason` text.
 - `503` means the model cannot start right now (memory); retry later.
 
+## The stills the deck sends
+
+No live CCTV frame reaches Sahoshi. On a camera's page the Road state panel
+(`RoadStatePanel.svelte`) offers three stills, and the officer picks one:
+
+| Choice | Where it comes from | Shown as |
+|---|---|---|
+| Sample still | six credited Wikimedia Commons photos, pixelated, in `static/samples/cameras` | "Sample still · not live" with the credit |
+| Nearby street photo | the nearest public Mapillary photo within a 150 m box round the camera's (modelled) position, fetched server-side by the city feeds (`GET /api/cityfeeds/feeds/street-image.jpg`) so the page stays same-origin; officers only | "Reference photo · not live", the date it was taken beside it (photos can be years old), "© Mapillary contributors, CC BY-SA 4.0" and a link to its Mapillary page |
+| Upload | the officer's own JPEG or PNG | "Your still, not stored" |
+
+Whichever still is read, the answer is the same `UNVERIFIED-CAMERA` claim, and
+the board entry names its still (a sample still, or the Mapillary id and the
+date taken), never a live frame. Without `MAPILLARY_TOKEN` the street choice is
+disabled with a note that it needs a key, and no call is made; with no photo in
+range it says so. The photo is held in the browser's memory and in the city
+feeds' short cache (12 photos, 30 minutes), never on disk. Fetch rules:
+[`cityfeeds.md`](cityfeeds.md#street-photos-street_imagepy).
+
 ## Evaluation (28 Oct 2026, real model)
 
 Twelve public photos (nine from Kolkata and Howrah), faces and legible plates

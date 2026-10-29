@@ -301,6 +301,21 @@ const SHOTS = [
 			});
 			await sleep(3000);
 		} },
+	// the same panel reading the nearest public Mapillary photo (Chittaranjan Avenue: one taken in Aug 2026, 39 m away)
+	{ name: 'road-state-street', url: '/o/camera:EM-CAM-04', view: { width: 1440, height: 1320 }, lang: 'en', wait: 10000,
+		act: async (page) => {
+			await page.waitForSelector('[data-testid="rs-street"]:not([disabled])', { visible: true, timeout: 60000 });
+			await clickSel(page, '[data-testid="rs-street"]', null, 30000);
+			await page.waitForSelector('[data-testid="rs-street-date"]', { visible: true, timeout: 60000 });
+			await sleep(800);
+			await clickSel(page, '[data-testid="rs-read"]');
+			await waitText(page, /confidence/i, 240000);
+			await page.evaluate(() => {
+				window.scrollTo(0, 0);
+				for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
+			});
+			await sleep(3000);
+		} },
 	{ name: 'plan', url: '/plan', view: CONSOLE, lang: 'en', wait: 12000 },
 	{ name: 'assistant', url: '/assistant', view: CONSOLE, lang: 'en', wait: 8000,
 		act: async (page) => {

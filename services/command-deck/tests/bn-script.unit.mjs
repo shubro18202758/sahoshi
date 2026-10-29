@@ -69,7 +69,7 @@ const DEVANAGARI = HI ? /[ঀ-৿]/ : /[ऀ-ॿ]/;
 /** Mixed-case Latin a BN string may keep: product, protocol and licence names, keys on a keyboard, time-format letters, units. */
 const LATIN_OK = new Set(
 	(
-		'Gemma Nemotron Qwen Cesium ion Google OpenStreetMap OSM WhatsApp WebSocket Esc Escape Enter Shift Ctrl Alt Tab Cmd ' +
+		'Gemma Nemotron Qwen Cesium ion Google OpenStreetMap OSM Mapillary WhatsApp WebSocket Esc Escape Enter Shift Ctrl Alt Tab Cmd ' +
 		'ODbL csv json hh mm ss km m s ms min h kmh px veh Hz dB'
 	).split(/\s+/),
 );
