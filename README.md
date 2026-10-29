@@ -10,13 +10,13 @@
 
 <p align="center">
   <strong>One live picture of Kolkata's roads, rain and crowds for traffic police, the city corporation, disaster
-  response and ambulances.<br/>The AI proposes, a named officer decides, and citizens hear it in Bengali.</strong>
+  response and ambulances.<br/>The AI proposes, a named officer decides, and citizens hear it in English, Bengali or Hindi.</strong>
 </p>
 
 <p align="center">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square">
   <img alt="City: Kolkata, West Bengal" src="https://img.shields.io/badge/city-Kolkata%2C%20West%20Bengal-111111?style=flat-square">
-  <img alt="Languages: Bengali, English, Hindi" src="https://img.shields.io/badge/languages-%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%20%C2%B7%20EN%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%82%E0%A4%A6%E0%A5%80-111111?style=flat-square">
+  <img alt="Languages: English, Bengali, Hindi" src="https://img.shields.io/badge/languages-English%20%C2%B7%20Bengali%20%C2%B7%20Hindi-111111?style=flat-square">
   <img alt="Tests: 6,310 pytest and 121 cargo" src="https://img.shields.io/badge/tests-6%2C310%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
   <img alt="Status: prototype on one on-premises server" src="https://img.shields.io/badge/status-prototype%20on%20one%20on--premises%20server-555555?style=flat-square">
 </p>
@@ -38,6 +38,21 @@
   <img alt="llama.cpp" src="https://img.shields.io/badge/llama.cpp-local%20models-555555?style=flat-square">
   <img alt="OpenStreetMap" src="https://img.shields.io/badge/OpenStreetMap-real%20roads-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white">
 </p>
+
+<p align="center">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white">
+  <img alt="Hugging Face" src="https://img.shields.io/badge/Hugging%20Face-open%20models-FFD21E?style=flat-square&logo=huggingface&logoColor=black">
+  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-CUDA-EE4C2C?style=flat-square&logo=pytorch&logoColor=white">
+  <img alt="Cesium" src="https://img.shields.io/badge/Cesium-photoreal%203D-6CADDF?style=flat-square&logo=cesium&logoColor=white">
+  <img alt="NATS" src="https://img.shields.io/badge/NATS-events-27AAE1?style=flat-square&logo=natsdotio&logoColor=white">
+  <img alt="Valkey" src="https://img.shields.io/badge/Valkey-cache-555555?style=flat-square">
+  <img alt="NVIDIA" src="https://img.shields.io/badge/NVIDIA-GB10%20on--premises-76B900?style=flat-square&logo=nvidia&logoColor=white">
+</p>
+
+<p align="center"><b>Built for Kolkata's agencies</b><br/><img alt="Kolkata Police, KMC, West Bengal Police, Bidhannagar Police, Howrah City Police, WB Disaster Management, NKDA, WBTC, Metro Railway" src="docs/brand/agencies.png" width="900"></p>
+<p align="center"><b>Live on open public data</b><br/><img alt="IMD, NDMA, Sachet alerts, OpenStreetMap, Open-Meteo, Copernicus DEM, Cesium" src="docs/brand/sources.png" width="760"></p>
+<p align="center"><b>The vehicles it works with, and the events it handles</b><br/><img alt="Ambulance, patrol, taxi, WBTC bus, toto, auto, fire tender, protected movement" src="docs/brand/vehicles.png" width="840"><br/><img alt="Waterlogging, weather, cyclone, Puja crowds, procession, green corridor, road accident, work zone" src="docs/brand/events.png" width="840"></p>
+<p align="center"><sub>Agency and source marks belong to their owners; Sahoshi is a prototype, not affiliated with or endorsed by them (<a href="services/command-deck/static/logos/NOTICE.md">details and licences</a>). Vehicle and event art is Sahoshi's own, with no plates or people.</sub></p>
 
 <p align="center">
   <img width="900" alt="The live map of Kolkata in photoreal 3D over the Hooghly and Howrah Bridge" src="docs/screenshots/map-live-3d.jpg" /><br/>
