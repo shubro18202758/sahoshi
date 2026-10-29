@@ -2,10 +2,10 @@
 
 Backend: Svara-TTS v1 (Apache-2.0), an Orpheus-style model that writes SNAC
 audio codes which the SNAC 24 kHz codec (MIT) turns into a waveform. Indic
-Parler-TTS was the first choice; its weights are gated and were not granted
-to this deployment (README "Models"). It drops in by configuration once
-access is granted (``SPEECH_TTS_BACKEND=indic_parler``): until then
-:class:`FallbackTTS` says why it cannot load and Svara answers.
+Parler-TTS, the first choice, is gated on Hugging Face; access was granted on
+29 Oct 2026 and it did better in the evaluation (docs/ai/speech.md). It drops
+in by configuration (``SPEECH_TTS_BACKEND=indic_parler``); while it cannot
+load, :class:`FallbackTTS` says why and Svara answers.
 
 Svara takes a speaker id ("Bengali (Female)") plus an end-of-utterance style
 tag. The house voice is the female speaker of the requested language with
@@ -34,7 +34,7 @@ from typing import Any, Callable, Protocol
 
 import numpy as np
 
-from .audio import encode_wav
+from .audio import encode_wav, level_speech
 from .runtime import LazyModel, ModelNotProvisioned, ModelUnavailable, not_provisioned
 
 log = logging.getLogger("speech.tts")
@@ -118,6 +118,8 @@ def split_sentences(text: str, max_chars: int = 220) -> list[str]:
 
 # Bumped whenever the prompt layout changes, so cached audio is regenerated.
 PROMPT_FORMAT = "orpheus-human-turn/2"
+# Bumped whenever the output levelling changes (audio.level_speech), for the same reason.
+LEVEL_FORMAT = "level/1"
 
 
 def prompt_ids(tok, text: str, speaker: str, style_tag: str = "") -> list[int]:
@@ -371,12 +373,14 @@ class IndicParlerTTS:
 
     def __init__(self, model_id: str = DEFAULT_MODEL, *, device: str = "cuda",
                  description: str = PARLER_DESCRIPTION, seed: int = 1847,
+                 revision: str | None = None,
                  min_free_gib: float = 12.0, idle_unload_s: float = 600,
                  loader: Callable[[], Any] | None = None) -> None:
         self.model_id = model_id
         self.device = device
         self.description = description
         self.seed = seed
+        self.revision = revision or None
         self._run_lock = threading.Lock()
         self._lazy = LazyModel(
             f"tts:{model_id}", loader or self._load, need_gib=5.0,
@@ -390,9 +394,10 @@ class IndicParlerTTS:
         except ImportError as exc:
             raise not_provisioned(self.model_id, exc, gated=True) from exc
         try:
-            model = ParlerTTSForConditionalGeneration.from_pretrained(self.model_id)
+            model = ParlerTTSForConditionalGeneration.from_pretrained(self.model_id,
+                                                                      revision=self.revision)
             model = model.to(self.device).eval()
-            tok = AutoTokenizer.from_pretrained(self.model_id)
+            tok = AutoTokenizer.from_pretrained(self.model_id, revision=self.revision)
             desc_tok = AutoTokenizer.from_pretrained(model.config.text_encoder._name_or_path)
         except Exception as exc:
             mapped = not_provisioned(self.model_id, exc, gated=True)
@@ -458,6 +463,7 @@ class ParlerWorkerTTS:
 
     def __init__(self, python: Path | str, model_id: str = IndicParlerTTS.DEFAULT_MODEL, *,
                  device: str = "cuda", description: str = PARLER_DESCRIPTION, seed: int = 1847,
+                 revision: str | None = None,
                  min_free_gib: float = 12.0, idle_unload_s: float = 600,
                  load_timeout_s: float = 900.0, synth_timeout_s: float = 300.0,
                  cmd: list[str] | None = None) -> None:
@@ -466,6 +472,7 @@ class ParlerWorkerTTS:
         self.device = device
         self.description = description
         self.seed = seed
+        self.revision = revision or None
         self.load_timeout_s = load_timeout_s
         self.synth_timeout_s = synth_timeout_s
         self._cmd_override = cmd
@@ -479,9 +486,12 @@ class ParlerWorkerTTS:
     def cmd(self) -> list[str]:
         if self._cmd_override is not None:
             return list(self._cmd_override)
-        return [str(self.python), "-m", "speech_service.parler_worker", "--model", self.model_id,
-                "--device", self.device, "--seed", str(self.seed),
-                "--description", self.description]
+        cmd = [str(self.python), "-m", "speech_service.parler_worker", "--model", self.model_id,
+               "--device", self.device, "--seed", str(self.seed),
+               "--description", self.description]
+        if self.revision:
+            cmd += ["--revision", self.revision]
+        return cmd
 
     @property
     def running(self) -> bool:
@@ -656,7 +666,7 @@ class TTSCache:
 def speak(backend: TTSBackend, cache: TTSCache, text: str, lang: str, voice: str,
           style: str) -> Speech:
     model_id = backend.model_id
-    key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}", lang, voice, style, text)
+    key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}|{LEVEL_FORMAT}", lang, voice, style, text)
     hit = cache.get(key)
     if hit is not None:
         try:
@@ -671,7 +681,8 @@ def speak(backend: TTSBackend, cache: TTSCache, text: str, lang: str, voice: str
         # a fallback answered for the preferred model: file the audio under
         # the model that actually spoke it, never under the preferred one
         model_id = backend.model_id
-        key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}", lang, voice, style, text)
+        key = TTSCache.key(f"{model_id}|{PROMPT_FORMAT}|{LEVEL_FORMAT}", lang, voice, style, text)
+    audio = level_speech(audio)
     wav = encode_wav(audio, sr)
     cache.put(key, wav)
     return Speech(wav, sr, round(audio.size / sr, 2), model_id, voice, False,

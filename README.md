@@ -17,7 +17,7 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square">
   <img alt="City: Kolkata, West Bengal" src="https://img.shields.io/badge/city-Kolkata%2C%20West%20Bengal-111111?style=flat-square">
   <img alt="Languages: Bengali, English, Hindi" src="https://img.shields.io/badge/languages-%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%20%C2%B7%20EN%20%C2%B7%20%E0%A4%B9%E0%A4%BF%E0%A4%82%E0%A4%A6%E0%A5%80-111111?style=flat-square">
-  <img alt="Tests: 5,987 pytest and 121 cargo" src="https://img.shields.io/badge/tests-5%2C987%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
+  <img alt="Tests: 6,030 pytest and 121 cargo" src="https://img.shields.io/badge/tests-6%2C030%20pytest%20%C2%B7%20121%20cargo-2ea44f?style=flat-square">
   <img alt="Status: prototype on one edge server" src="https://img.shields.io/badge/status-prototype%20on%20one%20edge%20server-555555?style=flat-square">
 </p>
 
@@ -105,7 +105,7 @@ offline; none is in this repository.
 | Corridor forecasting | **Chronos-2** (`amazon/chronos-2`); TimesFM 2.5 as challenger; seasonal-naive baseline | Apache-2.0 | Speed and V/C for every road 15–120 min ahead with p10–p90 bands; a diversion proposal when the median crosses 0.8 | "Forecast on simulated traffic" until real Kolkata traffic is recorded |
 | Waterlogging nowcast | No ML: a conceptual ponding model (rain × tide × pumps × terrain) | — | Depth-risk class 0–3 per road with lead time; reroute, ambulance window, live-wire request, Bengali and English advisory | rain LIVE · tide MODELLED · pumps EMULATED · risk MODELLED |
 | Bengali speech recognition | `bengaliAI/tugstugi_bengaliai-asr_whisper-medium`; `openai/whisper-large-v3-turbo` for English and Hindi | Apache-2.0; MIT | A spoken field report → place, kind, severity | UNVERIFIED-FIELD until an officer confirms |
-| Bengali speech synthesis | Svara-TTS v1 (`kenpath/svara-tts-v1`) with the SNAC 24 kHz codec | Apache-2.0; MIT | Advisories read aloud in Bengali, English or Hindi | "Synthetic voice" |
+| Bengali speech synthesis | AI4Bharat Indic Parler-TTS (`ai4bharat/indic-parler-tts`); Svara-TTS v1 with the SNAC 24 kHz codec answers while it cannot load | Apache-2.0; Apache-2.0 and MIT | Advisories read aloud in Bengali, English or Hindi | "Synthetic voice" |
 | Road-state vision | **Qwen3-VL-8B-Instruct** (Q4_K_M GGUF on llama.cpp) | Apache-2.0 | A camera still → waterlogged, blocked, tree fall, stalled vehicle, crash debris, congested or clear | UNVERIFIED-CAMERA; person and plate questions refused |
 | Signal-timing proposals | A cell-transmission traffic twin with Webster and max-pressure baselines; the local LLM only words the rationale | — | Tests each candidate timing against doing nothing over the whole network | MODELLED; demand SIMULATED |
 | Assistant and decision AI | A 27B decider model (`pplx-decider-v1.2`) asked typed questions; Gemma 4 12B (Q4_K_M) for drafting; `pplx-embed-context-v1-4b` and `pplx-embed-v2-late-0.6b` for memory, `PII-Tracer` for personal details in news | Apache-2.0 (decider), MIT (embeddings, PII-Tracer) | Answers about the live picture, plans movements, checks every claim against tool results | Labels per answer; cannot approve |
@@ -263,7 +263,7 @@ Measured on 28 Oct 2026, every suite offline:
 
 | Suite | Result |
 |---|---|
-| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **5,987 passed**, 160 skipped (they need a database sandbox or real models) |
+| Python, 16 suites (oracle, brain, store, emulator, embeddings, the six AI and city-feed services, four OSINT packages, the deck proxy guard) | **6,030 passed**, 160 skipped (they need a database sandbox or real models) |
 | Rust (`signal-ingress`) | **121 passed** |
 | Deck | `svelte-check` 0 errors; design-token, English copy (4,263 strings) and Bengali-script lints pass; 42 unit suites |
 | City Pack | `city_build.py kolkata --check`: every derived file is current |

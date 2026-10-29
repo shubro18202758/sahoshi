@@ -9,7 +9,16 @@ import numpy as np
 import pytest
 
 from fakes import tone_wav
-from speech_service.audio import TARGET_SR, AudioError, decode_audio, encode_wav, sniff_format
+from speech_service.audio import (
+    SPEECH_PEAK,
+    SPEECH_RMS,
+    TARGET_SR,
+    AudioError,
+    decode_audio,
+    encode_wav,
+    level_speech,
+    sniff_format,
+)
 
 
 def test_sniff() -> None:
@@ -58,3 +67,25 @@ def test_browser_formats_decode_through_ffmpeg_pipes(fmt: str, codec: str) -> No
     x, dur, got = decode_audio(p.stdout)
     assert got == fmt
     assert 1.3 < dur < 1.7
+
+
+def _rms(x: np.ndarray) -> float:
+    return float(np.sqrt(np.mean(np.square(x, dtype=np.float64))))
+
+
+def test_level_speech_gives_quiet_and_loud_voices_one_loudness() -> None:
+    t = np.arange(24_000) / 24_000
+    quiet = (0.016 * np.sin(2 * np.pi * 220 * t)).astype(np.float32)   # about -37 dBFS, as Parler speaks Bengali
+    loud = (0.17 * np.sin(2 * np.pi * 220 * t)).astype(np.float32)    # about -18 dBFS
+    a, b = level_speech(quiet), level_speech(loud)
+    assert abs(_rms(a) - SPEECH_RMS) < 0.005 and abs(_rms(b) - SPEECH_RMS) < 0.005
+    assert np.max(np.abs(a)) <= SPEECH_PEAK + 1e-6 and np.max(np.abs(b)) <= SPEECH_PEAK + 1e-6
+
+
+def test_level_speech_never_pushes_a_peak_past_the_ceiling_and_leaves_silence() -> None:
+    spiky = np.zeros(16_000, dtype=np.float32)
+    spiky[::400] = 0.5   # a high crest factor: the peak, not the RMS, sets the gain
+    out = level_speech(spiky)
+    assert abs(float(np.max(np.abs(out))) - SPEECH_PEAK) < 1e-6 and _rms(out) < SPEECH_RMS
+    silence = np.zeros(800, dtype=np.float32)
+    assert np.array_equal(level_speech(silence), silence) and level_speech(np.zeros(0, np.float32)).size == 0

@@ -21,6 +21,7 @@ __all__ = [
     "sniff_format",
     "decode_audio",
     "encode_wav",
+    "level_speech",
     "resample",
 ]
 
@@ -131,6 +132,24 @@ def decode_audio(data: bytes, max_seconds: float = 60.0) -> tuple[np.ndarray, fl
     if peak > 1.0:
         x = x / peak
     return x, dur, fmt
+
+
+#: synthetic speech is levelled to about -20 dBFS RMS, never past -1 dBFS peak
+SPEECH_RMS = 0.1
+SPEECH_PEAK = 0.89
+
+
+def level_speech(x: np.ndarray, rms: float = SPEECH_RMS, peak: float = SPEECH_PEAK) -> np.ndarray:
+    """One loudness for every voice and language (Indic Parler-TTS speaks Bengali about 18 dB quieter than
+    English): scale to ``rms``, but never so far that the peak passes ``peak``. Silence is left as it is."""
+    x = np.asarray(x, dtype=np.float32)
+    if not x.size:
+        return x
+    now_rms = float(np.sqrt(np.mean(np.square(x, dtype=np.float64))))
+    now_peak = float(np.max(np.abs(x)))
+    if now_rms < 1e-4 or now_peak <= 0.0:
+        return x
+    return (x * min(rms / now_rms, peak / now_peak)).astype(np.float32)
 
 
 def encode_wav(x: np.ndarray, sr: int) -> bytes:

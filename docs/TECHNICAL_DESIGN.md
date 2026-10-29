@@ -495,7 +495,7 @@ flowchart LR
     subgraph SVC["AI services"]
         fc["forecast<br/>Chronos-2"]
         hy["hydro<br/>ponding model"]
-        sp["speech<br/>Whisper bn · Svara-TTS"]
+        sp["speech<br/>Whisper bn · Indic Parler-TTS"]
         vi["vision<br/>Qwen3-VL-8B"]
         tw["twin<br/>cell-transmission model"]
     end
@@ -528,7 +528,7 @@ flowchart LR
 |---|---|---|---|---|---|
 | forecast | 8195 | Chronos-2 `amazon/chronos-2` (Apache-2.0); TimesFM 2.5 for backtests (Apache-2.0) | PyTorch, GPU | 456 MiB weights, 1.6 GiB peak | Seasonal-naive baseline, stated in `model_note` |
 | hydro | 8197 | None (a conceptual model) | Python, CPU | < 512 MiB | Cached rain; offline mode |
-| speech | 8194 | `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0); `openai/whisper-large-v3-turbo` for en/hi (MIT); Svara-TTS v1 (Apache-2.0) + SNAC 24 kHz (MIT) | ASR in transformers fp16; TTS on llama.cpp (Q8_0 GGUF) on bare metal, transformers bf16 in the container | ≈2.0 GiB ASR; 4.8 GiB TTS | 503 when memory is short; typed reports need no model |
+| speech | 8194 | `bengaliAI/tugstugi_bengaliai-asr_whisper-medium` (Apache-2.0); `openai/whisper-large-v3-turbo` for en/hi (MIT); `ai4bharat/indic-parler-tts` (Apache-2.0, live since 29 Oct); Svara-TTS v1 (Apache-2.0) + SNAC 24 kHz (MIT) as the fallback | ASR in transformers fp16; Parler in its own venv (parler-tts pins transformers 4.46.1) as a child process over pipes; Svara on llama.cpp (Q8_0 GGUF) | ≈2.0 GiB ASR; 5–8 GiB Parler once loaded (11.5 GiB peak while loading) | 503 when memory is short; typed reports need no model |
 | vision | 8196 | Qwen3-VL-8B-Instruct Q4_K_M (Apache-2.0) | llama.cpp `llama-server` on 8201 | 7.6 GiB | 503 when memory is short |
 | twin | 8198 | None for the timing; the tactical LLM only words the rationale | numpy, CPU | < 768 MiB | Template rationale |
 
@@ -1156,7 +1156,7 @@ The on-demand models load lazily and unload when idle, so the box keeps headroom
 
 | Level | What | Count (28 Oct 2026) |
 |---|---|---|
-| Unit and API (Python) | Every service, offline, outbound calls mocked | 5,987 passed |
+| Unit and API (Python) | Every service, offline, outbound calls mocked | 6,030 passed |
 | Real-model (opt-in) | forecast `-m model`, speech and vision `-m slow` | run on the box with weights |
 | Rust | signal-ingress | 121 passed |
 | Deck | `svelte-check`, design-token and copy lints, Bengali-script check, 42 unit suites, contract replay, proxy guard | see [`SAMPLE_DATA_AND_TESTS.md`](SAMPLE_DATA_AND_TESTS.md) |
@@ -1273,7 +1273,10 @@ Each record states the context, the decision and its consequences.
 - **Decision.** Measure open checkpoints on the same audio and pick the best (a Bengali Whisper-medium fine-tune,
   CER 2.6 %); Svara-TTS for bn/hi/en; keep the gated models as preferred once access is granted, behind the same
   interfaces.
-- **Consequences.** Working Bengali voice now, with an upgrade path that changes no API.
+- **Consequences.** Working Bengali voice now, with an upgrade path that changes no API. Access was granted on
+  29 Oct 2026 and both were measured on the same audio: Indic Parler-TTS beat Svara (round-trip WER 8.2 % against
+  11.2 %, places 60/60 against 55/60, half the synthesis time) and is live; IndicConformer was not more accurate than
+  the Whisper fine-tune (WER 11.9 % against 11.2 %) and stays behind config.
 
 ### ADR-13 — llama.cpp for the vision model and TTS
 

@@ -207,22 +207,22 @@ Measured on 29 Oct 2026 with every suite run once, offline, in parallel (about 4
 | Suite | Passed | Skipped | Notes |
 |---|---:|---:|---|
 | traffic-oracle | 2,106 | 104 | Skips need a database sandbox |
-| convoy-brain | 752 | 1 | |
+| convoy-brain | 753 | 1 | |
 | corridor-store | 147 | 30 | Skips need a database sandbox |
 | event-emulator | 367 | 13 | |
 | embedding-service | 191 | 4 | |
 | forecast | 37 | 0 | 2 real-model tests deselected (`-m model`) |
 | hydro | 23 | 0 | Open-Meteo mocked |
-| speech | 150 | 4 | real-model tests skipped |
+| speech | 157 | 4 | real-model tests skipped |
 | vision | 75 | 3 | 3 real-model tests skipped |
 | twin | 48 | 0 | |
-| cityfeeds | 73 | 0 | every outside source mocked or replayed from a recording |
+| cityfeeds | 108 | 0 | every outside source mocked or replayed from a recording |
 | osint-common | 449 | 0 | |
 | osint-ingress | 498 | 1 | |
 | osint-geo | 586 | 0 | |
 | osint-analysis | 478 | 0 | |
 | deck proxy guard (pytest) | 7 | 0 | |
-| **Python total** | **5,987** | **160** | |
+| **Python total** | **6,030** | **160** | |
 | signal-ingress (cargo) | 121 | 0 | four test binaries: 50 + 45 + 7 + 19 |
 | deck unit suites | 45 of 45 files | — | |
 | deck lints | design tokens, copy (4,263 English strings), Bengali script | — | all pass |

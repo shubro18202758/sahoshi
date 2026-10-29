@@ -20,6 +20,7 @@ import re
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Protocol
 
 import numpy as np
@@ -32,6 +33,7 @@ __all__ = [
     "ASRBackend",
     "WhisperASR",
     "IndicConformerASR",
+    "assets_revision_error",
     "FallbackASR",
     "RoutedASR",
     "SUPPORTED_LANGS",
@@ -235,6 +237,25 @@ def _as_text(out: Any) -> str:
     return out if isinstance(out, str) else ("" if out is None else str(out))
 
 
+def assets_revision_error(model_id: str, folder: str, revision: str | None) -> str | None:
+    """Why the loaded IndicConformer assets are not the pinned commit, or None.
+
+    The model's own ``from_pretrained`` (remote code, ``model_onnx.py``)
+    fetches its ONNX graphs and TorchScript preprocessor with
+    ``snapshot_download(repo)`` and ignores ``revision``: the pin selects the
+    code transformers imports, not the assets it then loads. Offline, the
+    assets come from whatever commit the cache's ``main`` points to; this
+    check refuses to run them unless that is the pinned commit."""
+    if not revision:
+        return None
+    got = Path(str(folder or "")).name
+    if got and got.startswith(revision):
+        return None
+    return (f"{model_id}: the assets loaded are from commit {got or '?'}, not the pinned "
+            f"revision {revision}; download the pinned commit (scripts/fetch_gated_models.sh) "
+            f"or review the new one and pin it")
+
+
 class IndicConformerASR:
     """AI4Bharat IndicConformer-600M-multilingual (MIT; **gated** on Hugging Face).
 
@@ -273,13 +294,18 @@ class IndicConformerASR:
         except ImportError as exc:
             raise not_provisioned(self.model_id, exc, gated=True) from exc
         try:
-            return AutoModel.from_pretrained(self.model_id, trust_remote_code=True,
-                                             revision=self.revision)
+            model = AutoModel.from_pretrained(self.model_id, trust_remote_code=True,
+                                              revision=self.revision)
         except Exception as exc:
             mapped = not_provisioned(self.model_id, exc, gated=True)
             if mapped is not None:
                 raise mapped from exc
             raise
+        folder = getattr(getattr(model, "config", None), "ts_folder", "")
+        why = assets_revision_error(self.model_id, folder, self.revision)
+        if why:
+            raise ModelNotProvisioned(why)
+        return model
 
     def status(self) -> dict:
         return {"model": self.model_id, "decoder": self.decoder, **self._lazy.status()}

@@ -76,6 +76,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--seed", type=int, default=1847)
     ap.add_argument("--description", required=True)
+    ap.add_argument("--revision", default="", help="pinned commit of the model repo")
     args = ap.parse_args(argv)
 
     # keep the protocol stream clean: stdout now points at stderr
@@ -87,7 +88,8 @@ def main(argv: list[str] | None = None) -> None:
 
     # the parent already checked memory before starting this process
     tts = IndicParlerTTS(args.model, device=args.device, description=args.description,
-                         seed=args.seed, min_free_gib=0, idle_unload_s=0)
+                         seed=args.seed, revision=args.revision or None,
+                         min_free_gib=0, idle_unload_s=0)
     serve(tts, tts._lazy.get, sys.stdin.buffer, proto)
 
 

@@ -138,6 +138,7 @@ def make_tts(s: Settings) -> TTSBackend:
         raise ValueError(f"SPEECH_TTS_BACKEND must be one of {TTS_BACKENDS}, not {backend!r}")
     if backend == "indic_parler":
         kw = dict(device=s.device, description=s.tts_parler_description, seed=s.tts_seed,
+                  revision=s.tts_parler_revision or None,
                   min_free_gib=s.min_free_gib, idle_unload_s=s.idle_unload_s)
         preferred: TTSBackend = (
             ParlerWorkerTTS(s.tts_parler_python, s.tts_parler_model, **kw)

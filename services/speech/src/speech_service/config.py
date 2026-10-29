@@ -54,7 +54,9 @@ class Settings(BaseSettings):
     asr_indic_conformer_model: str = "ai4bharat/indic-conformer-600m-multilingual"
     asr_indic_conformer_decoder: str = "rnnt"  # or "ctc"
     # The model runs its own code (trust_remote_code): pin the commit whose
-    # model_onnx.py was reviewed. Empty = the repo's main branch.
+    # model_onnx.py was reviewed. Empty = the repo's main branch. The remote
+    # code fetches its ONNX assets from main regardless, so the adapter refuses
+    # assets from any commit other than this one.
     asr_indic_conformer_revision: str = ""
     # English and Hindi (and language detection for lang=auto) go to a general
     # multilingual Whisper: the Bengali fine-tune above transcribes them in
@@ -70,6 +72,9 @@ class Settings(BaseSettings):
     # (gated), with Svara ("auto") taking over while it cannot load.
     tts_backend: str = "auto"
     tts_parler_model: str = "ai4bharat/indic-parler-tts"
+    # Pin the commit that was evaluated (the fetch script prints it). Empty =
+    # the repo's main branch (offline: whatever commit the cache holds).
+    tts_parler_revision: str = ""
     # parler-tts pins transformers 4.46.1, so it runs in its own venv: the
     # python of that venv (empty = load it in this process instead).
     tts_parler_python: str = ""

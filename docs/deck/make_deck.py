@@ -281,7 +281,7 @@ def build() -> None:
         ("Forecast", "Chronos-2 (Apache-2.0)", "Zero-shot corridor forecasts; error 55% below the seasonal baseline in backtest (SIMULATED history)"),
         ("Waterlogging", "Rain × tide × DEM × pumps", "Replay of 22–23 Sep 2025 on IMD-observed rain: 13 of 13 reported places flagged"),
         ("Signal twin", "Cell-transmission model + Webster / max-pressure", "Shockwave speed within 0.2% of theory; a 30-min city run in 0.12 s"),
-        ("Speech", "Bengali Whisper (Apache-2.0), Svara-TTS", "11.2% word error, place matched 55/60 (synthetic round trip)"),
+        ("Speech", "Bengali Whisper + Indic Parler-TTS (Apache-2.0)", "11.2% word error, place 55/60; voice: places 60/60 (round trip)"),
         ("Vision", "Qwen3-VL-8B (Apache-2.0)", "11 of 12 road states right; 9 of 9 refusal probes refused"),
         ("Decision", "pplx-decider-v1.2 (27B) + Gemma 4", "Typed answers in 1.0 s; 22 of 26 labelled Kolkata decisions; an officer approves every action"),
     ]

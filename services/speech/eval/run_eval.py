@@ -16,15 +16,19 @@ report pipeline on that audio.
     # 3. end-to-end through the running service (POST /speech/report)
     python eval/run_eval.py api --base http://127.0.0.1:9161 --audio /tmp/sahoshi-speech-eval
 
-Results go to ``eval/results.json`` (merged per stage).
+Results go to ``eval/results.json`` (merged per stage), or to the file named
+by ``--results`` (a TTS round trip with another voice model goes to its own
+file, so the round trip of the current TTS is not overwritten).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import statistics
+import subprocess
 import sys
 import time
 import urllib.request
@@ -74,6 +78,49 @@ def _merge(key: str, value) -> None:
     doc = json.loads(RESULTS.read_text(encoding="utf-8")) if RESULTS.exists() else {}
     doc[key] = value
     RESULTS.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _status_kib(pid: int | str, field: str) -> int | None:
+    try:
+        for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+            if line.startswith(field + ":"):
+                return int(line.split()[1])
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
+def _gpu_mib(pids: set[int]) -> float | None:
+    """GPU memory the driver attributes to these processes (nvidia-smi), MiB.
+    On the GB10 this is unified memory that does not show in the process RSS."""
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=20, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    total = None
+    for line in out.splitlines():
+        parts = [x.strip() for x in line.split(",")]
+        if len(parts) == 2 and parts[0].isdigit() and int(parts[0]) in pids:
+            try:
+                total = (total or 0.0) + float(parts[1])
+            except ValueError:
+                pass
+    return total
+
+
+def proc_memory(pid: int | None = None) -> dict:
+    """Resident memory of one process: RSS now and its peak (VmHWM), plus the
+    GPU memory the driver attributes to it. Together they are what the model
+    takes from the shared pool while it is loaded."""
+    pid = pid or os.getpid()
+    rss, hwm, gpu = _status_kib(pid, "VmRSS"), _status_kib(pid, "VmHWM"), _gpu_mib({pid})
+    out = {"rss_gib": round(rss / 2**20, 2) if rss else None,
+           "rss_peak_gib": round(hwm / 2**20, 2) if hwm else None,
+           "gpu_gib": round(gpu / 1024, 2) if gpu is not None else None}
+    out["resident_gib"] = round((out["rss_gib"] or 0) + (out["gpu_gib"] or 0), 2)
+    return out
 
 
 def _post(url: str, data: bytes, ctype: str, timeout: float = 600) -> tuple[bytes, dict]:
@@ -176,6 +223,7 @@ def cmd_asr(args) -> None:
     for mid in args.models.split(","):
         asr = asr_for_eval(mid)
         _reset_gpu_peak()
+        mem_before = proc_memory()
         t0 = time.perf_counter()
         try:
             asr._lazy.get()
@@ -196,10 +244,13 @@ def cmd_asr(args) -> None:
                              "kind": rep["kind"], "expected_kind": p["kind"],
                              "kind_ok": rep["kind"] == p["kind"]})
         gpu_peak = _gpu_peak_gib()
+        mem = proc_memory()  # with the model still loaded, after all 60 clips
         asr.unload()
         s = _score(rows)
         s["load_s"] = load_s
+        s["asr_seconds_mean"] = round(statistics.mean(r["asr_s"] for r in rows), 3)
         s.update(gpu_peak or {})
+        s["process_memory"] = {"before_load": mem_before, "loaded": mem}
         s["per_voice"] = {v: _score([r for r in rows if r["voice"] == v]) for v in VOICES}
         summary[mid] = {"summary": s, "rows": rows}
         print(mid, json.dumps(s), flush=True)
@@ -256,7 +307,8 @@ def cmd_rescore(_args) -> None:
             r["kind"] = rep["kind"]
             r["kind_ok"] = rep["kind"] == r["expected_kind"]
         kept = {k: v["summary"][k]
-                for k in ("load_s", "gpu_peak_alloc_gib", "gpu_peak_reserved_gib")
+                for k in ("load_s", "asr_seconds_mean", "gpu_peak_alloc_gib",
+                          "gpu_peak_reserved_gib", "process_memory")
                 if k in v["summary"]}
         v["summary"] = _score(v["rows"])
         v["summary"].update(kept)
@@ -286,7 +338,10 @@ def cmd_text(_args) -> None:
 
 
 def main() -> None:
+    global RESULTS
     ap = argparse.ArgumentParser()
+    ap.add_argument("--results", default=str(RESULTS),
+                    help="the JSON file to merge results into (default: eval/results.json)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("synth"); a.add_argument("--base", required=True); a.add_argument("--audio", required=True)
     b = sub.add_parser("asr"); b.add_argument("--audio", required=True); b.add_argument("--models", required=True)
@@ -294,6 +349,7 @@ def main() -> None:
     sub.add_parser("text")
     sub.add_parser("rescore")
     args = ap.parse_args()
+    RESULTS = Path(args.results)
     {"synth": cmd_synth, "asr": cmd_asr, "api": cmd_api, "text": cmd_text,
      "rescore": cmd_rescore}[args.cmd](args)
 

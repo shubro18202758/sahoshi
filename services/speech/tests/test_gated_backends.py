@@ -15,7 +15,13 @@ from fakes import FakeASR, FakeTTS, tone_wav
 from fastapi.testclient import TestClient
 
 from speech_service.api import create_app, make_asr, make_tts
-from speech_service.asr import FallbackASR, IndicConformerASR, RoutedASR, WhisperASR
+from speech_service.asr import (
+    FallbackASR,
+    IndicConformerASR,
+    RoutedASR,
+    WhisperASR,
+    assets_revision_error,
+)
 from speech_service.config import Settings
 from speech_service.runtime import ModelNotProvisioned, ModelUnavailable, not_provisioned
 from speech_service.tts import (
@@ -268,9 +274,9 @@ def test_tts_fallback_audio_is_cached_under_the_model_that_spoke(tmp_path: Path)
     second = speak(tts, cache, "গড়িয়াহাটে জল।", "bn", "female", "<clear>")
     assert second.cached and len(fake.calls) == 1
     # nothing was filed under the preferred (gated) model's key
-    from speech_service.tts import PROMPT_FORMAT
+    from speech_service.tts import LEVEL_FORMAT, PROMPT_FORMAT
 
-    k = TTSCache.key(f"{PARLER}|{PROMPT_FORMAT}", "bn", "female", "<clear>", "গড়িয়াহাটে জল।")
+    k = TTSCache.key(f"{PARLER}|{PROMPT_FORMAT}|{LEVEL_FORMAT}", "bn", "female", "<clear>", "গড়িয়াহাটে জল।")
     assert cache.get(k) is None
 
 
@@ -407,3 +413,68 @@ def test_config_runs_parler_in_its_own_venv(tmp_path: Path) -> None:
     cmd = t.preferred.cmd()
     assert cmd[:3] == ["/opt/parler/bin/python", "-m", "speech_service.parler_worker"]
     assert cmd[cmd.index("--model") + 1] == PARLER
+    assert "--revision" not in cmd  # unpinned: the worker loads what the cache holds
+
+
+def test_config_pins_the_parler_revision(tmp_path: Path) -> None:
+    kw = dict(tts_backend="indic_parler", tts_gguf=tmp_path / "absent.gguf",
+              tts_parler_revision="abc123")
+    worker = make_tts(Settings(tts_parler_python="/opt/parler/bin/python", **kw)).preferred
+    assert worker.revision == "abc123"
+    cmd = worker.cmd()
+    assert cmd[cmd.index("--revision") + 1] == "abc123"
+    in_process = make_tts(Settings(**kw)).preferred
+    assert isinstance(in_process, IndicParlerTTS) and in_process.revision == "abc123"
+
+
+# --- IndicConformer: the pin must cover the assets, not only the code ---------
+
+PINNED = "2a77d305038dfc502fd9464e7d028b90381976cb"
+
+
+def test_assets_from_the_pinned_commit_pass() -> None:
+    folder = f"/hf/models--ai4bharat--indic-conformer-600m-multilingual/snapshots/{PINNED}"
+    assert assets_revision_error(CONFORMER, folder, PINNED) is None
+    assert assets_revision_error(CONFORMER, folder, PINNED[:12]) is None
+    assert assets_revision_error(CONFORMER, folder, None) is None  # unpinned: not checked
+
+
+def test_assets_from_another_commit_are_refused() -> None:
+    why = assets_revision_error(CONFORMER, "/hf/snapshots/ffff0000", PINNED)
+    assert why and "ffff0000" in why and PINNED in why and "fetch_gated_models.sh" in why
+
+
+def _fake_remote_model(monkeypatch, folder: str) -> None:
+    """The remote code's from_pretrained, as far as the adapter sees it."""
+    import types
+
+    class Model:
+        config = types.SimpleNamespace(ts_folder=folder)
+
+    class AutoModel:
+        @staticmethod
+        def from_pretrained(repo, trust_remote_code=False, revision=None):
+            assert trust_remote_code
+            return Model()
+
+    monkeypatch.setitem(sys.modules, "onnxruntime", types.ModuleType("onnxruntime"))
+    fake_tf = types.ModuleType("transformers")
+    fake_tf.AutoModel = AutoModel
+    monkeypatch.setitem(sys.modules, "transformers", fake_tf)
+
+
+def test_conformer_with_unpinned_assets_falls_back(monkeypatch) -> None:
+    _fake_remote_model(monkeypatch, "/hf/snapshots/0123newer")
+    preferred = IndicConformerASR(CONFORMER, revision=PINNED, min_free_gib=0)
+    preferred._lazy._probe = lambda: 999.0
+    asr = FallbackASR(preferred, FakeASR())
+    tr = asr.transcribe(np.zeros(16000, dtype=np.float32), "bn")
+    assert tr.model == "fake-asr"
+    assert "not the pinned revision" in asr.status()["preferred_error"]
+
+
+def test_conformer_with_pinned_assets_loads(monkeypatch) -> None:
+    _fake_remote_model(monkeypatch, f"/hf/snapshots/{PINNED}")
+    c = IndicConformerASR(CONFORMER, revision=PINNED, min_free_gib=0)
+    c._lazy._probe = lambda: 999.0
+    assert c._lazy.get().config.ts_folder.endswith(PINNED)
