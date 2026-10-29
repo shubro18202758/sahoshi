@@ -166,7 +166,9 @@ def test_refusal_is_logged_with_its_reason(tmp_path: Path, monkeypatch, caplog) 
 
 
 def test_missing_weights_are_logged(tmp_path: Path, caplog) -> None:
-    s = Settings(model_path=tmp_path / "absent.gguf")
+    # the server binary and projector exist (as on a provisioned box, or a CI runner without llama.cpp): only the
+    # weights are missing
+    s = _files(tmp_path).model_copy(update={"model_path": tmp_path / "absent.gguf"})
     with caplog.at_level("WARNING", logger="vision.model"), pytest.raises(ModelUnavailable):
         asyncio.run(LlamaServerManager(s).ensure())
     assert any("absent.gguf" in r.getMessage() for r in caplog.records)
@@ -187,7 +189,7 @@ def test_readiness_says_when_a_start_would_be_refused(tmp_path: Path, monkeypatc
 
 
 def test_readiness_reports_missing_files(tmp_path: Path) -> None:
-    r = LlamaServerManager(Settings(model_path=tmp_path / "absent.gguf")).readiness()
+    r = LlamaServerManager(_files(tmp_path).model_copy(update={"model_path": tmp_path / "absent.gguf"})).readiness()
     assert r["ready"] is False and "absent.gguf" in r["reason"]
 
 
